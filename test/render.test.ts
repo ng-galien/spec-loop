@@ -101,7 +101,7 @@ describe("render", () => {
     (feature.requirements as { title?: string }[])[0]!.title = "Liste par curseur";
     const exigences = renderToMemory(feature).find((f) => f.path === "exigences.md")!.content;
     expect(exigences).toContain(
-      "<!-- ptr: /requirements -->\n| Exigence | Titre | Priorité | Forme EARS | Origine |\n| --- | --- | --- | --- | --- |\n| [REQ-001](#req-001--liste-par-curseur) | Liste par curseur | MUST | sur événement | ACT-02 |\n| [REQ-002](#req-002) | — | MUST | comportement indésirable | CON-03 |",
+      "<!-- ptr: /requirements -->\n| Exigence | Titre | Facette | Priorité | Forme EARS | Origine |\n| --- | --- | --- | --- | --- | --- |\n| [REQ-001](#req-001--liste-par-curseur) | Liste par curseur | intégration | MUST | sur événement | ACT-02 |\n| [REQ-002](#req-002) | — | comportement | MUST | comportement indésirable | CON-03 |",
     );
     expect(exigences).toContain("<!-- id: REQ-001 -->\n## REQ-001 · Liste par curseur\n");
     expect(headingSlug("REQ-003 · Écrire avec révision")).toBe("req-003--%C3%A9crire-avec-r%C3%A9vision");

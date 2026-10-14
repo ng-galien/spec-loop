@@ -77,4 +77,27 @@ describe("validate", () => {
     expect(errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/1/id", kind: "invalid" }));
     expect(errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/0/source/0", kind: "invalid" }));
   });
+
+  it("requirements: a requirement without facet is incomplete, not invalid", async () => {
+    const feature = inRequirements(await guineaPig());
+    delete (feature.requirements as { facet?: string }[])[0]!.facet;
+    const result = validate(feature);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/0/facet", kind: "incomplete" }));
+  });
+
+  it("requirements: an interface requirement waits for its svg screen before leaving the phase", async () => {
+    const feature = inRequirements(await guineaPig());
+    (feature.requirements as { facet: string }[])[0]!.facet = "interface";
+    expect(validate(feature).errors).toEqual([{ pointer: "/requirements/0", message: "REQ-001 attend sa maquette d'écran", kind: "incomplete" }]);
+    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "ascii", title: "Brouillon", source: "+--+", illustrates: ["REQ-001"] });
+    expect(validate(feature).complete).toBe(false);
+    (feature.artifacts as unknown[]).push({ id: "ART-03", kind: "screen", format: "svg", title: "Écran", path: "assets/screen.svg", illustrates: ["REQ-001"] });
+    expect(validate(feature).complete).toBe(true);
+  });
+
+  it("framing: the screen rule is not checked yet", async () => {
+    const feature = await guineaPig();
+    expect(validate(feature).errors.every((e) => !e.message.includes("maquette"))).toBe(true);
+  });
 });

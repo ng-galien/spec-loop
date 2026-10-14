@@ -1,7 +1,7 @@
 import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
 import formatsModule from "ajv-formats";
 import { indexIds } from "./model.js";
-import { activeChecks, phaseIndex, phaseProducing, schema } from "./schema.js";
+import { activeChecks, checkRules, phaseIndex, phaseProducing, schema } from "./schema.js";
 import type { Phase, ValidationError, ValidationResult } from "./types.js";
 
 const addFormats = (formatsModule as unknown as { default: (ajv: Ajv2020) => Ajv2020 }).default;
@@ -119,6 +119,17 @@ function coherence(json: Rec, phase: Phase | null): ValidationError[] {
     }
   });
   const checks = activeChecks(phase);
+  const matches = (item: Rec, filter: Record<string, unknown>) => Object.entries(filter).every(([key, value]) => item[key] === value);
+  for (const name of checks) {
+    const rule = checkRules[name];
+    if (!rule?.requirement || !rule.artifact) continue;
+    const artifacts = list(json.artifacts).filter((a) => matches(a, rule.artifact!));
+    requirements.forEach((req, i) => {
+      if (!matches(req, rule.requirement!)) return;
+      if (artifacts.some((a) => strings(a.illustrates).includes(String(req.id)))) return;
+      incomplete(`/requirements/${i}`, (rule.message ?? `{id} breaks ${name}`).replace("{id}", String(req.id)));
+    });
+  }
   if (checks.has("noOpenQuestion")) {
     questions.forEach((q, i) => {
       if (q.status === "open") incomplete(`/framing/questions/${i}/status`, `question ${String(q.id)} is still open`);

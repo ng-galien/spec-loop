@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import Handlebars from "handlebars";
 import { indexIds, loadFeature, resolveFeature } from "./model.js";
 import { featureDir, featureFile, renderedDir, stateDir, templatesDir, type Location } from "./paths.js";
-import { phaseIndex, phaseInfo, phaseProducing, phases } from "./schema.js";
+import { enumLabel, phaseIndex, phaseInfo, phaseProducing, phases } from "./schema.js";
 import type { Feature, RenderedFile, RenderResult, ValidationResult } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -133,7 +133,7 @@ function view(feature: Feature, validation: ValidationResult): Rec {
   const artifacts = placeArtifacts(feature);
   const hostFile = (host: string) => (host === "framing" ? "cadrage.md" : host.startsWith("REQ-") ? "exigences.md" : "criteres.md");
   const requirements = list(feature.requirements).map(
-    (req): Rec => ({ ...req, anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
+    (req): Rec => ({ ...req, facetLabel: enumLabel("requirement", "facet", req.facet) ?? "à préciser", anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
   );
   const criteria = list(feature.criteria).map((c): Rec => ({ ...c, steps: steps(c), table: table(list(c.examples)), artifacts: artifacts.get(String(c.id)) ?? [] }));
   const lifecycle = (feature.lifecycle ?? {}) as Rec;

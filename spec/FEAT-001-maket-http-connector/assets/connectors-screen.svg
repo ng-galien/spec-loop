@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif">
+<title>Écran Connecteurs (ART-03)</title>
+<rect x="0" y="0" width="960" height="600" rx="0" fill="#f8fafc" stroke="#334155" stroke-width="1"/>
+<rect x="0" y="0" width="960" height="48" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="20" y="30" font-size="16" font-weight="bold" text-anchor="start" fill="#334155">Maket</text>
+<text x="100" y="30" font-size="13" font-weight="normal" text-anchor="start" fill="#334155">Connecteurs</text>
+<rect x="0" y="48" width="160" height="552" rx="0" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="20" y="80" font-size="13" font-weight="normal" text-anchor="start" fill="#334155">Espaces</text>
+<text x="20" y="116" font-size="13" font-weight="normal" text-anchor="start" fill="#334155">Documents</text>
+<rect x="8" y="134" width="144" height="28" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="1"/>
+<text x="20" y="152" font-size="13" font-weight="bold" text-anchor="start" fill="#334155">Connecteurs</text>
+<text x="20" y="188" font-size="13" font-weight="normal" text-anchor="start" fill="#334155">Réglages</text>
+<text x="180" y="84" font-size="20" font-weight="bold" text-anchor="start" fill="#334155">Connecteurs</text>
+<text x="180" y="106" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">Toutes les sources de données utilisées par les espaces.</text>
+<rect x="176" y="126" width="774" height="236" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="1"/>
+<rect x="176" y="126" width="774" height="44" rx="4" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="182" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Type</text>
+<text x="226" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Espace</text>
+<text x="296" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">URL de base</text>
+<text x="462" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Variable</text>
+<text x="462" y="160" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">du secret</text>
+<text x="566" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Joignable</text>
+<text x="662" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Lecture</text>
+<text x="662" y="160" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">seule</text>
+<text x="724" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Dernier</text>
+<text x="724" y="160" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">rafraîchissement</text>
+<text x="834" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">Dernière</text>
+<text x="834" y="160" font-size="11" font-weight="bold" text-anchor="start" fill="#334155">erreur</text>
+<text x="904" y="145" font-size="11" font-weight="bold" text-anchor="start" fill="#334155"></text>
+<line x1="176" y1="170" x2="950" y2="170" stroke="#334155" stroke-width="0.5"/>
+<text x="182" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">HTTP</text>
+<text x="226" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">Clients</text>
+<text x="296" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">https://api.exemple.fr/v1</text>
+<text x="462" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">CRM_TOKEN</text>
+<text x="566" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">● oui</text>
+<text x="662" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">non</text>
+<text x="724" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">14/10 10:42</text>
+<text x="834" y="206" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">—</text>
+<rect x="902" y="190" width="44" height="24" rx="4" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="924" y="206" font-size="11" font-weight="bold" text-anchor="middle" fill="#334155">Tester</text>
+<line x1="176" y1="234" x2="950" y2="234" stroke="#334155" stroke-width="0.5"/>
+<text x="182" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">HTTP</text>
+<text x="226" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">Factures</text>
+<text x="296" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">https://factures.exemple.fr</text>
+<text x="462" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">BILLING_KEY</text>
+<text x="566" y="264" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">○ non</text>
+<text x="578" y="279" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">depuis 09:15</text>
+<text x="662" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">non</text>
+<text x="724" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">14/10 09:10</text>
+<text x="834" y="270" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">503</text>
+<rect x="902" y="254" width="44" height="24" rx="4" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="924" y="270" font-size="11" font-weight="bold" text-anchor="middle" fill="#334155">Tester</text>
+<line x1="176" y1="298" x2="950" y2="298" stroke="#334155" stroke-width="0.5"/>
+<text x="182" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">HTTP</text>
+<text x="226" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">Catalogue</text>
+<text x="296" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">https://catalogue.exemple.fr</text>
+<text x="462" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">CATALOG_TOKEN</text>
+<text x="566" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">● oui</text>
+<text x="662" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">oui</text>
+<text x="724" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">14/10 10:40</text>
+<text x="834" y="334" font-size="11" font-weight="normal" text-anchor="start" fill="#334155">—</text>
+<rect x="902" y="318" width="44" height="24" rx="4" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="924" y="334" font-size="11" font-weight="bold" text-anchor="middle" fill="#334155">Tester</text>
+<rect x="176" y="386" width="600" height="64" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="190" y="412" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">Le secret n&#x27;est jamais saisi ici : seul le nom de la variable d&#x27;environnement est affiché.</text>
+<text x="190" y="432" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">« Tester » lance une lecture de liste avec le secret configuré, sans modifier aucun élément.</text>
+<rect x="176" y="478" width="330" height="110" rx="4" fill="#e2e8f0" stroke="#334155" stroke-width="1"/>
+<text x="190" y="502" font-size="12" font-weight="bold" text-anchor="start" fill="#334155">Résultat du test : Factures</text>
+<text x="190" y="526" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">○ injoignable : 503 Service Unavailable</text>
+<text x="190" y="548" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">Nouvel essai conseillé dans 30 s</text>
+<text x="190" y="570" font-size="12" font-weight="normal" text-anchor="start" fill="#334155">Aucun élément modifié.</text>
+</svg>

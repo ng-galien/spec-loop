@@ -38,7 +38,8 @@
       ],
       "granularity": "One example with values and exactly one action per criterion.",
       "checks": [
-        "requirementHasCriterion"
+        "requirementHasCriterion",
+        "interfaceHasScreen"
       ]
     },
     {
@@ -86,7 +87,19 @@
     "mustRequirementHasAnchor": "Every MUST requirement is realized by at least one anchor.",
     "criterionHasTest": "Every criterion is verified by at least one test.",
     "testNameCarriesCriterion": "Every test name contains each criterion id it verifies.",
-    "mustTestsPassing": "Every test verifying a criterion of a MUST requirement has status passing."
+    "mustTestsPassing": "Every test verifying a criterion of a MUST requirement has status passing.",
+    "interfaceHasScreen": {
+      "description": "Every requirement of facet interface is illustrated by at least one screen artifact in svg, before the feature enters the acceptance phase.",
+      "gate": "entry",
+      "requirement": {
+        "facet": "interface"
+      },
+      "artifact": {
+        "kind": "screen",
+        "format": "svg"
+      },
+      "message": "{id} attend sa maquette d'écran"
+    }
   },
   "type": "object",
   "additionalProperties": false,
@@ -626,6 +639,7 @@
       "required": [
         "id",
         "pattern",
+        "facet",
         "statement",
         "priority",
         "rationale"
@@ -644,6 +658,30 @@
           "examples": [
             "Liste par curseur"
           ]
+        },
+        "facet": {
+          "enum": [
+            "interface",
+            "behaviour",
+            "data",
+            "integration",
+            "security"
+          ],
+          "description": "What side of the system the requirement fixes, which decides how it is illustrated and verified.",
+          "x-enumDescriptions": {
+            "interface": "What a person sees and does on a screen; illustrated by a screen wireframe.",
+            "behaviour": "How the system responds to an event or a state, observable from outside.",
+            "data": "What the system stores, declares or exposes as data and configuration.",
+            "integration": "How the system talks to another system: protocol, request, error contract.",
+            "security": "What the system refuses, protects or never exposes."
+          },
+          "x-labels": {
+            "interface": "interface",
+            "behaviour": "comportement",
+            "data": "données",
+            "integration": "intégration",
+            "security": "sécurité"
+          }
         },
         "pattern": {
           "enum": [
@@ -1198,5 +1236,6 @@
         }
       }
     }
-  }
+  },
+  "x-checksFormat": "A check is either a sentence (implemented by name in code) or an object rule: requirements matching `requirement` must be illustrated by an artifact matching `artifact`; `gate: entry` makes it hold already in the phase before the one that lists it; `message` is shown with {id} replaced."
 }

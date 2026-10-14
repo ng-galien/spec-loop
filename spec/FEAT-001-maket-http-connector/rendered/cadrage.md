@@ -169,6 +169,15 @@ _Recommandation proposée : Non : l'espace passe en lecture seule._
 
 Concerne : CON-03.
 
+<!-- id: Q-06 -->
+### Q-06 : Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?
+
+Réponse : La configuration reste écrite par l'agent dans la définition de l'espace. Maket a un écran « Connecteurs » qui liste toutes les sources en service avec leur type, l'espace qui les utilise, l'URL de base, le nom de la variable d'environnement, l'état joignable ou non, lecture seule ou non, la date du dernier rafraîchissement, la dernière erreur, et un bouton « tester la connexion ». Dans l'espace, un indicateur d'état du connecteur est visible sans ouvrir l'écran. Aucun secret ne se saisit dans Maket.
+
+_Recommandation proposée : La configuration est une définition de l'espace de travail, écrite par l'agent par l'outil MCP de création ou de modification de définition, comme le schéma de données. Maket affiche dans l'espace un panneau de source en lecture : URL, nom de la variable, état joignable ou non, lecture seule ou non, date du dernier rafraîchissement, et un bouton « tester la connexion ». Aucun formulaire de saisie des pointeurs, et le secret ne se saisit jamais dans Maket._
+
+Concerne : ACT-01, ACT-02.
+
 <!-- ptr: /framing/glossary -->
 ## Glossaire
 

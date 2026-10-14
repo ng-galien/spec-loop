@@ -112,6 +112,17 @@
           "CON-03"
         ],
         "answer": "Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu."
+      },
+      {
+        "id": "Q-06",
+        "question": "Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?",
+        "recommendation": "La configuration est une définition de l'espace de travail, écrite par l'agent par l'outil MCP de création ou de modification de définition, comme le schéma de données. Maket affiche dans l'espace un panneau de source en lecture : URL, nom de la variable, état joignable ou non, lecture seule ou non, date du dernier rafraîchissement, et un bouton « tester la connexion ». Aucun formulaire de saisie des pointeurs, et le secret ne se saisit jamais dans Maket.",
+        "status": "answered",
+        "about": [
+          "ACT-01",
+          "ACT-02"
+        ],
+        "answer": "La configuration reste écrite par l'agent dans la définition de l'espace. Maket a un écran « Connecteurs » qui liste toutes les sources en service avec leur type, l'espace qui les utilise, l'URL de base, le nom de la variable d'environnement, l'état joignable ou non, lecture seule ou non, la date du dernier rafraîchissement, la dernière erreur, et un bouton « tester la connexion ». Dans l'espace, un indicateur d'état du connecteur est visible sans ouvrir l'écran. Aucun secret ne se saisit dans Maket."
       }
     ],
     "glossary": [
@@ -160,6 +171,28 @@
         "Q-01",
         "Q-05"
       ]
+    },
+    {
+      "id": "ART-03",
+      "kind": "screen",
+      "format": "svg",
+      "title": "Écran Connecteurs",
+      "path": "assets/connectors-screen.svg",
+      "illustrates": [
+        "REQ-017",
+        "REQ-018",
+        "REQ-020"
+      ]
+    },
+    {
+      "id": "ART-04",
+      "kind": "screen",
+      "format": "svg",
+      "title": "Index de l’espace avec l’indicateur du connecteur",
+      "path": "assets/workspace-index.svg",
+      "illustrates": [
+        "REQ-019"
+      ]
     }
   ],
   "lifecycle": {
@@ -193,7 +226,8 @@
         "ACT-02",
         "CON-01"
       ],
-      "title": "Interface ItemSource sur REST"
+      "title": "Interface ItemSource sur REST",
+      "facet": "integration"
     },
     {
       "id": "REQ-002",
@@ -205,7 +239,8 @@
         "Q-02",
         "ACT-01"
       ],
-      "title": "Configuration de l’espace"
+      "title": "Configuration de l’espace",
+      "facet": "data"
     },
     {
       "id": "REQ-003",
@@ -216,7 +251,8 @@
       "source": [
         "CON-02"
       ],
-      "title": "Secret par variable d’environnement"
+      "title": "Secret par variable d’environnement",
+      "facet": "security"
     },
     {
       "id": "REQ-004",
@@ -227,7 +263,8 @@
       "source": [
         "ACT-02"
       ],
-      "title": "Liste par curseur"
+      "title": "Liste par curseur",
+      "facet": "integration"
     },
     {
       "id": "REQ-005",
@@ -238,7 +275,8 @@
       "source": [
         "Q-04"
       ],
-      "title": "Conversion de la pagination"
+      "title": "Conversion de la pagination",
+      "facet": "integration"
     },
     {
       "id": "REQ-006",
@@ -249,7 +287,8 @@
       "source": [
         "ACT-02"
       ],
-      "title": "Lecture d’un élément"
+      "title": "Lecture d’un élément",
+      "facet": "integration"
     },
     {
       "id": "REQ-007",
@@ -261,7 +300,8 @@
         "CON-03",
         "Q-05"
       ],
-      "title": "Écriture avec If-Match"
+      "title": "Écriture avec If-Match",
+      "facet": "integration"
     },
     {
       "id": "REQ-008",
@@ -272,7 +312,8 @@
       "source": [
         "CON-03"
       ],
-      "title": "Révision périmée (412)"
+      "title": "Révision périmée (412)",
+      "facet": "behaviour"
     },
     {
       "id": "REQ-009",
@@ -284,7 +325,8 @@
         "Q-05",
         "CON-03"
       ],
-      "title": "Lecture seule sans révision"
+      "title": "Lecture seule sans révision",
+      "facet": "behaviour"
     },
     {
       "id": "REQ-010",
@@ -295,7 +337,8 @@
       "source": [
         "Q-01"
       ],
-      "title": "Création par POST"
+      "title": "Création par POST",
+      "facet": "integration"
     },
     {
       "id": "REQ-011",
@@ -307,7 +350,8 @@
         "Q-01",
         "CON-03"
       ],
-      "title": "Suppression avec If-Match"
+      "title": "Suppression avec If-Match",
+      "facet": "integration"
     },
     {
       "id": "REQ-012",
@@ -318,7 +362,8 @@
       "source": [
         "Q-03"
       ],
-      "title": "Interrogation périodique"
+      "title": "Interrogation périodique",
+      "facet": "behaviour"
     },
     {
       "id": "REQ-013",
@@ -329,7 +374,8 @@
       "source": [
         "Q-03"
       ],
-      "title": "Webhook optionnel"
+      "title": "Webhook optionnel",
+      "facet": "integration"
     },
     {
       "id": "REQ-014",
@@ -340,7 +386,8 @@
       "source": [
         "CON-04"
       ],
-      "title": "API injoignable"
+      "title": "API injoignable",
+      "facet": "behaviour"
     },
     {
       "id": "REQ-015",
@@ -351,7 +398,73 @@
       "source": [
         "CON-04"
       ],
-      "title": "Délai dépassé"
+      "title": "Délai dépassé",
+      "facet": "behaviour"
+    },
+    {
+      "id": "REQ-016",
+      "title": "Configuration par la définition",
+      "pattern": "ubiquitous",
+      "statement": "The connector configuration (base URL, environment variable name, JSON Pointer mapping, polling interval, timeout) SHALL be part of the workspace definition written through the structured workspace definition tool, and SHALL be validated by the same check as the rest of the definition.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-06 : la configuration est une définition de l'espace, donc du ressort de l'agent, comme le schéma de données.",
+      "source": [
+        "Q-06",
+        "ACT-02"
+      ],
+      "facet": "data"
+    },
+    {
+      "id": "REQ-017",
+      "title": "Écran Connecteurs",
+      "pattern": "ubiquitous",
+      "statement": "The Maket application SHALL show a Connectors screen listing every data source in use with its kind, the workspace using it, the base URL, the environment variable name, whether it is reachable, whether it is read-only, the last refresh date and the last error.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-06 : le propriétaire doit voir ce qui est branché et si ça marche, sans lire de JSON.",
+      "source": [
+        "Q-06",
+        "ACT-01"
+      ],
+      "facet": "interface"
+    },
+    {
+      "id": "REQ-018",
+      "title": "Test de connexion",
+      "pattern": "event",
+      "statement": "When the owner asks to test a connector from the Connectors screen, the connector SHALL perform one list request with the configured secret and SHALL report reachable or the error received, without changing any item.",
+      "priority": "MUST",
+      "rationale": "Un retour immédiat sur la configuration, sans effet sur les données.",
+      "source": [
+        "Q-06",
+        "ACT-01"
+      ],
+      "facet": "behaviour"
+    },
+    {
+      "id": "REQ-019",
+      "title": "Indicateur d'état dans l'espace",
+      "pattern": "ubiquitous",
+      "statement": "The workspace index SHALL show a connector status indicator (reachable, unreachable since a date, read-only) visible without opening the Connectors screen.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-06 : l'état de la source se voit là où le propriétaire travaille.",
+      "source": [
+        "Q-06",
+        "ACT-01"
+      ],
+      "facet": "interface"
+    },
+    {
+      "id": "REQ-020",
+      "title": "Aucune saisie de secret",
+      "pattern": "unwanted",
+      "statement": "If any screen or tool of Maket receives a secret value for a connector, then Maket SHALL refuse it and SHALL point at the environment variable name instead.",
+      "priority": "MUST",
+      "rationale": "Le secret vit dans l'environnement de la machine ; Maket n'en connaît que le nom (CON-02).",
+      "source": [
+        "CON-02",
+        "Q-06"
+      ],
+      "facet": "security"
     }
   ]
 }

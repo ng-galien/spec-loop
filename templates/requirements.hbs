@@ -8,10 +8,10 @@ Chaque exigence est une phrase EARS qui décrit une réponse observable du syst�
 
 {{#if requirements.length}}
 <!-- ptr: /requirements -->
-| Exigence | Titre | Priorité | Forme EARS | Origine |
-| --- | --- | --- | --- | --- |
+| Exigence | Titre | Facette | Priorité | Forme EARS | Origine |
+| --- | --- | --- | --- | --- | --- |
 {{#each requirements}}
-| [{{id}}](#{{anchor}}) | {{#if title}}{{title}}{{else}}—{{/if}} | {{priority}} | {{patternLabel}} | {{#if sourceList}}{{sourceList}}{{else}}—{{/if}} |
+| [{{id}}](#{{anchor}}) | {{#if title}}{{title}}{{else}}—{{/if}} | {{facetLabel}} | {{priority}} | {{patternLabel}} | {{#if sourceList}}{{sourceList}}{{else}}—{{/if}} |
 {{/each}}
 
 {{/if}}
@@ -21,7 +21,7 @@ Chaque exigence est une phrase EARS qui décrit une réponse observable du syst�
 
 {{statement}}
 
-Forme EARS : **{{patternLabel}}**. Priorité : **{{priority}}**.{{#if invariant}} Invariant : vrai dans tout état.{{/if}}
+Facette : **{{facetLabel}}**. Forme EARS : **{{patternLabel}}**. Priorité : **{{priority}}**.{{#if invariant}} Invariant : vrai dans tout état.{{/if}}
 
 Justification : {{rationale}}
 {{#if sourceList}}

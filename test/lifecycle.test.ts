@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { advancePhase, create, features, patch, render, status, verify } from "../src/lib/index.js";
@@ -111,5 +111,24 @@ describe("lifecycle", () => {
     expect(s.completeness.missing).toContainEqual(expect.objectContaining({ pointer: "/framing/questions/5/status" }));
     expect(await readFile(path, "utf8")).toContain("Lire un élément par son identité ou par son URL.");
     expect(await readFile(path, "utf8")).not.toContain("ni SSE");
+  });
+
+  it("refuses to leave requirements while an interface requirement has no screen wireframe", async () => {
+    const root = await workspace("requirements");
+    await render(FEATURE, { root });
+    expect((await patch(FEATURE, [{ op: "replace", path: "/requirements/0/facet", value: "interface" }], { root })).ok).toBe(true);
+    const s = await status(FEATURE, { root });
+    expect(s.completeness.missing).toEqual([{ pointer: "/requirements/0", message: "REQ-001 attend sa maquette d'écran", kind: "incomplete" }]);
+    const refused = await advancePhase(FEATURE, { root });
+    expect(refused.ok).toBe(false);
+    expect(refused.reasons[0]).toContain('phase "requirements" is incomplete: 1 item(s) missing');
+    await mkdir(inFolder(root, "assets"), { recursive: true });
+    await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"/>\n');
+    const art = { id: "ART-02", kind: "screen", format: "svg", title: "Écran", path: "assets/screen.svg", illustrates: ["REQ-001"] };
+    expect((await patch(FEATURE, [{ op: "add", path: "/artifacts/-", value: art }], { root })).ok).toBe(true);
+    const exigences = await readFile(inFolder(root, "rendered", "exigences.md"), "utf8");
+    expect(exigences).toContain("<!-- id: ART-02 -->\n**Écran** (`ART-02`, écran)\n\n![Écran](../assets/screen.svg)");
+    expect(exigences.indexOf("<!-- id: ART-02 -->")).toBeLessThan(exigences.indexOf("<!-- id: REQ-002 -->"));
+    expect((await advancePhase(FEATURE, { root, now: NOW })).ok).toBe(true);
   });
 });

@@ -35,6 +35,7 @@ export function inRequirements(feature: Feature): Feature {
     {
       id: "REQ-001",
       pattern: "event",
+      facet: "integration",
       statement: "When the agent lists a workspace, the connector SHALL follow the API cursor until the requested page is filled.",
       priority: "MUST",
       rationale: "Le listage par curseur est la base d'ItemSource.",
@@ -43,6 +44,7 @@ export function inRequirements(feature: Feature): Feature {
     {
       id: "REQ-002",
       pattern: "unwanted",
+      facet: "behaviour",
       statement: "If the API answers 412 to a PUT, then the connector SHALL report a stale revision to the agent.",
       priority: "MUST",
       rationale: "Aucun écrasement à l'aveugle.",

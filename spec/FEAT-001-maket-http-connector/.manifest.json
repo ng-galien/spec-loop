@@ -1,21 +1,30 @@
 {
   "feature": {
-    "hash": "aa4e6d1d13df8a72418ebe297725265c0e5af2f3d7af5b4c823d22d6604bb7ce",
-    "renderedAt": "2026-10-14T11:58:08.466Z"
+    "hash": "dad55818b33f71aae8d369d0988141db7324add592c057f76f01575851ba4678",
+    "renderedAt": "2026-10-14T12:09:12.830Z"
   },
   "files": {
     "index.md": {
-      "hash": "e4bfb3824462b20bc2e2da063816c9f8b4f4c3a04ff9d8a6a6a5032ddc215b92",
-      "renderedAt": "2026-10-14T11:58:08.466Z"
+      "hash": "451359c74890e172dad09640cd1e51e11c3744c767bc0a4f9b2f626df3a1c6b0",
+      "renderedAt": "2026-10-14T12:09:12.830Z"
     },
     "cadrage.md": {
-      "hash": "e7f633056c9b39d07f6969c275fc139b4e7844c1f49ea3ec3b5ec601d79b6049",
-      "renderedAt": "2026-10-14T11:58:08.466Z"
+      "hash": "35c217be0c27d26313236176de7119a8f63f1156441aea7fdb969f7980e4116f",
+      "renderedAt": "2026-10-14T12:03:02.207Z"
     },
     "exigences.md": {
-      "hash": "217e156ca466c8314e75f295f0446f0b2faf0ab3e9ba70181624b8f86dd3f002",
-      "renderedAt": "2026-10-14T11:58:08.466Z"
+      "hash": "673abe97a5f0735841d2c368b41ece73404b1ebf50071e0eb97653e336e28833",
+      "renderedAt": "2026-10-14T12:09:12.830Z"
     }
   },
-  "assets": {}
+  "assets": {
+    "assets/connectors-screen.svg": {
+      "hash": "956ed25988a62538e6c290080609d0997544b4ba117707447073a6fa6b849c4d",
+      "renderedAt": "2026-10-14T12:09:12.830Z"
+    },
+    "assets/workspace-index.svg": {
+      "hash": "ddf8d4ee840ddc83cca6a3e7c994227e52b5a4f0ec093a3fe57a97def01aa7c9",
+      "renderedAt": "2026-10-14T12:09:12.830Z"
+    }
+  }
 }

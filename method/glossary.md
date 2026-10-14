@@ -1,6 +1,6 @@
 # Glossary
 
-These 23 terms are the only words to use for the objects of a feature, in the JSON, in what you write to the owner and in your reasoning.
+These 24 terms are the only words to use for the objects of a feature, in the JSON, in what you write to the owner and in your reasoning.
 
 | Term (JSON) | French label | Id | Meaning |
 | --- | --- | --- | --- |
@@ -16,6 +16,7 @@ These 23 terms are the only words to use for the objects of a feature, in the JS
 | requirement | Exigence | REQ-001 | One EARS sentence, one observable system response |
 | EARS pattern | Forme EARS | enum | ubiquitous, event, state, unwanted, optional, complex |
 | priority | Priorité | enum | MUST, SHOULD, MAY (RFC 2119/8174) |
+| facet | Facette | enum | Side of the system a requirement fixes: interface, behaviour, data, integration, security |
 | rationale | Justification | — | Why the requirement exists |
 | source | Origine | refs | Where the requirement comes from |
 | invariant | Invariant | flag | Requirement holding in every state |

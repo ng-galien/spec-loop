@@ -10,7 +10,7 @@ Topics, read them with `learn`:
 - `questioning`: how to fill a phase by interviewing the owner.
 - `feedback`: how the owner gives feedback and how you reconcile it.
 - `artifacts`: diagrams and screens, and which format to use.
-- `glossary`: the 23 terms to use, and the words to avoid.
+- `glossary`: the 24 terms to use, and the words to avoid.
 - `use-cases`: three worked situations.
 
 Rules that hold everywhere:

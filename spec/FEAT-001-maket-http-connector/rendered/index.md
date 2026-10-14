@@ -30,6 +30,8 @@ flowchart LR
 
 - ART-01 : Contexte du connecteur HTTP (contexte, mermaid), dans [cadrage.md](cadrage.md)
 - ART-02 : Écriture d'un élément : révision, conflit et lecture seule (séquence, mermaid), dans [cadrage.md](cadrage.md)
+- ART-03 : Écran Connecteurs (écran, svg), dans [exigences.md](exigences.md)
+- ART-04 : Index de l’espace avec l’indicateur du connecteur (écran, svg), dans [exigences.md](exigences.md)
 
 ## Reste à faire pour la phase « Exigences »
 

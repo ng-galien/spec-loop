@@ -42,6 +42,9 @@ function fieldLines(node: JsonSchema, prefix: string, depth = 0): string[] {
     const c = deref(child);
     const examples = Array.isArray(c.examples) ? ` Example: \`${JSON.stringify(c.examples[0])}\`.` : "";
     out.push(`${"  ".repeat(depth)}- \`${prefix}${key}\` (${typeOf(child)}${required.has(key) ? ", required" : ""}): ${String(c.description ?? "")}${examples}`);
+    for (const [value, text] of Object.entries((c["x-enumDescriptions"] ?? {}) as Record<string, string>)) {
+      out.push(`${"  ".repeat(depth + 1)}- \`${value}\`: ${text}`);
+    }
     const inner = c.type === "array" ? deref((c.items ?? {}) as JsonSchema) : c;
     if (inner.type === "object" && inner.properties && depth < 2) out.push(...fieldLines(c, "", depth + 1));
   }

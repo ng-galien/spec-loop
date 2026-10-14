@@ -10,6 +10,18 @@ Format rule:
 
 Typical moments: a `context` diagram from framing; `screen` and `flow` artifacts in requirements; `module` diagrams in anchoring.
 
+## Screen wireframes
+
+Wireframes live with the requirements. Every requirement of facet `interface` needs one `screen` artifact in `svg`, under `assets/`, listing that requirement in `illustrates`; the schema rule `interfaceHasScreen` reports « REQ-nnn attend sa maquette d'écran » while it is missing, and the feature cannot leave the requirements phase without it.
+
+How to draw them:
+
+- Black and grey line art only, no colour: strokes `#334155`, fills `#f8fafc` and `#e2e8f0`, text in the system font. Readable in both editor themes because the drawing carries its own light background.
+- `viewBox` about 960 x 600. Boxes for regions, labels in French, the real field names and sample values, one visible state per element that has several (reachable, unreachable, read-only).
+- No pixel-perfect styling: the wireframe fixes what is shown and where, not how it looks.
+
+Criteria refer to the wireframe by its id when they describe what the screen shows (« Soit l'écran ART-03 … »), so a reader goes from the example to the drawing.
+
 `illustrates` lists the requirement or criterion ids the artifact shows. The projection places the artifact right after the first of them; an artifact with no id renders in the framing document after the intent. The index lists every artifact with the document that holds it.
 
 Owner edits: an edited mermaid or ascii source is a text hunk mapped to its ART id, reconciled like any other edit. An edited svg is reported as "artifact changed, review visually": look at it, then account for it in `verify` (applied if you accept the new drawing as it is, reported otherwise).
