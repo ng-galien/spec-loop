@@ -106,6 +106,7 @@ These came out of the field run; they are recorded here so they are not lost. Th
 - **Requirements bound to the scope.** Each requirement references the `scope.in` item it serves; a requirement without a scope item is `incomplete`. This gives the agent's own patches a scope rule, as owner edits already have. A model change, to be weighed.
 - **Owner decision on forward moves.** A forward `phase` move could require an owner decision text recorded in the lifecycle (as backward moves require a reason) and rendered in `decisions.md`. The instruction hooks already say that the owner confirms; recording the decision would make a speed-run visible and dated.
 - **Evidence on tests.** Beyond hook runs, `tests[]` entries could carry `evidence: { command, date, exitCode }`.
+- **Hook runs and a hand edit of feature.json in the same window.** If the owner edits feature.json while hooks run, the runs are recorded into the edited file; `reconcile` with `featureChange: accept` then refuses it (lifecycle differs from the last known good copy) and `restore` drops the runs. Narrow timing window, found by review, not reproduced. Possible fix: record the runs in the last known good copy too.
 - **Stale feature signal.** `features` could flag a feature with no change for a long time while another one advances.
 
 ## For the extension maintainer
