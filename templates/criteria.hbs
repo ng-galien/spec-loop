@@ -8,7 +8,7 @@ Chaque exigence devient une règle ; chaque critère est un exemple de cette rè
 
 {{#each groups}}
 <!-- id: {{requirement.id}} -->
-## Règle {{requirement.id}}
+## Règle {{requirement.id}}{{#if requirement.title}} · {{requirement.title}}{{/if}}
 
 _{{requirement.statement}}_
 

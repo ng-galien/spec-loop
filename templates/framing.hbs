@@ -33,7 +33,8 @@ _Aucun acteur pour l'instant._
 ### Dans le périmètre
 
 {{#each framing.scope.in}}
-- <!-- ptr: /framing/scope/in/{{@index}} --> {{this}}
+<!-- ptr: /framing/scope/in/{{@index}} -->
+- {{this}}
 {{else}}
 _À compléter._
 {{/each}}
@@ -42,7 +43,8 @@ _À compléter._
 ### Hors périmètre
 
 {{#each framing.scope.out}}
-- <!-- ptr: /framing/scope/out/{{@index}} --> {{this}}
+<!-- ptr: /framing/scope/out/{{@index}} -->
+- {{this}}
 {{else}}
 _À compléter._
 {{/each}}
@@ -51,7 +53,8 @@ _À compléter._
 ## Contraintes
 
 {{#each framing.constraints}}
-- <!-- id: {{id}} --> **{{id}}** : {{statement}}
+<!-- id: {{id}} -->
+- **{{id}}** · {{statement}}
 {{else}}
 _Aucune contrainte pour l'instant._
 {{/each}}
@@ -60,7 +63,8 @@ _Aucune contrainte pour l'instant._
 ## Hypothèses
 
 {{#each framing.assumptions}}
-- <!-- id: {{id}} --> **{{id}}** : {{statement}}
+<!-- id: {{id}} -->
+- **{{id}}** · {{statement}}
 {{else}}
 _Aucune hypothèse pour l'instant._
 {{/each}}
@@ -93,12 +97,12 @@ _Aucune question à trancher._
 
 Réponse : {{#if answer}}{{answer}}{{else}}_non consignée._{{/if}}
 
-{{#if aboutList}}
-Concerne : {{aboutList}}.
+{{#if recommendation}}
+_Recommandation proposée : {{recommendation}}_
 
 {{/if}}
-{{#if recommendation}}
-Recommandation proposée : {{recommendation}}
+{{#if aboutList}}
+Concerne : {{aboutList}}.
 
 {{/if}}
 {{else}}
@@ -109,7 +113,8 @@ _Aucune question tranchée pour l'instant._
 ## Glossaire
 
 {{#each framing.glossary}}
-- <!-- ptr: /framing/glossary/{{@index}} --> **{{term}}** : {{definition}}{{#if avoidList}} À éviter : {{avoidList}}.{{/if}}
+<!-- ptr: /framing/glossary/{{@index}} -->
+- **{{term}}** : {{definition}}{{#if avoidList}} À éviter : {{avoidList}}.{{/if}}
 {{else}}
 _Aucun terme pour l'instant._
 {{/each}}

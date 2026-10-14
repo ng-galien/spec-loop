@@ -73,35 +73,52 @@ Service REST tiers qui détient les éléments. Elle fait foi sur leur contenu e
 <!-- ptr: /framing/scope/in -->
 ### Dans le périmètre
 
-- <!-- ptr: /framing/scope/in/0 --> Lister les éléments par curseur, avec les paramètres de pagination et de recherche propres à l'API.
-- <!-- ptr: /framing/scope/in/1 --> Lire un élément par son identité.
-- <!-- ptr: /framing/scope/in/2 --> Écrire un élément par PUT avec l'en-tête If-Match portant la révision connue ; une réponse 412 est rendue à l'agent comme une révision périmée.
-- <!-- ptr: /framing/scope/in/3 --> Identité et révision des éléments déclarées dans le schéma de l'espace : champ d'identité, source de la révision (ETag ou champ de la réponse).
-- <!-- ptr: /framing/scope/in/4 --> Authentification par un secret lu dans une variable d'environnement dont seul le nom figure dans la configuration.
-- <!-- ptr: /framing/scope/in/5 --> Espace en lecture seule quand l'API n'offre pas d'écriture : le connecteur refuse alors toute écriture.
-- <!-- ptr: /framing/scope/in/6 --> En option, détection des changements faits hors de Maket, par webhook ou par interrogation périodique.
+<!-- ptr: /framing/scope/in/0 -->
+- Lister les éléments par curseur, avec les paramètres de pagination et de recherche propres à l'API.
+<!-- ptr: /framing/scope/in/1 -->
+- Lire un élément par son identité.
+<!-- ptr: /framing/scope/in/2 -->
+- Écrire un élément par PUT avec l'en-tête If-Match portant la révision connue ; une réponse 412 est rendue à l'agent comme une révision périmée.
+<!-- ptr: /framing/scope/in/3 -->
+- Identité et révision des éléments déclarées dans le schéma de l'espace : champ d'identité, source de la révision (ETag ou champ de la réponse).
+<!-- ptr: /framing/scope/in/4 -->
+- Authentification par un secret lu dans une variable d'environnement dont seul le nom figure dans la configuration.
+<!-- ptr: /framing/scope/in/5 -->
+- Espace en lecture seule quand l'API n'offre pas d'écriture : le connecteur refuse alors toute écriture.
+<!-- ptr: /framing/scope/in/6 -->
+- En option, détection des changements faits hors de Maket, par webhook ou par interrogation périodique.
 
 <!-- ptr: /framing/scope/out -->
 ### Hors périmètre
 
-- <!-- ptr: /framing/scope/out/0 --> Authentification OAuth interactive et rafraîchissement de jetons.
-- <!-- ptr: /framing/scope/out/1 --> API qui ne sont pas REST : GraphQL, SOAP, gRPC.
-- <!-- ptr: /framing/scope/out/2 --> Transformation métier des données au-delà du mappage déclaratif des champs.
-- <!-- ptr: /framing/scope/out/3 --> Fusion automatique des conflits : un conflit est signalé à l'agent, jamais résolu à sa place.
+<!-- ptr: /framing/scope/out/0 -->
+- Authentification OAuth interactive et rafraîchissement de jetons.
+<!-- ptr: /framing/scope/out/1 -->
+- API qui ne sont pas REST : GraphQL, SOAP, gRPC.
+<!-- ptr: /framing/scope/out/2 -->
+- Transformation métier des données au-delà du mappage déclaratif des champs.
+<!-- ptr: /framing/scope/out/3 -->
+- Fusion automatique des conflits : un conflit est signalé à l'agent, jamais résolu à sa place.
 
 <!-- ptr: /framing/constraints -->
 ## Contraintes
 
-- <!-- id: CON-01 --> **CON-01** : Le connecteur implémente l'interface ItemSource existante sans la modifier.
-- <!-- id: CON-02 --> **CON-02** : Aucun secret n'est écrit dans le schéma, la configuration ou les documents : seulement le nom de la variable d'environnement.
-- <!-- id: CON-03 --> **CON-03** : Une écriture sans révision connue est refusée : aucun écrasement à l'aveugle.
-- <!-- id: CON-04 --> **CON-04** : Une erreur HTTP est rendue à l'agent avec son statut et le message de l'API ; une écriture n'est jamais réessayée en silence.
+<!-- id: CON-01 -->
+- **CON-01** · Le connecteur implémente l'interface ItemSource existante sans la modifier.
+<!-- id: CON-02 -->
+- **CON-02** · Aucun secret n'est écrit dans le schéma, la configuration ou les documents : seulement le nom de la variable d'environnement.
+<!-- id: CON-03 -->
+- **CON-03** · Une écriture sans révision connue est refusée : aucun écrasement à l'aveugle.
+<!-- id: CON-04 -->
+- **CON-04** · Une erreur HTTP est rendue à l'agent avec son statut et le message de l'API ; une écriture n'est jamais réessayée en silence.
 
 <!-- ptr: /framing/assumptions -->
 ## Hypothèses
 
-- <!-- id: ASM-01 --> **ASM-01** : Les API visées renvoient du JSON et exposent une identité stable par élément.
-- <!-- id: ASM-02 --> **ASM-02** : L'interface ItemSource de Maket couvre déjà curseur, recherche et révision, de sorte que le connecteur n'a rien à lui ajouter.
+<!-- id: ASM-01 -->
+- **ASM-01** · Les API visées renvoient du JSON et exposent une identité stable par élément.
+<!-- id: ASM-02 -->
+- **ASM-02** · L'interface ItemSource de Maket couvre déjà curseur, recherche et révision, de sorte que le connecteur n'a rien à lui ajouter.
 
 <!-- ptr: /framing/questions -->
 ## À trancher
@@ -116,45 +133,48 @@ _Aucune question à trancher._
 
 Réponse : Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation.
 
-Concerne : CON-01.
+_Recommandation proposée : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place._
 
-Recommandation proposée : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.
+Concerne : CON-01.
 
 <!-- id: Q-02 -->
 ### Q-02 : Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
 
 Réponse : Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation.
 
-Recommandation proposée : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.
+_Recommandation proposée : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation._
 
 <!-- id: Q-03 -->
 ### Q-03 : Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
 
 Réponse : L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite.
 
-Recommandation proposée : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.
+_Recommandation proposée : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite._
 
 <!-- id: Q-04 -->
 ### Q-04 : Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
 
 Réponse : Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur.
 
-Concerne : ASM-02.
+_Recommandation proposée : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur._
 
-Recommandation proposée : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.
+Concerne : ASM-02.
 
 <!-- id: Q-05 -->
 ### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
 
 Réponse : Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu.
 
-Concerne : CON-03.
+_Recommandation proposée : Non : l'espace passe en lecture seule._
 
-Recommandation proposée : Non : l'espace passe en lecture seule.
+Concerne : CON-03.
 
 <!-- ptr: /framing/glossary -->
 ## Glossaire
 
-- <!-- ptr: /framing/glossary/0 --> **élément** : Une entrée d'un espace de travail structuré, lue ou écrite par ItemSource. À éviter : enregistrement, ligne.
-- <!-- ptr: /framing/glossary/1 --> **révision** : Valeur fournie par l'API qui change à chaque modification d'un élément ; elle sert à détecter une écriture concurrente. À éviter : version.
-- <!-- ptr: /framing/glossary/2 --> **connecteur HTTP** : L'implémentation d'ItemSource qui parle à une API REST décrite par configuration. À éviter : plugin, adaptateur.
+<!-- ptr: /framing/glossary/0 -->
+- **élément** : Une entrée d'un espace de travail structuré, lue ou écrite par ItemSource. À éviter : enregistrement, ligne.
+<!-- ptr: /framing/glossary/1 -->
+- **révision** : Valeur fournie par l'API qui change à chaque modification d'un élément ; elle sert à détecter une écriture concurrente. À éviter : version.
+<!-- ptr: /framing/glossary/2 -->
+- **connecteur HTTP** : L'implémentation d'ItemSource qui parle à une API REST décrite par configuration. À éviter : plugin, adaptateur.

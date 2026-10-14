@@ -8,16 +8,17 @@ Fonctionnalité `FEAT-001`. Phase actuelle : **Exigences**.
 <!-- ptr: /phase -->
 ```mermaid
 flowchart LR
-  framing["Cadrage"]:::past
-  requirements["Exigences"]:::now
-  acceptance["Acceptation"]:::next
-  anchoring["Ancrage"]:::next
-  verification["Vérification"]:::next
-  done["Terminé"]:::next
-  framing --> requirements --> acceptance --> anchoring --> verification --> done
-  classDef past fill:#e2e8f0,stroke:#475569,color:#0f172a
-  classDef now fill:#2563eb,stroke:#1e40af,color:#ffffff
-  classDef next fill:#ffffff,stroke:#94a3b8,color:#64748b,stroke-dasharray:4 3
+  framing["Cadrage"]
+  requirements(["Exigences ◀ actuelle"])
+  acceptance["Acceptation"]
+  anchoring["Ancrage"]
+  verification["Vérification"]
+  done["Terminé"]
+  framing --> requirements
+  requirements -.-> acceptance
+  acceptance -.-> anchoring
+  anchoring -.-> verification
+  verification -.-> done
 ```
 
 ## Documents

@@ -8,7 +8,7 @@ The agent works through one interface: a stdio MCP server. It is the only writer
 
 You need a project folder, Node 22 or later, VS Code, and one agent.
 
-1. VS Code: the built-in Markdown preview, plus the extension **Markdown Preview Mermaid Support** (`bierner.markdown-mermaid`) for the diagrams. SVG screens show as images with no extension.
+1. VS Code 1.121 or later: the built-in Markdown preview renders the projection and its Mermaid diagrams (the `bierner.markdown-mermaid` extension is no longer needed). SVG screens show as images. To check a rendering, open the file and press Ctrl+Shift+V (Cmd+Shift+V on macOS); it must read well in both the light and the dark theme.
 2. Register the MCP server, one line per agent, from the project folder:
 
    | Agent | Command |
@@ -106,6 +106,9 @@ The skills always pass `root`.
 - Every alteration (rendered file, svg, `feature.json`, missing or extra file) counts as pending until a `verify` accounts for it, so `phase` cannot advance over an unread change.
 - Artifacts render once, right after the first requirement or criterion they illustrate. An artifact with no id renders in the framing document after the intent.
 - `artifacts[].illustrates` takes any feature id (`anyRef`: requirement, criterion, anchor, decision, artifact, actor, constraint, assumption, question, with an optional `FEAT-nnn/` prefix), not only requirements and criteria. The widening was made during the owner's first run, so that a diagram can illustrate a constraint or an actor. Placement is unchanged: next to the first requirement or criterion listed, otherwise in the framing document.
+- Templates target the VS Code preview (CommonMark plus tables, sanitised HTML, Mermaid following the editor theme): no inline HTML, id and ptr comments alone on their line above the block or list item they mark, no meaning carried by colour; the index diagram marks the current phase by its label « ◀ actuelle », a stadium shape and dashed links to the next phases. Rules in `method/artifacts.md`.
+- Requirements have an optional French `title`, shown in the heading (« REQ-004 · Liste par curseur ») and in the summary table that opens `exigences.md`; the table links to the heading slug VS Code computes (lowercase, spaces to dashes, punctuation such as « · » removed, URI-encoded).
+- Under « Tranché », the recommendation is a single italic line « Recommandation proposée » right after the answer.
 - In the framing document, questions are split: « À trancher » (open, with the recommendation) first, then « Tranché » (answered, with the answer). The index's « Reste à faire » list is unchanged.
 - A document of a phase earlier than the current one opens, after its source comment, with one line naming its closed phase and linking to the current phase document; the current phase document carries no such line.
 - Tests never read the live `spec/` folder: they copy `test/fixtures/framing.json` (the guinea pig before the owner's answers) or `test/fixtures/requirements.json` into a temporary project.

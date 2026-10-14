@@ -35,6 +35,18 @@ const LABELS: Record<string, Record<string, string>> = {
   artifactKind: { context: "contexte", flow: "flux", sequence: "séquence", state: "états", screen: "écran", module: "modules" },
   by: { agent: "l'agent", owner: "le propriétaire" },
 };
+export function headingSlug(heading: string): string {
+  return encodeURI(
+    heading
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[\][!/'"#$%&()*+,./:;<=>?@\\^{|}~`。，、；：？！…—·ˉ¨‘’“”々～‖∶＂＇｀｜〃〔〕〈〉《》「」『』．〖〗【】（）［］｛｝]/g, "")
+      .replace(/^-+/, "")
+      .replace(/-+$/, ""),
+  );
+}
+
 const label = (table: string, value: unknown) => LABELS[table]![String(value)] ?? "à préciser";
 export const phaseTitle = (name: string | null | undefined) => phaseInfo(name)?.title ?? "inconnue";
 
@@ -121,7 +133,7 @@ function view(feature: Feature, validation: ValidationResult): Rec {
   const artifacts = placeArtifacts(feature);
   const hostFile = (host: string) => (host === "framing" ? "cadrage.md" : host.startsWith("REQ-") ? "exigences.md" : "criteres.md");
   const requirements = list(feature.requirements).map(
-    (req): Rec => ({ ...req, patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
+    (req): Rec => ({ ...req, anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
   );
   const criteria = list(feature.criteria).map((c): Rec => ({ ...c, steps: steps(c), table: table(list(c.examples)), artifacts: artifacts.get(String(c.id)) ?? [] }));
   const lifecycle = (feature.lifecycle ?? {}) as Rec;
@@ -129,8 +141,10 @@ function view(feature: Feature, validation: ValidationResult): Rec {
   return {
     ...feature,
     phaseLabel: phaseTitle(phase),
-    phases: phases.map((p, i) => ({ key: p.name, label: p.title, state: i < at ? "past" : i === at ? "now" : "next" })),
-    chain: phases.map((p) => p.name).join(" --> "),
+    diagram: [
+      ...phases.map((p, i) => (i === at ? `  ${p.name}(["${p.title} ◀ actuelle"])` : `  ${p.name}["${p.title}"]`)),
+      ...phases.slice(1).map((p, i) => `  ${phases[i]!.name} ${i + 1 <= at ? "-->" : "-.->"} ${p.name}`),
+    ].join("\n"),
     documents: filesFor(feature, phase)
       .filter((f) => f.section !== null)
       .map((f) => ({ path: f.path, label: fileTitle(f), description: phaseProducing(f.section!)?.summary ?? "décisions et leurs conséquences" })),

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { render, renderToMemory, validate } from "../src/lib/index.js";
+import { headingSlug } from "../src/lib/render.js";
 import { FEATURE, guineaPig, inAcceptance, inFolder, inRequirements, requirementsFixture, workspace } from "./helpers.js";
 
 describe("render", () => {
@@ -74,5 +75,49 @@ describe("render", () => {
     expect(cadrage[4]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
     expect(files.find((f) => f.path === "exigences.md")!.content.split("\n")[2]).toBe("# Exigences : Connecteur HTTP pour les espaces structurés de Maket");
     expect(renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content.split("\n")[2]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
+  });
+
+  it("puts every id and ptr comment alone on its line, so the Markdown after it is parsed", async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http.ts", symbol: "HttpConnector.list", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = [{ file: "test/http.test.ts", name: "AC-001.1 AC-002.1 lists and writes", framework: "vitest", verifies: ["AC-001.1", "AC-002.1"] }];
+    feature.decisions = [{ id: "DEC-01", title: "Interrogation d'abord", status: "accepted", context: "c", decision: "d", consequences: "e", affects: ["REQ-001"] }];
+    const files = renderToMemory(feature);
+    expect(files.map((f) => f.path)).toEqual(["index.md", "cadrage.md", "exigences.md", "criteres.md", "ancrage.md", "verification.md", "decisions.md"]);
+    for (const file of files) {
+      expect(file.content.replace(/`[^`]*`/g, "").replace(/<!-- (id|ptr): [^ ]+ -->/g, "").replace(/^<!-- source: .* -->$/m, ""), file.path).not.toMatch(/<[a-z!/]/i);
+      for (const line of file.content.split("\n").filter((l) => /<!-- (id|ptr):/.test(l.replace(/`[^`]*`/g, "")))) {
+        expect(line, `${file.path}: ${line}`).toMatch(/^<!-- (id: [A-Z]+-[0-9]+(\.[0-9]+)?|ptr: \/[^ ]*) -->$/);
+      }
+    }
+    const cadrage = files.find((f) => f.path === "cadrage.md")!.content;
+    expect(cadrage).toContain("<!-- id: CON-01 -->\n- **CON-01** · Le connecteur implémente l'interface ItemSource existante sans la modifier.");
+    expect(cadrage).toContain("<!-- ptr: /framing/scope/in/1 -->\n- Lire un élément par son identité.");
+  });
+
+  it("opens the requirements document with a summary table linking to titled headings", async () => {
+    const feature = await requirementsFixture();
+    (feature.requirements as { title?: string }[])[0]!.title = "Liste par curseur";
+    const exigences = renderToMemory(feature).find((f) => f.path === "exigences.md")!.content;
+    expect(exigences).toContain(
+      "<!-- ptr: /requirements -->\n| Exigence | Titre | Priorité | Forme EARS | Origine |\n| --- | --- | --- | --- | --- |\n| [REQ-001](#req-001--liste-par-curseur) | Liste par curseur | MUST | sur événement | ACT-02 |\n| [REQ-002](#req-002) | — | MUST | comportement indésirable | CON-03 |",
+    );
+    expect(exigences).toContain("<!-- id: REQ-001 -->\n## REQ-001 · Liste par curseur\n");
+    expect(headingSlug("REQ-003 · Écrire avec révision")).toBe("req-003--%C3%A9crire-avec-r%C3%A9vision");
+    expect(validate(feature).valid).toBe(true);
+  });
+
+  it("shows the recommendation of an answered question on one line after the answer", async () => {
+    const cadrage = renderToMemory(await requirementsFixture()).find((f) => f.path === "cadrage.md")!.content;
+    expect(cadrage).toContain("### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n\nRéponse : Recommandation retenue.\n\n_Recommandation proposée : Non : l'espace passe en lecture seule._\n\nConcerne : CON-03.");
+  });
+
+  it("marks the current phase in the index diagram by label, shape and dashed links, without colours", async () => {
+    const index = renderToMemory(await requirementsFixture()).find((f) => f.path === "index.md")!.content;
+    expect(index).toContain(
+      '```mermaid\nflowchart LR\n  framing["Cadrage"]\n  requirements(["Exigences ◀ actuelle"])\n  acceptance["Acceptation"]\n  anchoring["Ancrage"]\n  verification["Vérification"]\n  done["Terminé"]\n  framing --> requirements\n  requirements -.-> acceptance\n  acceptance -.-> anchoring\n  anchoring -.-> verification\n  verification -.-> done\n```',
+    );
+    expect(index).not.toContain("classDef");
   });
 });

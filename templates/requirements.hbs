@@ -6,9 +6,18 @@
 
 Chaque exigence est une phrase EARS qui décrit une réponse observable du système. Son identifiant reste stable.
 
+{{#if requirements.length}}
+<!-- ptr: /requirements -->
+| Exigence | Titre | Priorité | Forme EARS | Origine |
+| --- | --- | --- | --- | --- |
+{{#each requirements}}
+| [{{id}}](#{{anchor}}) | {{#if title}}{{title}}{{else}}—{{/if}} | {{priority}} | {{patternLabel}} | {{#if sourceList}}{{sourceList}}{{else}}—{{/if}} |
+{{/each}}
+
+{{/if}}
 {{#each requirements}}
 <!-- id: {{id}} -->
-## {{id}}
+## {{id}}{{#if title}} · {{title}}{{/if}}
 
 {{statement}}
 

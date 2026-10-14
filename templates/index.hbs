@@ -6,13 +6,7 @@ Fonctionnalité `{{id}}`. Phase actuelle : **{{phaseLabel}}**.
 <!-- ptr: /phase -->
 ```mermaid
 flowchart LR
-{{#each phases}}
-  {{key}}["{{label}}"]:::{{state}}
-{{/each}}
-  {{chain}}
-  classDef past fill:#e2e8f0,stroke:#475569,color:#0f172a
-  classDef now fill:#2563eb,stroke:#1e40af,color:#ffffff
-  classDef next fill:#ffffff,stroke:#94a3b8,color:#64748b,stroke-dasharray:4 3
+{{diagram}}
 ```
 
 ## Documents

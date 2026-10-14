@@ -192,7 +192,8 @@
       "source": [
         "ACT-02",
         "CON-01"
-      ]
+      ],
+      "title": "Interface ItemSource sur REST"
     },
     {
       "id": "REQ-002",
@@ -203,7 +204,8 @@
       "source": [
         "Q-02",
         "ACT-01"
-      ]
+      ],
+      "title": "Configuration de l’espace"
     },
     {
       "id": "REQ-003",
@@ -213,7 +215,8 @@
       "rationale": "Aucun secret n'est écrit dans la configuration (CON-02) ; seul le nom de la variable y figure.",
       "source": [
         "CON-02"
-      ]
+      ],
+      "title": "Secret par variable d’environnement"
     },
     {
       "id": "REQ-004",
@@ -223,7 +226,8 @@
       "rationale": "La liste par curseur est le contrat de l'espace de travail ; le connecteur traduit ce contrat vers l'API.",
       "source": [
         "ACT-02"
-      ]
+      ],
+      "title": "Liste par curseur"
     },
     {
       "id": "REQ-005",
@@ -233,7 +237,8 @@
       "rationale": "Réponse Q-04 : l'espace ne voit qu'un seul contrat, celui du curseur.",
       "source": [
         "Q-04"
-      ]
+      ],
+      "title": "Conversion de la pagination"
     },
     {
       "id": "REQ-006",
@@ -243,7 +248,8 @@
       "rationale": "La lecture par identité et la révision sont nécessaires à l'ouverture et à l'écriture.",
       "source": [
         "ACT-02"
-      ]
+      ],
+      "title": "Lecture d’un élément"
     },
     {
       "id": "REQ-007",
@@ -254,7 +260,8 @@
       "source": [
         "CON-03",
         "Q-05"
-      ]
+      ],
+      "title": "Écriture avec If-Match"
     },
     {
       "id": "REQ-008",
@@ -264,7 +271,8 @@
       "rationale": "Un conflit est signalé à l'agent avec la donnée courante, jamais résolu à sa place.",
       "source": [
         "CON-03"
-      ]
+      ],
+      "title": "Révision périmée (412)"
     },
     {
       "id": "REQ-009",
@@ -275,7 +283,8 @@
       "source": [
         "Q-05",
         "CON-03"
-      ]
+      ],
+      "title": "Lecture seule sans révision"
     },
     {
       "id": "REQ-010",
@@ -285,7 +294,8 @@
       "rationale": "Réponse Q-01 : la création fait partie de la première version.",
       "source": [
         "Q-01"
-      ]
+      ],
+      "title": "Création par POST"
     },
     {
       "id": "REQ-011",
@@ -296,7 +306,8 @@
       "source": [
         "Q-01",
         "CON-03"
-      ]
+      ],
+      "title": "Suppression avec If-Match"
     },
     {
       "id": "REQ-012",
@@ -306,7 +317,8 @@
       "rationale": "Réponse Q-03 : l'interrogation périodique vient avant le webhook, parce qu'elle n'exige pas que Maket soit joignable.",
       "source": [
         "Q-03"
-      ]
+      ],
+      "title": "Interrogation périodique"
     },
     {
       "id": "REQ-013",
@@ -316,7 +328,8 @@
       "rationale": "Réponse Q-03 : le webhook vient ensuite, pour les API qui le proposent.",
       "source": [
         "Q-03"
-      ]
+      ],
+      "title": "Webhook optionnel"
     },
     {
       "id": "REQ-014",
@@ -326,7 +339,8 @@
       "rationale": "Aucun réessai silencieux (CON-04) : l'espace garde sa dernière fenêtre datée et l'agent sait pourquoi.",
       "source": [
         "CON-04"
-      ]
+      ],
+      "title": "API injoignable"
     },
     {
       "id": "REQ-015",
@@ -336,7 +350,8 @@
       "rationale": "Une API lente ne doit pas figer l'espace de travail ; le délai est une configuration, pas une constante.",
       "source": [
         "CON-04"
-      ]
+      ],
+      "title": "Délai dépassé"
     }
   ]
 }

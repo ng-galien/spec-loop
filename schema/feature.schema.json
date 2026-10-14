@@ -638,6 +638,13 @@
             "REQ-001"
           ]
         },
+        "title": {
+          "$ref": "#/$defs/text",
+          "description": "Short French name of the requirement, shown in its heading and in the summary table.",
+          "examples": [
+            "Liste par curseur"
+          ]
+        },
         "pattern": {
           "enum": [
             "ubiquitous",
