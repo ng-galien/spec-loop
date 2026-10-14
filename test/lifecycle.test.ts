@@ -2,7 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { advancePhase, create, features, patch, render, status, verify } from "../src/lib/index.js";
-import { FEATURE, inFolder, workspace } from "./helpers.js";
+import { FEATURE, guineaPig, inAcceptance, inFolder, workspace } from "./helpers.js";
+import { serializeFeature } from "../src/lib/model.js";
 
 const NOW = "2026-10-14T12:00:00.000Z";
 
@@ -130,5 +131,67 @@ describe("lifecycle", () => {
     expect(exigences).toContain("<!-- id: ART-02 -->\n**Écran** (`ART-02`, écran)\n\n![Écran](../assets/screen.svg)");
     expect(exigences.indexOf("<!-- id: ART-02 -->")).toBeLessThan(exigences.indexOf("<!-- id: REQ-002 -->"));
     expect((await advancePhase(FEATURE, { root, now: NOW })).ok).toBe(true);
+  });
+
+  async function inVerification(statuses: (string | undefined)[]) {
+    const root = await workspace();
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.lifecycle = {
+      created: NOW,
+      phaseHistory: ["framing", "requirements", "acceptance", "anchoring", "verification"].map((phase) => ({ phase, date: NOW, by: "owner" })),
+    };
+    feature.anchors = [{ id: "ANC-01", kind: "module", path: "src/http.ts", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = statuses.map((status, i) => ({
+      file: "test/http.test.ts",
+      name: `AC-00${i + 1}.1 case ${i + 1}`,
+      framework: "vitest",
+      verifies: [`AC-00${i + 1}.1`],
+      ...(status ? { status } : {}),
+    }));
+    await writeFile(inFolder(root, "feature.json"), serializeFeature(feature));
+    await render(FEATURE, { root });
+    return root;
+  }
+
+  it("cannot reach done while a test is missing, and can once every test passes or is justified", async () => {
+    const root = await inVerification(["passing", "missing"]);
+    const refused = await advancePhase(FEATURE, { root, by: "owner" });
+    expect(refused.ok).toBe(false);
+    expect(refused.reasons).toEqual([
+      'phase "verification" is incomplete: 1 item(s) missing',
+      '/tests/1/status: missing: test "AC-002.1 case 2" is not passing',
+    ]);
+    expect((await status(FEATURE, { root })).phase).toBe("verification");
+    const justified = await patch(FEATURE, [
+      { op: "add", path: "/tests/1/method", value: "inspection" },
+      { op: "add", path: "/tests/1/reason", value: "La révision périmée se vérifie à la lecture du journal de l'API." },
+    ], { root });
+    expect(justified.ok).toBe(true);
+    const closed = await advancePhase(FEATURE, { root, by: "owner", now: NOW });
+    expect(closed).toMatchObject({ ok: true, from: "verification", to: "done" });
+    expect((await status(FEATURE, { root })).completeness.state).toBe("complete");
+  });
+
+  it("moves back to an earlier phase on the owner's decision with a reason, keeping the later sections", async () => {
+    const root = await inVerification(["passing", "passing"]);
+    expect((await advancePhase(FEATURE, { root, by: "agent", to: "requirements", reason: "x" })).reasons).toContain(
+      "a move back to an earlier phase is decided by the owner: pass by owner",
+    );
+    expect((await advancePhase(FEATURE, { root, by: "owner", to: "requirements" })).reasons).toContain("a move back to an earlier phase needs a reason, in French");
+    expect((await advancePhase(FEATURE, { root, by: "owner", to: "verification", reason: "x" })).reasons[0]).toContain("is not an earlier phase");
+    const back = await advancePhase(FEATURE, { root, by: "owner", to: "requirements", reason: "REQ-002 doit couvrir la suppression.", now: NOW });
+    expect(back).toMatchObject({ ok: true, from: "verification", to: "requirements" });
+    const json = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
+    expect(json.criteria).toHaveLength(2);
+    expect(json.anchors).toHaveLength(1);
+    expect(json.tests).toHaveLength(2);
+    expect(json.lifecycle.phaseHistory.at(-1)).toEqual({ phase: "requirements", date: NOW, by: "owner", reason: "REQ-002 doit couvrir la suppression." });
+    expect(back.patch?.render?.files.map((f) => f.path)).toEqual(["index.md", "cadrage.md", "exigences.md"]);
+    expect(back.patch?.render?.removed).toEqual(["ancrage.md", "criteres.md", "verification.md"]);
+    const s = await status(FEATURE, { root });
+    expect(s.lastBackwardMove).toEqual({ from: "verification", to: "requirements", date: NOW, by: "owner", reason: "REQ-002 doit couvrir la suppression." });
+    expect(s.completeness.state).toBe("complete");
+    expect((await advancePhase(FEATURE, { root, by: "owner" })).to).toBe("acceptance");
   });
 });

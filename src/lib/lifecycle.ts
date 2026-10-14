@@ -4,7 +4,7 @@ import { indexIds, loadFeature, resolveFeature } from "./model.js";
 import { featureFile, specDir, workspaceRoot, type Location } from "./paths.js";
 import { PROTECTED, patchFolder, touchesProtected } from "./patch.js";
 import { backup, lastGoodPath } from "./render.js";
-import { nextPhase, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
+import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
 import type { Alteration, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -47,7 +47,19 @@ export interface StatusResult {
   ownerEdits: { state: "none" | "pending"; files: number; hunks: number; ids: string[] };
   alterations: Alteration[];
   lastVerify: { date: string; applied: number; reported: { file: string; pointer: string | null; reason: string }[] } | null;
-  phaseHistory: { phase: string; date: string; by: Author }[];
+  phaseHistory: { phase: string; date: string; by: Author; reason?: string }[];
+  lastBackwardMove: { from: string; to: string; date: string; by: Author; reason: string } | null;
+}
+
+function lastBackward(history: StatusResult["phaseHistory"]): StatusResult["lastBackwardMove"] {
+  for (let i = history.length - 1; i > 0; i--) {
+    const entry = history[i]!;
+    const before = history[i - 1]!;
+    if (phaseIndex(entry.phase) < phaseIndex(before.phase)) {
+      return { from: before.phase, to: entry.phase, date: entry.date, by: entry.by, reason: entry.reason ?? "" };
+    }
+  }
+  return null;
 }
 
 export async function statusFolder(folder: string, options: Location = {}): Promise<StatusResult> {
@@ -71,6 +83,7 @@ export async function statusFolder(folder: string, options: Location = {}): Prom
     alterations: d.alterations,
     lastVerify: lifecycle.lastVerify ?? null,
     phaseHistory: lifecycle.phaseHistory ?? [],
+    lastBackwardMove: lastBackward(lifecycle.phaseHistory ?? []),
   };
 }
 
@@ -88,22 +101,40 @@ export interface PhaseResult {
   patch: PatchResult | null;
 }
 
-export async function advancePhase(ref: string, options: Location & { by?: Author; now?: string } = {}): Promise<PhaseResult> {
+export async function advancePhase(
+  ref: string,
+  options: Location & { by?: Author; now?: string; to?: string; reason?: string } = {},
+): Promise<PhaseResult> {
   const folder = await resolveFeature(ref, options);
   const current = await statusFolder(folder, options);
+  const by = options.by ?? "agent";
+  const backward = options.to !== undefined && options.to !== current.nextPhase;
+  const target = options.to ?? current.nextPhase;
   const reasons: string[] = [];
-  if (!current.nextPhase) reasons.push(`phase "${current.phase}" is the last one`);
-  if (current.completeness.state !== "complete") reasons.push(`phase "${current.phase}" is incomplete: ${current.completeness.missing.length} item(s) missing`);
-  if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the verify skill first`);
+  if (backward) {
+    if (phaseIndex(target) < 0) reasons.push(`unknown phase "${target}"`);
+    else if (phaseIndex(target) >= phaseIndex(current.phase)) reasons.push(`"${target}" is not an earlier phase than "${current.phase}"; only the next phase can be entered forward`);
+    if (by !== "owner") reasons.push("a move back to an earlier phase is decided by the owner: pass by owner");
+    if (!options.reason?.trim()) reasons.push("a move back to an earlier phase needs a reason, in French");
+    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the verify skill first`);
+  } else {
+    if (!target) reasons.push(`phase "${current.phase}" is the last one`);
+    if (current.completeness.state !== "complete") {
+      reasons.push(`phase "${current.phase}" is incomplete: ${current.completeness.missing.length} item(s) missing`);
+      reasons.push(...current.completeness.missing.map((e) => `${e.pointer}: ${e.message}`));
+    }
+    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the verify skill first`);
+  }
   if (reasons.length > 0) {
-    return { ok: false, feature: folder, from: current.phase, to: current.nextPhase, reasons, missing: current.completeness.missing, patch: null };
+    return { ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, patch: null };
   }
   const now = options.now ?? new Date().toISOString();
+  const entry = { phase: target, date: now, by, ...(backward ? { reason: options.reason!.trim() } : {}) };
   const result = await patchFolder(
     folder,
     [
-      { op: "replace", path: "/phase", value: current.nextPhase },
-      { op: "add", path: "/lifecycle/phaseHistory/-", value: { phase: current.nextPhase, date: now, by: options.by ?? "agent" } },
+      { op: "replace", path: "/phase", value: target },
+      { op: "add", path: "/lifecycle/phaseHistory/-", value: entry },
     ],
     { ...options, allowProtected: true, now },
   );
@@ -111,7 +142,7 @@ export async function advancePhase(ref: string, options: Location & { by?: Autho
     ok: result.ok,
     feature: folder,
     from: current.phase,
-    to: current.nextPhase,
+    to: target,
     reasons: result.ok ? [] : result.errors.map((e) => e.message),
     missing: result.validation?.errors ?? [],
     patch: result,

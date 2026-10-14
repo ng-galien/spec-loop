@@ -28,7 +28,7 @@ function phaseOf(json: unknown): Phase | null {
   return typeof phase === "string" && phaseIndex(phase) >= 0 ? phase : null;
 }
 
-function translate(error: ErrorObject, phase: Phase | null): ValidationError | null {
+function translate(error: ErrorObject, phase: Phase | null, reached: number): ValidationError | null {
   const where = phase ? ` in phase "${phase}"` : "";
   switch (error.keyword) {
     case "if":
@@ -44,6 +44,8 @@ function translate(error: ErrorObject, phase: Phase | null): ValidationError | n
     }
     case "false schema": {
       const section = error.instancePath.split("/")[1] ?? "";
+      const producer = phaseProducing(section);
+      if (producer && phaseIndex(producer.name) <= reached) return null;
       return {
         pointer: error.instancePath,
         message: `"${section}" belongs to phase "${phaseProducing(section)?.name ?? section}" and is not allowed${where}; advance the phase first`,
@@ -184,7 +186,9 @@ export function validate(json: unknown): ValidationResult {
   check(json);
   const errors: ValidationError[] = [];
   const seen = new Set<string>();
-  for (const error of [...(check.errors ?? []).map((e) => translate(e, phase)), ...coherence(json as Rec, phase)]) {
+  const history = ((json as { lifecycle?: { phaseHistory?: { phase?: string }[] } }).lifecycle?.phaseHistory ?? []) as { phase?: string }[];
+  const reached = Math.max(-1, ...(Array.isArray(history) ? history.map((h) => phaseIndex(h?.phase)) : []));
+  for (const error of [...(check.errors ?? []).map((e) => translate(e, phase, reached)), ...coherence(json as Rec, phase)]) {
     if (!error) continue;
     const key = `${error.pointer}\u0000${error.message}`;
     if (seen.has(key)) continue;

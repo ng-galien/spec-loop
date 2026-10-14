@@ -41,7 +41,8 @@ export const phaseProducing = (section: string): PhaseInfo | null => phases.find
 export const activeChecks = (name: string | null | undefined): Set<string> => {
   const at = Math.max(phaseIndex(name), 0);
   const active = new Set(phases.slice(0, at + 1).flatMap((p) => p.checks));
-  for (const check of phases[at + 1]?.checks ?? []) if (checkRules[check]?.gate === "entry") active.add(check);
+  const next = phases[at + 1];
+  for (const check of next?.checks ?? []) if (checkRules[check]?.gate === "entry" || next!.produces.length === 0) active.add(check);
   return active;
 };
 

@@ -143,9 +143,22 @@ describe("validate", () => {
     expect(validate(feature).complete).toBe(true);
   });
 
-  it("verification phase: a failing test is not yet a gap, only the done gate requires passing", async () => {
+  it("verification phase: the closing rule is an entry gate, so a test not passing already keeps the phase incomplete", async () => {
     const feature = await verified();
     (feature.tests as Record<string, unknown>[])[0]!.status = "failing";
-    expect(validate(feature).complete).toBe(true);
+    expect(validate(feature).errors).toEqual([{ pointer: "/tests/0/status", message: 'missing: test "AC-001.1 lists two pages" is not passing', kind: "incomplete" }]);
+  });
+
+  it("tolerates sections of phases already reached after a move back", async () => {
+    const feature = await verified();
+    feature.phase = "requirements";
+    expect(validate(feature).valid).toBe(false);
+    feature.lifecycle = {
+      created: "2026-10-14T10:00:00.000Z",
+      phaseHistory: ["framing", "requirements", "acceptance", "anchoring", "verification"].map((phase) => ({ phase, date: "2026-10-14T10:00:00.000Z", by: "owner" })).concat([
+        { phase: "requirements", date: "2026-10-14T11:00:00.000Z", by: "owner", reason: "Revoir REQ-002." } as never,
+      ]),
+    };
+    expect(validate(feature)).toMatchObject({ valid: true, complete: true });
   });
 });

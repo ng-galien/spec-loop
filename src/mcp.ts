@@ -87,7 +87,7 @@ const diffResult = z.object({
 const patchResult = z.object({ ok: z.boolean(), feature: z.string(), errors: z.array(validationError), validation: validation.nullable(), render: renderResult.nullable() });
 const operation = z.object({ op: z.enum(["add", "remove", "replace", "move", "copy", "test"]), path: z.string(), value: z.unknown().optional(), from: z.string().optional() });
 const reportedItem = z.object({ file: z.string(), pointer: z.string().nullable(), reason: z.string().describe("Why it is reported to the owner instead of applied, in French") });
-const history = z.object({ phase: z.string(), date: z.string(), by: z.enum(["agent", "owner"]) });
+const history = z.object({ phase: z.string(), date: z.string(), by: z.enum(["agent", "owner"]), reason: z.string().optional() });
 
 const server = new McpServer(
   { name: "spec-loop", version: pkg.version },
@@ -183,6 +183,10 @@ server.registerTool(
       alterations: z.array(alteration),
       lastVerify: z.object({ date: z.string(), applied: z.number(), reported: z.array(reportedItem) }).nullable(),
       phaseHistory: z.array(history),
+      lastBackwardMove: z
+        .object({ from: z.string(), to: z.string(), date: z.string(), by: z.enum(["agent", "owner"]), reason: z.string() })
+        .nullable()
+        .describe("The last move back to an earlier phase, with the owner's reason"),
     },
     annotations: readOnly,
   },
@@ -274,14 +278,21 @@ server.registerTool(
   "phase",
   {
     title: "Advance a spec-loop feature",
-    description: "Move a spec-loop feature to the next phase of the schema, only when the current phase is complete and no owner edit is pending; records the history entry.",
-    inputSchema: { feature, by: z.enum(["agent", "owner"]).describe("Who decided the move: owner when the owner asked for it"), root },
+    description:
+      "Move a spec-loop feature to the next phase of the schema, only when the current phase is complete (entry rules of the next phase included) and no owner edit is pending; or, with to, back to an earlier phase on the owner's decision with a reason. Records the history entry.",
+    inputSchema: {
+      feature,
+      by: z.enum(["agent", "owner"]).describe("Who decided the move: owner when the owner asked for it; a backward move requires owner"),
+      to: z.string().optional().describe("An earlier phase to move back to; omit to advance to the next phase"),
+      reason: z.string().optional().describe("Why the owner moves the feature back, in French; required with to"),
+      root,
+    },
     outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), patch: patchResult.nullable() },
     annotations: writes,
   },
-  async ({ feature, by, root }) =>
+  async ({ feature, by, to, reason, root }) =>
     run(async () => {
-      const value = await lib.advancePhase(feature, { root, by });
+      const value = await lib.advancePhase(feature, { root, by, to, reason });
       return { value, isError: !value.ok };
     }),
 );

@@ -24,4 +24,8 @@ Pass `root`, the absolute path of the project, on every spec-loop call.
 
 ## Closing
 
+`phase` itself refuses to enter the last phase while any closing rule fails, and lists each blocking item with its pointer; report them as they come.
+
 When the gate holds, tell the owner in one paragraph what the feature now covers: the number of requirements, criteria and tests, and any criterion verified by a method other than `test`, with its reason. Ask for the decision. On a yes, call `phase` with `by: "owner"`; the history records the date and who decided. If the owner asks you to decide, call it with `by: "agent"` and say so.
+
+If the owner decides that an earlier phase must be reopened (a requirement to rewrite, a criterion to change), call `phase` with `to` naming that phase, `by: "owner"` and his reason in French. Nothing is deleted: the later sections stay in the model and come back when their phase is reached again.

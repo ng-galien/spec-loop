@@ -99,7 +99,10 @@
       },
       "message": "{id} attend sa maquette d'écran"
     },
-    "testsPassingOrJustified": "Every test has status passing, or uses a method other than test with its reason recorded."
+    "testsPassingOrJustified": {
+      "description": "Every test has status passing, or uses a method other than test with its reason recorded, before the feature enters the done phase.",
+      "gate": "entry"
+    }
   },
   "type": "object",
   "additionalProperties": false,
@@ -1164,7 +1167,7 @@
         "phaseHistory": {
           "type": "array",
           "minItems": 1,
-          "description": "Every phase entered, oldest first.",
+          "description": "Every phase entered, oldest first; a move back to an earlier phase carries its reason.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -1188,6 +1191,10 @@
                   "owner"
                 ],
                 "description": "Who decided the move."
+              },
+              "reason": {
+                "$ref": "#/$defs/text",
+                "description": "Why the owner moved the feature back to this earlier phase, in French."
               }
             }
           }
@@ -1267,5 +1274,5 @@
       }
     }
   },
-  "x-checksFormat": "A check is either a sentence (implemented by name in code) or an object rule: requirements matching `requirement` must be illustrated by an artifact matching `artifact`; `gate: entry` makes it hold already in the phase before the one that lists it; `message` is shown with {id} replaced."
+  "x-checksFormat": "A check is either a sentence (implemented by name in code) or an object rule: requirements matching `requirement` must be illustrated by an artifact matching `artifact`; `gate: entry` makes it hold already in the phase before the one that lists it; `message` is shown with {id} replaced. A check listed under a phase that produces no section is always an entry gate."
 }
