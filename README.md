@@ -1,27 +1,37 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/mark-dark.svg">
+  <img src="assets/brand/mark-light.svg" width="96" height="96" alt="spec-loop mark: an agent head inside a loop arrow">
+</picture>
+
 # spec-loop
 
-spec-loop is for a product owner who works with a coding agent and wants to decide what gets built without writing specifications by hand. The agent keeps one JSON model per feature. A JSON Schema governs which fields each phase requires and when a phase may close. The model is rendered as Markdown documents that the owner reads in the VS Code preview. The owner answers in the chat, or edits the documents directly and asks the agent to take the edits into account. The agent maps each edit back to the object it changes and applies it. It reports, and does not apply, any edit that widens the scope or contradicts the model. Everything goes through one MCP server, so it works the same with Gemini CLI, Claude Code and Codex. spec-loop specifies; it does not implement: the code is written at the anchors, between the anchoring and verification phases, with the agent's usual development workflow.
+**Your coding agent keeps one JSON model per feature; you read and edit it as Markdown, and every edit comes back to it over MCP.**
 
-Project page: [site/index.html](site/index.html), with the brand in [assets/brand/](assets/brand/brand.md).
+<!-- npm: swap the static badge for https://img.shields.io/npm/v/mcp-spec-loop?labelColor=334155&color=2563eb once the package is published -->
+<a href="https://www.npmjs.com/package/mcp-spec-loop"><img alt="npm: not published yet" src="https://img.shields.io/badge/npm-mcp--spec--loop%20(not%20published%20yet)-64748b?labelColor=334155"></a>
+<img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2563eb?labelColor=334155">
+<img alt="Node 22 or later" src="https://img.shields.io/badge/node-%E2%89%A5%2022-2563eb?labelColor=334155">
+<img alt="MCP server" src="https://img.shields.io/badge/MCP-server-2563eb?labelColor=334155">
+<img alt="Agent Skills: 7" src="https://img.shields.io/badge/Agent%20Skills-7-2563eb?labelColor=334155">
+<a href="https://github.com/ng-galien/spec-loop/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/ng-galien/spec-loop?labelColor=334155&color=2563eb"></a>
 
-```mermaid
-flowchart LR
-  owner["Owner, in VS Code"]
-  agent["Agent: Gemini CLI, Claude Code or Codex"]
-  mcp["spec-loop MCP server"]
-  schema["feature.schema.json"]
-  json[("feature.json")]
-  md["rendered/*.md"]
-  owner -- "answers and decisions in the chat" --> agent
-  agent -- "create, patch, phase, reconcile" --> mcp
-  mcp -- "validates against" --> schema
-  mcp -- "writes" --> json
-  json -- "rendered by Handlebars" --> md
-  md -- "read in the preview" --> owner
-  owner -. "edits a rendered file" .-> md
-  md -. "diff maps each hunk to an id and a JSON pointer" .-> mcp
-  mcp -. "reconcile patches coherent edits, reports the others" .-> json
-```
+</div>
+
+spec-loop is for a product owner who works with a coding agent and wants to decide what gets built without writing specifications by hand.
+The agent keeps the specification as data; you read it, answer, and edit it where you read it.
+
+- **One JSON model per feature**, governed by a JSON Schema that says which fields each phase requires and when a phase may close.
+- **Markdown documents** rendered from the model, read in the VS Code preview, that you can edit directly.
+- **One MCP server** that takes your edits back into the model, so it works the same with Gemini CLI, Claude Code and Codex.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/loop-dark.svg">
+  <img src="assets/brand/loop-light.svg" width="100%" alt="The loop: the owner answers the agent, which calls the MCP server; the server validates and writes the JSON model, rendered as Markdown the owner reads; owner edits to the Markdown are reconciled through the server.">
+</picture>
+
+The model is rendered as Markdown documents that the owner reads in the VS Code preview. The owner answers in the chat, or edits the documents directly and asks the agent to take the edits into account. The agent maps each edit back to the object it changes and applies it. It reports, and does not apply, any edit that widens the scope or contradicts the model. spec-loop specifies; it does not implement: the code is written at the anchors, between the anchoring and verification phases, with the agent's usual development workflow.
 
 A feature goes through six phases. Each phase adds one kind of object and is left only when the schema says it is complete:
 
@@ -36,20 +46,66 @@ flowchart TB
   framing --> requirements --> acceptance --> anchoring --> verification --> done
 ```
 
+## Contents
+
+- [Why](#why)
+- [Day one](#day-one)
+- [Tools](#tools)
+- [Skills](#skills)
+- [Rendered documents](#rendered-documents)
+- [Principles](#principles)
+- [Further reading](#further-reading)
+- [Development](#development)
+
+## Why
+
+- A coding agent works best on structured data, so the specification is a JSON model with a schema, not prose.
+- The owner reads a projection of that model, as Markdown documents in the VS Code preview, and never edits JSON.
+- The owner's answers and edits come back into the model through the MCP server: applied when coherent, reported with a reason otherwise.
+- The schema fixes the granularity: six phases, each adding one kind of object, each closed only when complete.
+- One server, one model, one set of skills: the same loop with Gemini CLI, Antigravity, Claude Code and Codex.
+
 ## Day one
 
-You need Node 22 or later, a project folder, VS Code 1.121 or later, and one agent. Run every line from the project folder. **The package `mcp-spec-loop` is not published on npm yet**: until it is, clone this repository, run `npm install` in it (this builds `dist/`), and use the right-hand column.
+You need Node 22 or later, a project folder, VS Code 1.121 or later, and one agent. Run every line from the project folder.
 
-| Agent | Register the server (once published) | Until published (local clone) |
-| --- | --- | --- |
-| Gemini CLI | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y mcp-spec-loop@0.1.0` | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- node /path/to/spec-loop/dist/mcp.js` |
-| Antigravity CLI | `agy plugin import gemini` after the Gemini line, or commit `examples/consumer/.agents/mcp_config.json` | same, with the local command in `mcp_config.json` |
-| Claude Code | `claude mcp add --scope project spec-loop -- npx -y mcp-spec-loop@0.1.0` | `claude mcp add --scope project spec-loop -- node /path/to/spec-loop/dist/mcp.js` |
-| Codex | `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.0` | `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- node /path/to/spec-loop/dist/mcp.js` |
+> [!NOTE]
+> **The package `mcp-spec-loop` is not published on npm yet.** Until it is, clone this repository, run `npm install` in it (this builds `dist/`), and use the "until published" line of your agent.
 
-Antigravity CLI (`agy`) replaced Gemini CLI for free and Google One accounts in June 2026.
+### Gemini CLI
 
-Then install the skills. Gemini CLI, Antigravity and Codex read `.agents/skills/`; Claude Code reads `.claude/skills/`, linked to the same folder:
+```sh
+# once published
+gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y mcp-spec-loop@0.1.0
+# until published (local clone)
+gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- node /path/to/spec-loop/dist/mcp.js
+```
+
+### Antigravity CLI
+
+Run `agy plugin import gemini` after the Gemini line, or commit `examples/consumer/.agents/mcp_config.json`. Until the package is published, put the local command in `mcp_config.json`. Antigravity CLI (`agy`) replaced Gemini CLI for free and Google One accounts in June 2026.
+
+### Claude Code
+
+```sh
+# once published
+claude mcp add --scope project spec-loop -- npx -y mcp-spec-loop@0.1.0
+# until published (local clone)
+claude mcp add --scope project spec-loop -- node /path/to/spec-loop/dist/mcp.js
+```
+
+### Codex
+
+```sh
+# once published
+codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.0
+# until published (local clone)
+codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- node /path/to/spec-loop/dist/mcp.js
+```
+
+### Skills
+
+Gemini CLI, Antigravity and Codex read `.agents/skills/`; Claude Code reads `.claude/skills/`, linked to the same folder:
 
 ```sh
 mkdir -p .agents/skills && cp -R /path/to/spec-loop/skills/* .agents/skills/
@@ -58,14 +114,17 @@ mkdir -p .claude && ln -s ../.agents/skills .claude/skills   # Claude Code only
 
 `examples/consumer/` holds every file a project commits for the three agents.
 
-Walkthrough:
+### Walkthrough
+
 1. Ask the agent to create a feature, then run the `framing` skill.
 2. Open `spec/README.md` in the preview (Ctrl+Shift+V, Cmd+Shift+V on macOS) and edit a rendered line.
 3. Ask the agent to take your changes into account (`reconcile`), then tell it to move to the next phase.
 
 The server looks for `spec/` in the `root` argument of each tool call. Without one, it uses `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR` (set by Claude Code), then its working directory. A value still holding an unexpanded `${…}` is skipped. The skills always pass `root`, and `status` and `features` echo the resolved path.
 
-Last, VS Code: commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then proposes three preview extensions when the folder is first opened. Each one is optional, and the documents stay readable without it:
+### VS Code
+
+Commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then proposes three preview extensions when the folder is first opened. Each one is optional, and the documents stay readable without it:
 
 | Extension | Adds | Without it |
 | --- | --- | --- |
@@ -119,13 +178,14 @@ Each feature lives in `spec/FEAT-nnn-<name>/`. Its `feature.json` is the model a
 | `decisions.md` | Decisions, when there are any |
 
 A document appears once its phase is reached. A document of a closed phase opens with a line pointing at the current one. Every document opens and closes with the same navigation, rendered by one partial from the schema's phase list:
+
 - a breadcrumb back to the feature and to all features;
 - the menu of the feature's documents in phase order;
 - "Previous" and "Next" links at the bottom.
 
 The diff ignores the navigation.
 
-The built-in VS Code preview renders CommonMark, tables and Mermaid; callouts, checkboxes and footnotes need the extensions listed under "Day one", and read as plain blockquotes, list lines and paragraphs without them.
+The built-in VS Code preview renders CommonMark, tables and Mermaid; callouts, checkboxes and footnotes need the extensions listed under [VS Code](#vs-code), and read as plain blockquotes, list lines and paragraphs without them.
 
 No meaning is carried by colour, and no inline HTML is used. The only exception is the `<!-- id: … -->` and `<!-- ptr: … -->` comments that let the diff find the object behind each block. The rules are in `method/artifacts.md`.
 
@@ -139,10 +199,11 @@ No meaning is carried by colour, and no inline HTML is used. The only exception 
 
 ## Further reading
 
-- `docs/vocabulary-research.md`: why each term, the EARS and Gherkin choices, the glossary.
-- `docs/integration-guide.md`: how Gemini CLI, Antigravity, Claude Code and Codex load the server and the skills.
-- `method/`: the method served by `learn`. `method/index.md` maps each phase to its skill.
-- `docs/decisions.md`: every decision, one dated line each.
+- [`docs/vocabulary-research.md`](docs/vocabulary-research.md): why each term, the EARS and Gherkin choices, the glossary.
+- [`docs/integration-guide.md`](docs/integration-guide.md): how Gemini CLI, Antigravity, Claude Code and Codex load the server and the skills.
+- [`method/`](method/index.md): the method served by `learn`. `method/index.md` maps each phase to its skill.
+- [`docs/decisions.md`](docs/decisions.md): every decision, one dated line each.
+- [`site/index.html`](site/index.html): the project page; the brand is in [`assets/brand/`](assets/brand/brand.md).
 
 ## Development
 
@@ -159,3 +220,16 @@ The skills are generated. Edit `skills-src/`, never `skills/`:
 - each skill has a `skill.yaml` (name, description, phase, the parts in order, the patch example) and a `body.md` that places each part with `{{> part}}`.
 
 Then run `npm run assemble`. It writes `skills/<name>/SKILL.md` and the copy in `examples/consumer/.agents/skills/`; the Gemini extension and the Claude and Codex plugins read `skills/` directly. `test/skills.test.ts` fails, and lists the stale files, when a generated skill differs from its source.
+
+---
+
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/mark-dark.svg">
+  <img src="assets/brand/mark-light.svg" width="32" height="32" alt="spec-loop">
+</picture>
+
+Made for product owners who build with agents · [Project page](site/index.html) · MIT licence
+
+</div>

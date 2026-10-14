@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 490" width="960" height="490" role="img" aria-label="The spec-loop loop: the owner answers the agent, which calls the MCP server; the server validates and writes the JSON model, rendered as Markdown the owner reads; owner edits to the Markdown are reconciled through the server.">
+<style>text{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+.d-node{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1.5}.d-node.acc{fill:#dbeafe;stroke:#2563eb}
+.d-title{fill:#0f172a;font-weight:650;font-size:17px}.d-sub{fill:#64748b;font-size:12.5px}
+.d-edge{fill:none;stroke:#64748b;stroke-width:1.6}.d-rec{fill:none;stroke:#2563eb;stroke-width:1.8;stroke-dasharray:6 5}
+.d-lbl{fill:#64748b;font-size:13px;font-weight:500}.d-lbl.acc{fill:#2563eb;font-weight:600}
+.d-arrow{fill:#64748b}.d-arrow.acc{fill:#2563eb}</style>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="d-arrow" d="M0 0 10 5 0 10z"/></marker><marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="d-arrow acc" d="M0 0 10 5 0 10z"/></marker></defs>
+        
+        <!-- solid flow -->
+        <path class="d-edge" marker-end="url(#ah)" d="M250 88H362"/>
+        <text class="d-lbl" x="310" y="76" text-anchor="middle">answers</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M590 88H702"/>
+        <text class="d-lbl" x="646" y="76" text-anchor="middle">tool calls</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M820 136V318"/>
+        <text class="d-lbl" x="832" y="232">validate, write</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M710 374H598"/>
+        <text class="d-lbl" x="654" y="362" text-anchor="middle">render</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M370 374H120V144"/>
+        <text class="d-lbl" x="250" y="396" text-anchor="middle">read in the preview</text>
+        <!-- reconcile -->
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M200 136V346H362"/>
+        <text class="d-lbl acc" x="212" y="250">edit a file</text>
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M520 326V230H760V144"/>
+        <text class="d-lbl acc" x="640" y="220" text-anchor="middle">Reconcile: diff, apply or report</text>
+        <!-- nodes -->
+        <rect class="d-node" x="30" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="140" y="83" text-anchor="middle">Owner</text>
+        <text class="d-sub" x="140" y="104" text-anchor="middle">in VS Code</text>
+        <rect class="d-node" x="370" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="480" y="83" text-anchor="middle">Agent</text>
+        <text class="d-sub" x="480" y="104" text-anchor="middle">Gemini CLI, Claude Code, Codex</text>
+        <rect class="d-node acc" x="710" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="820" y="83" text-anchor="middle">MCP server</text>
+        <text class="d-sub" x="820" y="104" text-anchor="middle">the only writer of spec/</text>
+        <rect class="d-node" x="710" y="326" width="220" height="96" rx="14"/>
+        <text class="d-title" x="820" y="369" text-anchor="middle">JSON model + schema</text>
+        <text class="d-sub" x="820" y="390" text-anchor="middle">feature.json</text>
+        <rect class="d-node" x="370" y="326" width="220" height="96" rx="14"/>
+        <text class="d-title" x="480" y="369" text-anchor="middle">Rendered Markdown</text>
+        <text class="d-sub" x="480" y="390" text-anchor="middle">framing.md, requirements.md …</text>
+      
+  <path class="d-edge" d="M40 466H76"/><text class="d-lbl" x="86" y="471">model flow</text>
+  <path class="d-rec" d="M210 466H246"/><text class="d-lbl" x="256" y="471">owner edits, taken back by the reconcile tool</text>
+</svg>

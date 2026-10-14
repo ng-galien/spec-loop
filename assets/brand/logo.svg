@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 40" width="336" height="80" role="img" aria-label="spec-loop">
+  <style>.h{fill:#0f172a}.l{fill:#2563eb;stroke:#2563eb}.w{fill:#0f172a}@media (prefers-color-scheme:dark){.h,.w{fill:#f8fafc}.l{fill:#2563eb;stroke:#2563eb}}</style>
+  <g transform="translate(4 4)"><g class="l"><path fill="none" stroke-width="2.8" stroke-linecap="round" d="M22.5 4.74A13 13 0 1 1 11.55 3.78"/><path stroke="none" d="M15.1 2.5 10.46 0.78 12.65 6.79z"/></g><g class="h"><path fill-rule="evenodd" transform="matrix(1.2 0 0 1.2 6.4 6.4)" d="M7.2 1h1.6v2.5H11a3 3 0 0 1 3 3V12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V6.5a3 3 0 0 1 3-3h2.2zM5 7.5v2h1.6v-2zm4.4 0v2H11v-2z"/></g></g>
+  <text class="w" x="46" y="27.5" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="650" letter-spacing="-0.4">spec-loop</text>
+</svg>

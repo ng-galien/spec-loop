@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spec-loop</title>
+<meta name="description" content="A coding agent maintains one JSON model per feature, projected into Markdown for a product owner, with a feedback loop over MCP.">
+<link rel="icon" type="image/svg+xml" href="../assets/brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --text: #334155;
+  --muted: #64748b;
+  --line: #cbd5e1;
+  --accent: #2563eb;
+  --accent-ink: #2563eb;
+  --tint: #dbeafe;
+  --tint-ink: #0f172a;
+  --code-bg: #0f172a;
+  --code-ink: #f8fafc;
+  --code-muted: #cbd5e1;
+  --head: #0f172a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f172a;
+    --surface: rgba(248, 250, 252, 0.04);
+    --ink: #f8fafc;
+    --text: #cbd5e1;
+    --muted: #cbd5e1;
+    --line: #334155;
+    --accent: #2563eb;
+    --accent-ink: #dbeafe;
+    --tint: rgba(37, 99, 235, 0.22);
+    --tint-ink: #f8fafc;
+    --code-bg: rgba(248, 250, 252, 0.05);
+    --code-ink: #f8fafc;
+    --code-muted: #cbd5e1;
+    --head: #f8fafc;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: rgba(248, 250, 252, 0.04);
+  --ink: #f8fafc;
+  --text: #cbd5e1;
+  --muted: #cbd5e1;
+  --line: #334155;
+  --accent: #2563eb;
+  --accent-ink: #dbeafe;
+  --tint: rgba(37, 99, 235, 0.22);
+  --tint-ink: #f8fafc;
+  --code-bg: rgba(248, 250, 252, 0.05);
+  --code-ink: #f8fafc;
+  --code-muted: #cbd5e1;
+  --head: #f8fafc;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+h1, h2, h3 { color: var(--ink); margin: 0; letter-spacing: -0.02em; }
+section { padding: 88px 0; }
+section + section { border-top: 1px solid var(--line); }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 12px; }
+h2 { font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; font-weight: 700; }
+.section-lede { max-width: 640px; margin: 16px 0 48px; color: var(--muted); }
+
+/* Header */
+header { padding: 24px 0; }
+header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 650; font-size: 20px; letter-spacing: -0.02em; }
+.brand svg { width: 34px; height: 34px; }
+.nav { display: flex; align-items: center; gap: 20px; font-size: 15px; }
+.nav a { color: var(--text); text-decoration: none; font-weight: 500; }
+.nav a:hover { color: var(--ink); }
+.toggle {
+  display: inline-grid; place-items: center; width: 38px; height: 38px;
+  border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); cursor: pointer;
+}
+.toggle svg { width: 18px; height: 18px; }
+.toggle .sun { display: none; }
+:root[data-theme="dark"] .toggle .sun { display: block; }
+:root[data-theme="dark"] .toggle .moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .toggle .sun { display: block; }
+  :root:not([data-theme="light"]) .toggle .moon { display: none; }
+}
+
+/* Marks */
+.m-loop { fill: var(--accent); stroke: var(--accent); }
+.m-head { fill: var(--head); }
+
+/* Hero */
+.hero { padding: 72px 0 96px; border-top: 0; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.hero h1 { font-size: clamp(38px, 5.6vw, 64px); line-height: 1.04; font-weight: 700; letter-spacing: -0.035em; }
+.hero p.lede { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.55; margin: 24px 0 36px; max-width: 600px; color: var(--text); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 10px;
+  font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid transparent;
+}
+.btn-primary { background: var(--accent); color: #ffffff; }
+.btn-primary:hover { filter: brightness(0.9); }
+.btn-secondary { border-color: var(--line); color: var(--ink); background: transparent; }
+.btn-secondary:hover { border-color: var(--muted); }
+.hero-mark { justify-self: center; width: min(100%, 340px); }
+.hero-mark svg { width: 100%; height: auto; display: block; }
+.for { margin-top: 28px; font-size: 15px; color: var(--muted); }
+
+/* Diagram */
+.diagram { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); padding: 24px; }
+.diagram svg { display: block; width: 100%; height: auto; }
+.diagram .portrait { display: none; max-width: 380px; margin: 0 auto; }
+.d-node { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.d-node.acc { fill: var(--tint); stroke: var(--accent); }
+.d-title { fill: var(--ink); font-weight: 650; font-size: 17px; }
+.d-sub { fill: var(--muted); font-size: 12.5px; }
+.d-edge { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.d-rec { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 6 5; }
+.d-lbl { fill: var(--muted); font-size: 13px; font-weight: 500; }
+.d-lbl.acc { fill: var(--accent-ink); font-weight: 600; }
+.d-arrow { fill: var(--muted); }
+.d-arrow.acc { fill: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 10px; }
+.legend i { display: inline-block; width: 28px; border-top: 2px solid var(--muted); }
+.legend i.acc { border-top: 2px dashed var(--accent); }
+
+/* Stepper */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px; counter-reset: step; }
+.steps li { position: relative; padding-top: 52px; }
+.steps li::before {
+  counter-increment: step; content: counter(step);
+  position: absolute; top: 0; left: 0; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 650; font-size: 15px;
+  color: var(--accent-ink); background: var(--tint); border: 1.5px solid var(--accent);
+}
+.steps li::after {
+  content: ""; position: absolute; top: 17px; left: 44px; right: -10px; border-top: 1.5px solid var(--line);
+}
+.steps li:last-child::after { display: none; }
+.steps li:last-child::before { background: var(--accent); color: #ffffff; }
+.steps h3 { font-size: 17px; font-weight: 650; font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.01em; }
+.steps p { margin: 6px 0 0; font-size: 15px; line-height: 1.5; color: var(--muted); }
+
+/* Principles */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.card { border: 1px solid var(--line); border-radius: 16px; padding: 28px; background: var(--surface); }
+.card h3 { font-size: 20px; font-weight: 650; line-height: 1.3; }
+.card p { margin: 10px 0 0; font-size: 16px; color: var(--text); }
+.card .num { display: block; font-size: 13px; font-weight: 600; color: var(--accent-ink); margin-bottom: 14px; letter-spacing: 0.06em; }
+
+/* Code */
+.code { position: relative; border-radius: 16px; background: var(--code-bg); border: 1px solid var(--line); }
+.code pre {
+  margin: 0; padding: 28px 28px 28px; overflow-x: auto; color: var(--code-ink);
+  font: 14px/1.75 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.code .c { color: var(--code-muted); }
+.copy {
+  position: absolute; top: 14px; right: 14px; padding: 7px 12px; border-radius: 8px; cursor: pointer;
+  font: 600 13px Inter, system-ui, sans-serif; color: #0f172a; background: #dbeafe; border: 0;
+}
+.code-note { margin: 18px 0 0; font-size: 15px; color: var(--muted); max-width: 760px; }
+code.inline { white-space: nowrap; font: 0.92em ui-monospace, "SF Mono", Menlo, monospace; color: var(--ink); }
+
+/* Footer */
+footer { border-top: 1px solid var(--line); padding: 36px 0 48px; font-size: 15px; color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+footer .brand { font-size: 17px; }
+footer .brand svg { width: 26px; height: 26px; }
+
+@media (max-width: 980px) {
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 36px; }
+  .steps li:nth-child(3)::after { display: none; }
+  .cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
+  body { font-size: 16px; }
+  section { padding: 64px 0; }
+  .hero { padding: 32px 0 64px; }
+  .hero-grid { grid-template-columns: 1fr; gap: 0; }
+  .hero-mark { display: none; }
+  .nav .hide-sm { display: none; }
+  .diagram { padding: 16px 8px; }
+  .diagram .landscape { display: none; }
+  .diagram .portrait { display: block; }
+  .legend { padding: 0 8px; }
+  .steps { grid-template-columns: 1fr; row-gap: 0; }
+  .steps li { padding: 0 0 24px 52px; min-height: 58px; }
+  .steps li::after, .steps li:nth-child(3)::after { display: block; top: 40px; left: 17px; right: auto; bottom: 4px; border-top: 0; border-left: 1.5px solid var(--line); }
+  .steps li:last-child::after { display: none; }
+  .steps h3 { padding-top: 5px; }
+  .card { padding: 22px; }
+  .code pre { padding: 56px 18px 22px; font-size: 13px; }
+  .btn { flex: 1 1 auto; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark" viewBox="0 0 32 32">
+      <g class="m-loop">
+        <path fill="none" stroke-width="2.8" stroke-linecap="round" d="M22.5 4.74A13 13 0 1 1 11.55 3.78"/>
+        <path stroke="none" d="M15.1 2.5 10.46 0.78 12.65 6.79z"/>
+      </g>
+      <path class="m-head" fill-rule="evenodd" transform="matrix(1.2 0 0 1.2 6.4 6.4)" d="M7.2 1h1.6v2.5H11a3 3 0 0 1 3 3V12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V6.5a3 3 0 0 1 3-3h2.2zM5 7.5v2h1.6v-2zm4.4 0v2H11v-2z"/>
+    </symbol>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path class="d-arrow" d="M0 0 10 5 0 10z"/>
+    </marker>
+    <marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path class="d-arrow acc" d="M0 0 10 5 0 10z"/>
+    </marker>
+  </defs>
+</svg>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="spec-loop, home"><svg aria-hidden="true"><use href="#mark"/></svg>spec-loop</a>
+    <nav class="nav" aria-label="Main">
+      <a class="hide-sm" href="#loop">The loop</a>
+      <a class="hide-sm" href="#install">Install</a>
+      <a href="https://github.com/ng-galien/spec-loop">GitHub</a>
+      <button class="toggle" type="button" id="theme" aria-label="Switch colour theme">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Specifications your agent keeps, in a loop you steer.</h1>
+      <p class="lede">spec-loop is for product owners who build with a coding agent: the agent maintains one JSON model per feature, projected into Markdown documents you read and edit, and every edit comes back to it over MCP.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/ng-galien/spec-loop#readme">Get started</a>
+        <a class="btn btn-secondary" href="https://github.com/ng-galien/spec-loop/blob/main/method/index.md">Read the method</a>
+      </div>
+      <p class="for">Works the same with Gemini CLI, Claude Code and Codex.</p>
+    </div>
+    <div class="hero-mark" aria-hidden="true"><svg><use href="#mark"/></svg></div>
+  </div>
+</section>
+
+<section id="loop">
+  <div class="wrap">
+    <p class="eyebrow">The loop</p>
+    <h2>One model, one writer, two ways to answer.</h2>
+    <p class="section-lede">You answer in the chat, or you edit a rendered document. The MCP server is the only writer of the model: it validates every change against the schema, renders the documents, and reconciles your edits back into the JSON.</p>
+
+    <figure class="diagram" style="margin:0">
+      <svg class="landscape" viewBox="0 0 960 430" role="img" aria-labelledby="dl-title">
+        <title id="dl-title">The owner answers the agent, which calls the MCP server; the server validates and writes the JSON model, which is rendered as Markdown the owner reads. Owner edits to the Markdown are reconciled back through the server.</title>
+        <!-- solid flow -->
+        <path class="d-edge" marker-end="url(#ah)" d="M250 88H362"/>
+        <text class="d-lbl" x="310" y="76" text-anchor="middle">answers</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M590 88H702"/>
+        <text class="d-lbl" x="646" y="76" text-anchor="middle">tool calls</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M820 136V318"/>
+        <text class="d-lbl" x="832" y="232">validate, write</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M710 374H598"/>
+        <text class="d-lbl" x="654" y="362" text-anchor="middle">render</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M370 374H120V144"/>
+        <text class="d-lbl" x="250" y="396" text-anchor="middle">read in the preview</text>
+        <!-- reconcile -->
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M200 136V346H362"/>
+        <text class="d-lbl acc" x="212" y="250">edit a file</text>
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M520 326V230H760V144"/>
+        <text class="d-lbl acc" x="640" y="220" text-anchor="middle">Reconcile: diff, apply or report</text>
+        <!-- nodes -->
+        <rect class="d-node" x="30" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="140" y="83" text-anchor="middle">Owner</text>
+        <text class="d-sub" x="140" y="104" text-anchor="middle">in VS Code</text>
+        <rect class="d-node" x="370" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="480" y="83" text-anchor="middle">Agent</text>
+        <text class="d-sub" x="480" y="104" text-anchor="middle">Gemini CLI, Claude Code, Codex</text>
+        <rect class="d-node acc" x="710" y="40" width="220" height="96" rx="14"/>
+        <text class="d-title" x="820" y="83" text-anchor="middle">MCP server</text>
+        <text class="d-sub" x="820" y="104" text-anchor="middle">the only writer of spec/</text>
+        <rect class="d-node" x="710" y="326" width="220" height="96" rx="14"/>
+        <text class="d-title" x="820" y="369" text-anchor="middle">JSON model + schema</text>
+        <text class="d-sub" x="820" y="390" text-anchor="middle">feature.json</text>
+        <rect class="d-node" x="370" y="326" width="220" height="96" rx="14"/>
+        <text class="d-title" x="480" y="369" text-anchor="middle">Rendered Markdown</text>
+        <text class="d-sub" x="480" y="390" text-anchor="middle">framing.md, requirements.md …</text>
+      </svg>
+
+      <svg class="portrait" viewBox="0 0 380 700" role="img" aria-labelledby="dp-title">
+        <title id="dp-title">The same loop, top to bottom: Owner, Agent, MCP server, JSON model plus schema, Rendered Markdown, read back by the owner; owner edits are reconciled through the server.</title>
+        <path class="d-edge" marker-end="url(#ah)" d="M190 100V150"/>
+        <text class="d-lbl" x="202" y="130">answers</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M190 236V286"/>
+        <text class="d-lbl" x="202" y="266">tool calls</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M190 372V422"/>
+        <text class="d-lbl" x="202" y="402">validate, write</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M190 508V558"/>
+        <text class="d-lbl" x="202" y="538">render</text>
+        <path class="d-edge" marker-end="url(#ah)" d="M80 601H36V57H72"/>
+        <text class="d-lbl" transform="translate(24 330) rotate(-90)" text-anchor="middle">read in the preview</text>
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M300 50H322V588H308"/>
+        <text class="d-lbl acc" transform="translate(313 200) rotate(90)" text-anchor="middle">edit a file</text>
+        <path class="d-rec" marker-end="url(#ah-acc)" d="M300 616H352V330H308"/>
+        <text class="d-lbl acc" transform="translate(366 470) rotate(90)" text-anchor="middle">Reconcile</text>
+        <rect class="d-node" x="80" y="16" width="220" height="84" rx="14"/>
+        <text class="d-title" x="190" y="53" text-anchor="middle">Owner</text>
+        <text class="d-sub" x="190" y="74" text-anchor="middle">in VS Code</text>
+        <rect class="d-node" x="80" y="152" width="220" height="84" rx="14"/>
+        <text class="d-title" x="190" y="189" text-anchor="middle">Agent</text>
+        <text class="d-sub" x="190" y="210" text-anchor="middle">Gemini CLI, Claude Code, Codex</text>
+        <rect class="d-node acc" x="80" y="288" width="220" height="84" rx="14"/>
+        <text class="d-title" x="190" y="325" text-anchor="middle">MCP server</text>
+        <text class="d-sub" x="190" y="346" text-anchor="middle">the only writer of spec/</text>
+        <rect class="d-node" x="80" y="424" width="220" height="84" rx="14"/>
+        <text class="d-title" x="190" y="461" text-anchor="middle">JSON model + schema</text>
+        <text class="d-sub" x="190" y="482" text-anchor="middle">feature.json</text>
+        <rect class="d-node" x="80" y="560" width="220" height="84" rx="14"/>
+        <text class="d-title" x="190" y="597" text-anchor="middle">Rendered Markdown</text>
+        <text class="d-sub" x="190" y="618" text-anchor="middle">framing.md, requirements.md …</text>
+      </svg>
+      <figcaption class="legend">
+        <span><i></i>model flow</span>
+        <span><i class="acc"></i>owner edits, taken back by <code class="inline">reconcile</code></span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="phases">
+  <div class="wrap">
+    <p class="eyebrow">Six phases</p>
+    <h2>Each phase adds one kind of object.</h2>
+    <p class="section-lede">A phase is left only when the schema says it is complete, and never while an owner edit is waiting to be reconciled.</p>
+    <ol class="steps">
+      <li><h3>framing</h3><p>Intent, actors, scope in and out, constraints, open questions.</p></li>
+      <li><h3>requirements</h3><p>One EARS sentence per behaviour, with facet and priority.</p></li>
+      <li><h3>acceptance</h3><p>Given/When/Then criteria, at least one per requirement.</p></li>
+      <li><h3>anchoring</h3><p>The file and symbol that will realise each requirement.</p></li>
+      <li><h3>verification</h3><p>One declared test per criterion, status from the runner.</p></li>
+      <li><h3>done</h3><p>Every test passing or justified, no open question left.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="principles">
+  <div class="wrap">
+    <p class="eyebrow">Principles</p>
+    <h2>Three rules hold everywhere.</h2>
+    <p class="section-lede">They are why a rendered document can be trusted, and why your edits are never lost.</p>
+    <div class="cards">
+      <article class="card"><span class="num">01</span><h3>The JSON is the truth.</h3><p>The documents are a deterministic projection of the model. Nothing exists only in Markdown.</p></article>
+      <article class="card"><span class="num">02</span><h3>The schema governs the lifecycle.</h3><p>Phases, their order, required fields and coverage rules live in one JSON Schema. The code names no phase.</p></article>
+      <article class="card"><span class="num">03</span><h3>Owner edits are first-class.</h3><p>Each edit is applied, or reported with its reason and kept as an open question. None is overwritten unread.</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <p class="eyebrow">Install</p>
+    <h2>One MCP server, three agents.</h2>
+    <p class="section-lede">Run the lines for your agent from your project folder. They register the server and copy the seven skills.</p>
+    <div class="code">
+      <button class="copy" type="button" id="copy">Copy</button>
+<pre id="install-lines"><code><span class="c"># Gemini CLI</span>
+gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y mcp-spec-loop@0.1.0
+mkdir -p .agents/skills &amp;&amp; cp -R /path/to/spec-loop/skills/* .agents/skills/
+
+<span class="c"># Claude Code</span>
+claude mcp add --scope project spec-loop -- npx -y mcp-spec-loop@0.1.0
+mkdir -p .agents/skills &amp;&amp; cp -R /path/to/spec-loop/skills/* .agents/skills/ &amp;&amp; mkdir -p .claude &amp;&amp; ln -s ../.agents/skills .claude/skills
+
+<span class="c"># Codex</span>
+codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.0
+mkdir -p .agents/skills &amp;&amp; cp -R /path/to/spec-loop/skills/* .agents/skills/</code></pre>
+    </div>
+    <p class="code-note">The npm package is not published yet. Until it is, clone the repository, run <code class="inline">npm install</code>, and replace <code class="inline">npx -y mcp-spec-loop@0.1.0</code> with <code class="inline">node /path/to/spec-loop/dist/mcp.js</code>.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="https://github.com/ng-galien/spec-loop"><svg aria-hidden="true"><use href="#mark"/></svg>spec-loop on GitHub</a>
+    <span>Released under the MIT licence.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('spec-loop-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('theme').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('spec-loop-theme', next); } catch (e) {}
+  });
+  var btn = document.getElementById('copy');
+  btn.addEventListener('click', function () {
+    var text = document.getElementById('install-lines').innerText;
+    navigator.clipboard.writeText(text).then(function () {
+      btn.textContent = 'Copied';
+      setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+    });
+  });
+})();
+</script>
+</body>
+</html>
