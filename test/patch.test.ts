@@ -1,9 +1,30 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { diff, patch, render } from "../src/lib/index.js";
+import { diff, patch, reconcile, render } from "../src/lib/index.js";
 import { FEATURE, inFolder, workspace } from "./helpers.js";
 
 describe("patch", () => {
+  it("refuses to replace the whole document, or to move or copy from it, even when id, name, phase and lifecycle look unchanged elsewhere", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const before = await readFile(inFolder(root, "feature.json"), "utf8");
+    const json = JSON.parse(before);
+    const forged = { ...json, phase: "done", lifecycle: { created: json.lifecycle.created, phaseHistory: [{ phase: "done", date: json.lifecycle.created, by: "owner" }] } };
+    for (const op of [
+      { op: "replace" as const, path: "", value: forged },
+      { op: "move" as const, from: "", path: "/framing/notes" },
+      { op: "copy" as const, from: "", path: "/framing/notes" },
+    ]) {
+      const result = await patch(FEATURE, [op], { root });
+      expect(result.ok, op.op).toBe(false);
+      expect(result.errors[0]!.message).toContain("id, name, phase and lifecycle are written by the create, phase and reconcile tools only");
+    }
+    expect(await readFile(inFolder(root, "feature.json"), "utf8")).toBe(before);
+    const reconciled = await reconcile(FEATURE, { ops: [{ op: "replace", path: "", value: forged }], applied: 0, reported: [] }, { root });
+    expect(reconciled.ok).toBe(false);
+    expect(reconciled.errors).toEqual([": id, name, phase and lifecycle cannot be patched"]);
+  });
+
   it("never writes a Mermaid diagram that does not parse", async () => {
     const root = await workspace();
     await render(FEATURE, { root });

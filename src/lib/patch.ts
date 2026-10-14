@@ -17,7 +17,14 @@ export interface PatchOptions extends Location {
   allowProtected?: boolean;
 }
 
-export const touchesProtected = (path: string | undefined) => path !== undefined && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`));
+export const touchesProtected = (path: string | undefined) => path !== undefined && (path === "" || PROTECTED.some((p) => path === p || path.startsWith(`${p}/`)));
+
+export function protectedChanges(before: Record<string, unknown>, after: unknown): string[] {
+  const next = (after !== null && typeof after === "object" && !Array.isArray(after) ? after : {}) as Record<string, unknown>;
+  return PROTECTED.map((p) => p.slice(1)).filter((key) => JSON.stringify(before[key]) !== JSON.stringify(next[key]));
+}
+
+const PROTECTED_MESSAGE = "id, name, phase and lifecycle are written by the create, phase and reconcile tools only";
 
 export async function patchFolder(folder: string, ops: PatchOperation[], options: PatchOptions = {}): Promise<PatchResult> {
   const file = featureFile(folder, options);
@@ -26,7 +33,7 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
   if (!options.allowProtected) {
     const blocked = ops.filter((op) => touchesProtected(op.path) || touchesProtected(op.from));
     if (blocked.length > 0) {
-      return fail(blocked.map((op) => ({ pointer: op.path, message: "id, name, phase and lifecycle are written by the create, phase and reconcile tools only", kind: "invalid" as const })));
+      return fail(blocked.map((op) => ({ pointer: op.path, message: PROTECTED_MESSAGE, kind: "invalid" as const })));
     }
   }
   let next: Feature;
@@ -35,6 +42,10 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
   } catch (error) {
     const e = error as { message?: string; index?: number; operation?: { path?: string } };
     return fail([{ pointer: e.operation?.path ?? "", message: `patch operation ${e.index ?? "?"} rejected: ${(e.message ?? String(error)).split("\n")[0]}`, kind: "invalid" }]);
+  }
+  if (!options.allowProtected) {
+    const changed = protectedChanges(current, next);
+    if (changed.length > 0) return fail(changed.map((key) => ({ pointer: `/${key}`, message: `${PROTECTED_MESSAGE}; this patch changes ${key}`, kind: "invalid" as const })));
   }
   const validation = await validateFeature(next, { folder, options });
   if (!validation.valid) return fail(validation.errors.filter((e) => e.kind === "invalid"), validation);

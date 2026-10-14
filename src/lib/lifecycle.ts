@@ -2,7 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { diffFolder } from "./diff.js";
 import { indexIds, loadFeature, resolveFeature } from "./model.js";
 import { featureFile, specDir, workspaceRoot, type Location } from "./paths.js";
-import { PROTECTED, patchFolder, touchesProtected } from "./patch.js";
+import fastJsonPatch from "fast-json-patch";
+import { PROTECTED, patchFolder, protectedChanges, touchesProtected } from "./patch.js";
 import { backup, lastGoodPath } from "./render.js";
 import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
@@ -294,6 +295,16 @@ export async function reconcile(ref: string, input: ReconcileInput, options: Loc
     }
   }
   const json = await loadFeature(folder, options);
+  if (input.ops.length > 0) {
+    let applied: unknown;
+    try {
+      applied = fastJsonPatch.applyPatch(fastJsonPatch.deepClone(json), input.ops as never, true, false).newDocument;
+    } catch (error) {
+      return await refuse([`patch rejected: ${((error as Error).message ?? String(error)).split("\n")[0]}`]);
+    }
+    const changed = protectedChanges(json, applied);
+    if (changed.length > 0) return await refuse(changed.map((key) => `/${key}: id, name, phase and lifecycle cannot be patched`));
+  }
   const questions = questionOps(json, input.reported);
   const lastVerify = { date: now, applied: input.applied, reported: input.reported };
   lifecycleOps.push(
