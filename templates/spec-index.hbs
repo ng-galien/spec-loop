@@ -7,5 +7,5 @@ Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonc
 | Id | Fonctionnalité | Phase | Complétude | Modifications | Documents |
 | --- | --- | --- | --- | --- | --- |
 {{#each features}}
-| {{id}} | {{#if title}}{{title}}{{else}}{{name}}{{/if}} | {{phaseLabel}} | {{#if complete}}complète{{else}}{{missingCount}} manque(s){{/if}} | {{#if pending}}**À vérifier** ({{alterations}}){{else}}aucune{{/if}} | [ouvrir]({{folder}}/rendered/index.md) |
+| {{id}} | {{#if title}}{{title}}{{else}}{{name}}{{/if}} | {{#if corrupted}}**fichier corrompu**{{else}}{{phaseLabel}}{{/if}} | {{#if corrupted}}illisible{{else}}{{#if complete}}complète{{else}}{{missingCount}} manque(s){{/if}}{{/if}} | {{#if pending}}**À vérifier** ({{alterations}}){{else}}aucune{{/if}} | [ouvrir]({{folder}}/rendered/index.md) |
 {{/each}}

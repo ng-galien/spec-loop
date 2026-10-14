@@ -10,8 +10,11 @@ export interface Location {
   root?: string;
 }
 
+const usable = (value: string | undefined): value is string => typeof value === "string" && value !== "" && !value.includes("${");
+
 export function workspaceRoot(options: Location = {}): string {
-  return resolve(options.root || process.env.SPEC_LOOP_ROOT || process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  const candidates = [options.root, process.env.SPEC_LOOP_ROOT, process.env.CLAUDE_PROJECT_DIR];
+  return resolve(candidates.find(usable) ?? process.cwd());
 }
 
 export function specDir(options: Location = {}): string {
@@ -23,6 +26,7 @@ export function featureDir(folder: string, options: Location = {}): string {
   return join(specDir(options), folder);
 }
 
+export const specSchemaCopy = (options: Location = {}) => join(specDir(options), "feature.schema.json");
 export const featureFile = (folder: string, options: Location = {}) => join(featureDir(folder, options), "feature.json");
 export const renderedDir = (folder: string, options: Location = {}) => join(featureDir(folder, options), "rendered");
 export const assetsDir = (folder: string, options: Location = {}) => join(featureDir(folder, options), "assets");

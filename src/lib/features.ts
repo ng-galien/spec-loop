@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { isAbsolute, join } from "node:path";
 import Handlebars from "handlebars";
 import { diffFolder } from "./diff.js";
 import { featureFolders, serializeFeature } from "./model.js";
-import { featureDir, featureFile, schemaPath, specDir, templatesDir, type Location } from "./paths.js";
+import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templatesDir, workspaceRoot, type Location } from "./paths.js";
 import { phaseTitle, render } from "./render.js";
 import { firstPhase, nextPhase } from "./schema.js";
 import type { Feature, RenderResult, ValidationError } from "./types.js";
@@ -14,6 +14,8 @@ export interface FeatureSummary {
   id: string;
   name: string;
   folder: string;
+  path: string;
+  corrupted: string | null;
   title: string | null;
   phase: string | null;
   complete: boolean;
@@ -24,13 +26,17 @@ export interface FeatureSummary {
   modified: string;
 }
 
-async function summarize(folder: string, options: Location): Promise<FeatureSummary | null> {
+async function summarize(folder: string, id: string, name: string, options: Location): Promise<FeatureSummary> {
   const file = featureFile(folder, options);
   let json: Feature;
   try {
     json = JSON.parse(await readFile(file, "utf8")) as Feature;
-  } catch {
-    return null;
+  } catch (error) {
+    const modified = await stat(file).then((s) => s.mtime.toISOString(), () => "");
+    return {
+      id, name, folder, path: file, corrupted: (error as Error).message, title: null, phase: null, complete: false,
+      missingCount: 0, missingForNext: [], ownerEdits: "pending", alterations: 1, modified,
+    };
   }
   const now = validate(json);
   const next = nextPhase(now.phase);
@@ -39,6 +45,8 @@ async function summarize(folder: string, options: Location): Promise<FeatureSumm
     id: String(json.id ?? ""),
     name: String(json.name ?? ""),
     folder,
+    path: file,
+    corrupted: null,
     title: typeof json.title === "string" ? json.title : null,
     phase: now.phase,
     complete: now.complete,
@@ -52,11 +60,12 @@ async function summarize(folder: string, options: Location): Promise<FeatureSumm
 
 export async function features(options: Location = {}): Promise<FeatureSummary[]> {
   const out: FeatureSummary[] = [];
-  for (const { folder } of await featureFolders(options)) {
-    const summary = await summarize(folder, options);
-    if (summary) out.push(summary);
-  }
+  for (const { folder, id, name } of await featureFolders(options)) out.push(await summarize(folder, id, name, options));
   return out;
+}
+
+export async function featuresReport(options: Location = {}): Promise<{ root: string; spec: string; features: FeatureSummary[] }> {
+  return { root: workspaceRoot(options), spec: specDir(options), features: await features(options) };
 }
 
 const indexTemplate = Handlebars.create().compile(readFileSync(join(templatesDir, "spec-index.hbs"), "utf8"), { noEscape: true });
@@ -68,6 +77,7 @@ export async function writeSpecIndex(options: Location = {}): Promise<string> {
   }).trim()}\n`;
   await mkdir(specDir(options), { recursive: true });
   await writeFile(join(specDir(options), "README.md"), content);
+  await copyFile(schemaPath, specSchemaCopy(options));
   return "spec/README.md";
 }
 
@@ -81,6 +91,7 @@ export interface CreateResult {
 
 export async function create(name: string, title: string, options: Location & { now?: string } = {}): Promise<CreateResult> {
   const fail = (message: string): CreateResult => ({ ok: false, feature: null, id: null, errors: [{ pointer: "", message, kind: "invalid" }], render: null });
+  if (!options.root || !isAbsolute(options.root)) return fail("create needs root: the absolute path of the project that holds or will hold spec/");
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return fail(`invalid name "${name}": use lowercase words separated by dashes`);
   const existing = await featureFolders(options);
   if (existing.some((f) => f.name === name)) return fail(`a feature named "${name}" already exists`);
@@ -90,12 +101,12 @@ export async function create(name: string, title: string, options: Location & { 
   const now = options.now ?? new Date().toISOString();
   const phase = firstPhase();
   const skeleton: Feature = {
-    $schema: relative(featureDir(folder, options), schemaPath).split("\\").join("/"),
+    $schema: "../feature.schema.json",
     id,
     name,
     title,
     phase,
-    framing: { intent: "", actors: [], scope: { in: [], out: [] }, constraints: [], assumptions: [], questions: [], glossary: [] },
+    framing: { intent: "", actors: [], scope: { in: [], out: [] } },
     lifecycle: { created: now, phaseHistory: [{ phase, date: now, by: "agent" }] },
   };
   await mkdir(featureDir(folder, options), { recursive: true });

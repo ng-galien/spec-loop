@@ -1,5 +1,14 @@
 {
   "name": "spec-loop",
-  "owner": { "name": "Alexandre Boyer" },
-  "plugins": [{ "name": "spec-loop", "source": "./", "description": "Feature model loop: MCP tools and the framing and verify skills." }]
+  "owner": {
+    "name": "Alexandre Boyer"
+  },
+  "description": "spec-loop: a JSON feature model kept by an agent, projected into French Markdown for the owner, with the owner's feedback loop.",
+  "plugins": [
+    {
+      "name": "spec-loop",
+      "source": "./",
+      "description": "Feature model loop: MCP tools and the framing and verify skills."
+    }
+  ]
 }

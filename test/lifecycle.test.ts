@@ -25,6 +25,25 @@ describe("lifecycle", () => {
     expect((await features({ root })).map((f) => f.id)).toEqual(["FEAT-001", "FEAT-002"]);
     expect(await readFile(join(root, "spec", "README.md"), "utf8")).toContain("| FEAT-002 | Export CSV | Cadrage |");
     expect((await create("export-csv", "Doublon", { root })).ok).toBe(false);
+    expect(json.$schema).toBe("../feature.schema.json");
+    expect(JSON.parse(await readFile(join(root, "spec", "feature.schema.json"), "utf8"))["x-phases"]).toBeDefined();
+  });
+
+  it("refuses to create without an absolute root", async () => {
+    expect((await create("export-csv", "Export CSV", { root: "relative/project" })).errors[0]!.message).toContain("absolute path");
+    expect((await create("export-csv", "Export CSV", {})).ok).toBe(false);
+  });
+
+  it("status lists the fields of the phase never set, optional ones included; an empty array counts as addressed", async () => {
+    const root = await workspace();
+    await create("export-csv", "Export CSV", { root, now: NOW });
+    const s = await status("FEAT-002", { root });
+    expect(s.root).toBe(root);
+    expect(s.spec).toBe(join(root, "spec"));
+    expect(s.unaddressed.map((u) => u.pointer)).toEqual(["/framing/constraints", "/framing/assumptions", "/framing/questions", "/framing/glossary"]);
+    expect((await patch("FEAT-002", [{ op: "add", path: "/framing/glossary", value: [] }], { root })).ok).toBe(true);
+    expect((await status("FEAT-002", { root })).unaddressed.map((u) => u.pointer)).not.toContain("/framing/glossary");
+    expect((await status(FEATURE, { root })).unaddressed).toEqual([]);
   });
 
   it("refuses to advance an incomplete phase, and says why", async () => {
@@ -78,10 +97,18 @@ describe("lifecycle", () => {
       { root, now: NOW },
     );
     expect(done.ok).toBe(true);
-    expect(done.patch?.render?.backedUp).toEqual([".spec-loop/overwritten/cadrage.md"]);
+    expect(done.patch?.render?.backedUp).toEqual([".spec-loop/overwritten/2026-10-14T12-00-00-000Z/rendered/cadrage.md"]);
+    expect(done.questions).toEqual(["Q-06"]);
     const s = await status(FEATURE, { root });
     expect(s.ownerEdits.state).toBe("none");
     expect(s.lastVerify).toMatchObject({ date: NOW, applied: 1, reported: [{ pointer: "/framing/scope/out/1" }] });
+    const json = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
+    expect(json.framing.questions.at(-1)).toEqual({
+      id: "Q-06",
+      question: "Modification signalée (rendered/cadrage.md, /framing/scope/out/1) : Exclure SSE élargit le hors-périmètre ; à confirmer.",
+      status: "open",
+    });
+    expect(s.completeness.missing).toContainEqual(expect.objectContaining({ pointer: "/framing/questions/5/status" }));
     expect(await readFile(path, "utf8")).toContain("Lire un élément par son identité ou par son URL.");
     expect(await readFile(path, "utf8")).not.toContain("ni SSE");
   });

@@ -13,7 +13,7 @@ You need a project folder, Node 22 or later, VS Code, and one agent.
 
    | Agent | Command |
    | --- | --- |
-   | Gemini CLI | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y @ng-galien/spec-loop@0.1.0`, or commit `.gemini/settings.json` from `examples/consumer/` |
+   | Gemini CLI | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y @ng-galien/spec-loop@0.1.0`, or commit `.gemini/settings.json` from `examples/consumer/` with your absolute project path in `SPEC_LOOP_ROOT` (Gemini CLI 0.1.12 does not substitute `${workspacePath}` there) |
    | Antigravity CLI | `agy plugin import gemini` after the Gemini line, or `.agents/mcp_config.json` from `examples/consumer/` |
    | Claude Code | `claude mcp add --scope project spec-loop -- npx -y @ng-galien/spec-loop@0.1.0` |
    | Codex | `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y @ng-galien/spec-loop@0.1.0` |
@@ -27,9 +27,9 @@ Until the package is published on npm, replace `npx -y @ng-galien/spec-loop@0.1.
 ### Walkthrough
 
 1. Ask the agent to create a feature: it calls `create`, which writes `spec/FEAT-001-<name>/feature.json` in phase `framing` and renders it. Open `spec/README.md` in the preview.
-2. Run the `framing` skill. The agent asks one question at a time, each with a recommended answer. It writes each answer with `patch`, and `rendered/cadrage.md` updates after every answer.
+2. Run the `framing` skill. The agent asks one question per field of the phase, optional ones included, each with a recommended answer. It writes each answer with `patch`, and `rendered/cadrage.md` updates after every answer. It stops when `status` says the phase is complete and no field is left unaddressed.
 3. Edit a rendered file in VS Code: reword a line, add an exclusion. Keep the `<!-- id: … -->` comments in place.
-4. Ask the agent to verify your changes: the `verify` skill calls `status` and `diff`. It applies the coherent edits, reports the others with the reason, and calls `verify`, which re-renders and records the verification.
+4. Ask the agent to verify your changes: the `verify` skill calls `status` and `diff`. It applies the coherent edits and reports the others with the reason; each reported point becomes an open question. It then calls `verify`, which restores the projection exactly and records the verification.
 5. When the index says the phase is complete and nothing is pending, tell the agent to move on: it calls `phase`.
 
 ## Layout
@@ -44,12 +44,13 @@ src/lib/                        library: validate, render, diff, patch, lifecycl
 src/mcp.ts                      stdio MCP server (bin `spec-loop`)
 test/*.test.ts                  vitest
 spec/README.md                  generated index of features
+spec/feature.schema.json        copy of the schema, target of each feature.json `$schema` (machine-independent)
 spec/FEAT-001-<name>/
   feature.json                  the model (written only by the MCP)
   rendered/                     the projection the owner reads and edits
   assets/                       svg screens referenced by artifacts
   .manifest.json                hash and render time of feature.json, every rendered file and asset
-  .spec-loop/overwritten/       owner files kept when a verify re-renders over them
+  .spec-loop/                   local state, not committed: feature.last.json (last known good model), overwritten/<time>/ (owner files replaced by a verify)
 gemini-extension.json, GEMINI.md, .claude-plugin/, .codex-plugin/, .agents/plugins/, .mcp.json
 examples/consumer/              files a project commits to use spec-loop with the three agents
 ```
@@ -60,20 +61,20 @@ examples/consumer/              files a project commits to use spec-loop with th
 | --- | --- | --- |
 | `learn` | no | Method by topic; `phases` and `fields` are generated from the schema. |
 | `features` | no | One line per feature: id, name, phase, completeness, pending owner edits, last modification. |
-| `status` | no | One feature: phase, completeness (recomputed), pending edits and alterations (recomputed), last verify, phase history. |
+| `status` | no | One feature: resolved root and file, phase, completeness (recomputed), fields of the phase never set, pending edits and alterations (recomputed), last verify, phase history. |
 | `validate` | no | Schema plus coverage checks; every error has a JSON pointer and a kind (`incomplete` or `invalid`). |
 | `diff` | no | Regenerated projection against the disk and the manifest; hunks mapped to block id and pointer; alterations classified. |
-| `create` | yes | Next FEAT number, skeleton in the first phase, rendered. |
+| `create` | yes | Next FEAT number, skeleton in the first phase, rendered; needs an absolute `root`. |
 | `render` | yes | Deterministic projection; refuses while owner edits are unverified. |
 | `patch` | yes | RFC 6902 patch, validated before writing, then re-rendered; `id`, `name`, `phase`, `lifecycle` are protected. |
 | `phase` | yes | Next phase of the schema, only when complete and nothing is pending; records date and author. |
-| `verify` | yes | Applies the coherent edits, records the reported ones, re-renders, writes `lifecycle.lastVerify`. |
+| `verify` | yes | Applies the coherent edits, turns each reported one into an open question, accepts or restores a hand-edited `feature.json`, restores the projection exactly, writes `lifecycle.lastVerify`. |
 
 Read-only tools carry `readOnlyHint: true`, so Codex with `default_tools_approval_mode = "writes"` asks only for writes. Each result carries the same JSON as text `content` and as `structuredContent`. Gemini reads only the text; Claude Code and Codex read the structured part.
 
-**Project root.** Every tool takes `root`. Without it the server uses `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then its working directory:
+**Project root.** Every tool takes `root`. Without it the server uses `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then its working directory, skipping any value that still holds an unexpanded `${…}`. `status` and `features` echo the resolved root and `spec/` path:
 - Claude Code sets `CLAUDE_PROJECT_DIR`.
-- The Gemini extension and the Gemini command line above set `SPEC_LOOP_ROOT`.
+- The Gemini command line above sets `SPEC_LOOP_ROOT`; the Gemini extension sets nothing, so the skills' `root` is what counts.
 - Codex gives neither, hence the `--env` in its line.
 
 The skills always pass `root`.
@@ -97,7 +98,11 @@ The skills always pass `root`.
 - Questions carry a `recommendation` field (not in the research skeleton), needed by the interview method. Questions are `open` or `answered`, and an open question keeps any phase incomplete.
 - Coverage checks are named in code and bound to phases in `x-phases[].checks`. Their texts live in `x-checks`. `src/` holds no phase name.
 - Features are numbered `FEAT-001`; the folder is `FEAT-001-<name>`. Tools accept the id, the name or the folder. Cross-feature references are `FEAT-001/REQ-002`.
-- Owner edits are never lost. `render` and `patch` refuse to overwrite them. `verify` requires `applied + reported` to equal the pending count, keeps the owner's files in `.spec-loop/overwritten/`, and records `lastVerify`.
+- Owner edits are never lost. `render` and `patch` refuse to write while anything is pending: an edited, deleted or added rendered file, an edited svg, or a hand-edited `feature.json`. `verify` requires `applied + reported` to equal the pending count. It keeps the owner's files under `.spec-loop/overwritten/<time>/`, removes files added by hand, recreates deleted ones, and records `lastVerify`.
+- A hand-edited `feature.json` is accepted by `verify` only with a reason (recorded in `lifecycle.acceptedChanges`) and only if `phase`, `id`, `name` and `lifecycle` are untouched; otherwise it is restored from `.spec-loop/feature.last.json`. A hand-changed phase therefore cannot bypass the `phase` gate.
+- Every point `verify` reports to the owner becomes an open question in `framing.questions`, which keeps the phase incomplete until it is answered.
+- `status.unaddressed` lists the fields of the current phase never set, optional ones included; an explicit empty array counts as addressed. It is the framing skill's stop condition together with `complete`.
+- `.spec-loop/` is local state and is ignored by git; on a fresh checkout, a hand-edited `feature.json` can only be accepted.
 - Every alteration (rendered file, svg, `feature.json`, missing or extra file) counts as pending until a `verify` accounts for it, so `phase` cannot advance over an unread change.
 - Artifacts render once, right after the first requirement or criterion they illustrate. An artifact with no id renders in the framing document after the intent.
 - Rendered file names are French (`cadrage.md`, `exigences.md`, `criteres.md`, `ancrage.md`, `verification.md`, `decisions.md`), as they are owner-facing. Criteria use the French Gherkin keywords (Règle, Exemple, Soit, Et, Quand, Alors).

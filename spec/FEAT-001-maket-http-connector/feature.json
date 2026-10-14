@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/feature.schema.json",
+  "$schema": "../feature.schema.json",
   "id": "FEAT-001",
   "name": "maket-http-connector",
   "title": "Connecteur HTTP pour les espaces structurés de Maket",

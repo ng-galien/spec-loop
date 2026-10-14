@@ -264,14 +264,26 @@ export async function listRenderedOnDisk(folder: string, options: Location = {})
   return out.sort();
 }
 
-export async function ownerEditedFiles(folder: string, next: RenderedFile[], feature: Feature, options: Location = {}): Promise<string[]> {
+export interface GuardOptions extends Location {
+  trustedFeature?: boolean;
+}
+
+export async function ownerEditedFiles(folder: string, next: RenderedFile[], feature: Feature, options: GuardOptions = {}): Promise<string[]> {
   const manifest = await readManifest(folder, options);
+  const edited: string[] = [];
+  if (manifest?.feature && !options.trustedFeature) {
+    const raw = await readOptional(featureFile(folder, options));
+    if (raw === null || sha256(raw) !== manifest.feature.hash) edited.push("feature.json");
+  }
   const nextByPath = new Map(next.map((f) => [f.path, f.content]));
   const paths = new Set([...(await listRenderedOnDisk(folder, options)), ...Object.keys(manifest?.files ?? {})]);
-  const edited: string[] = [];
   for (const path of [...paths].sort()) {
     const disk = await readOptional(join(renderedDir(folder, options), path));
-    if (disk === null || disk === nextByPath.get(path)) continue;
+    if (disk === null) {
+      if (manifest?.files[path]) edited.push(path);
+      continue;
+    }
+    if (disk === nextByPath.get(path)) continue;
     if (manifest?.files[path]?.hash !== sha256(disk)) edited.push(path);
   }
   const assets = await assetHashes(folder, feature, options);
@@ -282,9 +294,20 @@ export async function ownerEditedFiles(folder: string, next: RenderedFile[], fea
   return edited;
 }
 
-export interface RenderOptions extends Location {
+export interface RenderOptions extends GuardOptions {
   force?: boolean;
   now?: string;
+}
+
+export const stamp = (now: string) => now.replace(/[:.]/g, "-");
+export const lastGoodPath = (folder: string, options: Location) => join(stateDir(folder, options), "feature.last.json");
+
+export async function backup(folder: string, relative: string, content: string, now: string, options: Location): Promise<string> {
+  const rel = `.spec-loop/overwritten/${stamp(now)}/${relative}`;
+  const target = join(featureDir(folder, options), rel);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, content);
+  return rel;
 }
 
 export async function render(ref: string, options: RenderOptions = {}): Promise<RenderResult> {
@@ -295,19 +318,21 @@ export async function render(ref: string, options: RenderOptions = {}): Promise<
   const edited = await ownerEditedFiles(folder, files, json, options);
   const result: RenderResult = { ok: true, feature: folder, files: [], removed: [], backedUp: [], refused: [], validation };
   if (edited.length > 0 && !options.force) return { ...result, ok: false, refused: edited };
+  const now = options.now ?? new Date().toISOString();
   const base = renderedDir(folder, options);
+  const produced = new Set(files.map((f) => f.path));
   for (const path of edited.filter((p) => p.endsWith(".md"))) {
     const disk = await readOptional(join(base, path));
     if (disk === null) continue;
-    const backup = join(stateDir(folder, options), "overwritten", path);
-    await mkdir(dirname(backup), { recursive: true });
-    await writeFile(backup, disk);
-    result.backedUp.push(`.spec-loop/overwritten/${path}`);
+    result.backedUp.push(await backup(folder, `rendered/${path}`, disk, now, options));
+    if (!produced.has(path)) {
+      await rm(join(base, path), { force: true });
+      result.removed.push(path);
+    }
   }
-  const produced = new Set(files.map((f) => f.path));
   const manifest = await readManifest(folder, options);
   for (const path of Object.keys(manifest?.files ?? {}).sort()) {
-    if (produced.has(path)) continue;
+    if (produced.has(path) || result.removed.includes(path)) continue;
     await rm(join(base, path), { force: true });
     result.removed.push(path);
   }
@@ -320,9 +345,11 @@ export async function render(ref: string, options: RenderOptions = {}): Promise<
     }
     result.files.push({ path: file.path, source: file.source, template: file.template, changed });
   }
-  const now = options.now ?? new Date().toISOString();
   const assets = Object.entries(await assetHashes(folder, json, options)).filter((e): e is [string, string] => e[1] !== null);
-  const featureHash = sha256(await readFile(featureFile(folder, options)));
+  const featureRaw = await readFile(featureFile(folder, options), "utf8");
+  const featureHash = sha256(featureRaw);
+  await mkdir(stateDir(folder, options), { recursive: true });
+  await writeFile(lastGoodPath(folder, options), featureRaw);
   const nextManifest: Manifest = {
     feature: entry(manifest?.feature, featureHash, now),
     files: Object.fromEntries(files.map((f) => [f.path, entry(manifest?.files[f.path], sha256(f.content), now)])),

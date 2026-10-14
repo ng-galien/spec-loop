@@ -2,7 +2,7 @@
 
 This guide says how to package spec-loop (a stdio MCP server plus Agent Skills) and how to wire it into three agents: Gemini CLI first, then Claude Code and Codex. Every claim names its source and the date it was read (14 October 2026). Section 8 lists what could not be verified.
 
-State of the repository when this was written: tools `validate`, `render`, `diff`, `patch`, `learn`, `features`, `create`, each with an `outputSchema`, none with annotations; skills `cadrage` and `verifier` (directories present, `SKILL.md` not yet written); workspace root resolved as tool argument `root`, then `SPEC_LOOP_ROOT`, then the server's working directory.
+Current state of the repository: ten tools (`learn`, `features`, `status`, `create`, `validate`, `render`, `diff`, `patch`, `phase`, `verify`), each with an `outputSchema`, the read-only ones annotated `readOnlyHint: true`; skills `framing` and `verify`; workspace root resolved as tool argument `root`, then `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then the server's working directory (a value still holding an unexpanded `${…}` is skipped).
 
 ## 0. Two facts that change the plan
 
@@ -97,8 +97,8 @@ spec-loop/
 ├── package.json                    # "@OWNER/spec-loop", bin {"spec-loop": "dist/mcp.js"}, files [...]
 ├── src/  dist/  schema/  templates/
 ├── skills/
-│   ├── cadrage/SKILL.md
-│   └── verifier/SKILL.md
+│   ├── framing/SKILL.md
+│   └── verify/SKILL.md
 ├── GEMINI.md                       # short: what spec-loop is, call `learn` first
 ├── gemini-extension.json
 ├── .claude-plugin/
@@ -128,8 +128,7 @@ Key file contents (replace `OWNER` and the version):
   "mcpServers": {
     "spec-loop": {
       "command": "npx",
-      "args": ["-y", "@OWNER/spec-loop@0.1.0"],
-      "env": { "SPEC_LOOP_ROOT": "${workspacePath}" }
+      "args": ["-y", "@OWNER/spec-loop@0.1.0"]
     }
   }
 }
@@ -198,18 +197,18 @@ default_tools_approval_mode = "writes"
 
 **Gemini CLI**
 1. `gemini extensions install https://github.com/OWNER/spec-loop` (or, in a consumer project, the committed `.gemini/settings.json` and `.agents/skills/`); restart.
-2. `/mcp` lists `spec-loop` with seven tools; `/skills list` shows `cadrage` and `verifier`.
-3. Ask "list the spec-loop features", then run the `cadrage` skill on a new feature. Antigravity users: `agy plugin import gemini`, then the same checks.
+2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows `framing` and `verify`.
+3. Ask "list the spec-loop features", then run the `framing` skill on a new feature. Antigravity users: `agy plugin import gemini`, then the same checks.
 
 **Claude Code**
 1. `claude plugin marketplace add OWNER/spec-loop` then `claude plugin install spec-loop@spec-loop`; or, in a consumer project, commit `.mcp.json` and `.claude/skills/` and accept the prompt.
 2. `claude mcp list` or `/mcp` shows `spec-loop` connected; `/plugin` shows the plugin and its skills.
-3. `/spec-loop:cadrage` (plugin) or `/cadrage` (project skill).
+3. `/spec-loop:framing` (plugin) or `/framing` (project skill).
 
 **Codex**
 1. `codex plugin marketplace add OWNER/spec-loop`, then install from `/plugins`; or `codex mcp add spec-loop -- npx -y @OWNER/spec-loop@0.1.0` plus `.agents/skills/` in the project; start a new session.
 2. `codex mcp list` and `/mcp` show the server; `/skills` lists the two skills.
-3. `$cadrage` on a new feature.
+3. `$framing` on a new feature.
 
 ## 8. Pitfalls
 
@@ -235,7 +234,7 @@ default_tools_approval_mode = "writes"
 - The working directory each client gives a stdio server, and whether Codex exposes any workspace variable.
 - How Claude Code and Codex treat `structuredContent` (community reports only).
 - Whether Codex accepts `"./"` as a plugin path in a marketplace, and whether a Codex plugin `.mcp.json` accepts `startup_timeout_sec`.
-- Whether Gemini substitutes `${workspacePath}` inside `env` (documented for the manifest in general).
+- Whether Gemini substitutes `${workspacePath}` inside `env`: the day-one replay with Gemini CLI 0.1.12 showed it does not (the server created a literal `${workspacePath}/spec` folder). The manifest no longer sets it, the server skips any root value still holding `${`, and the skills pass `root`.
 - Antigravity CLI's global MCP path (sources disagree between `~/.gemini/config/mcp_config.json` and others) and whether it still reads `gemini-extension.json` directly.
 - Windows behaviour of `npx` under Gemini CLI and Codex.
 - The extent of the Gemini CLI retirement for paid and enterprise accounts (third-party sources only).

@@ -101,7 +101,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "Relative path to this schema, for editor completion."
+      "description": "Relative path to the copy of this schema in spec/, for editor completion."
     },
     "id": {
       "$ref": "#/$defs/featureId",
@@ -1164,6 +1164,28 @@
                     "description": "Why it was reported instead of applied, in French."
                   }
                 }
+              }
+            }
+          }
+        },
+        "acceptedChanges": {
+          "type": "array",
+          "description": "Hand edits of feature.json accepted by verify, each with the reason given.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "date",
+              "reason"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date",
+                "description": "When the edit was accepted."
+              },
+              "reason": {
+                "$ref": "#/$defs/text",
+                "description": "Why it was accepted, in French."
               }
             }
           }

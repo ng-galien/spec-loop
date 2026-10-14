@@ -58,8 +58,13 @@ export async function resolveFeature(ref: string, options: Location = {}): Promi
 }
 
 export async function loadFeature(folder: string, options: Location = {}): Promise<Feature> {
-  const raw = await readFile(featureFile(folder, options), "utf8");
-  const parsed: unknown = JSON.parse(raw);
+  const path = featureFile(folder, options);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    throw new Error(`${path} cannot be read as JSON: ${(error as Error).message}`);
+  }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`spec/${folder}/feature.json must hold a JSON object`);
   }

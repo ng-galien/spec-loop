@@ -17,13 +17,15 @@ Pass `root`, the absolute path of the project, on every spec-loop call.
 
 ## The interview
 
-Fill each field of the current phase as its description in the schema says (`learn` topic `fields`). Ask one question per field, with a recommended answer. Never restate the field list to the owner: ask about the next missing pointer from `status`.
+Fill each field of the current phase as its description in the schema says (`learn` topic `fields`), required or not. Ask one question per field, with a recommended answer. Your agenda is `status`: first the pointers of `completeness.missing`, then those of `unaddressed` (optional fields never set). Never restate the field list to the owner.
+
+When the owner says a field does not apply (no assumption, no glossary term), write it as an empty array with `patch`: an explicit empty array counts as addressed.
 
 For every question:
 
 - Explore first. When the repository, its documentation or another feature answers the point, read it and turn the question into a proposal ("Je propose …, d'accord ?").
 - Ask one question only, in French, naming what it settles, with your recommendation and its reason.
-- Follow the dependencies: intent first, then actors, scope, constraints, assumptions, glossary. When an answer opens a branch, resolve it before moving on.
+- Follow the dependencies: intent first, then actors, scope, constraints, assumptions, questions, glossary. When an answer opens a branch, resolve it before moving on.
 - Write the answer at once with `patch`, then read `validation` in the result. If a patch is refused, fix the operation; never write the file another way.
 - A point the owner cannot settle becomes a question object with status `open` and your recommendation.
 - Keep the granularity of the phase. A requirement, a criterion or a code location given now is noted as a question or a scope line for its own phase.
@@ -33,4 +35,4 @@ After each answer, tell the owner in one sentence what changed and in which docu
 
 ## Ending
 
-Stop when `status` reports `completeness.state: "complete"` and no owner edit is pending. Say so to the owner and ask whether to move to the next phase. On a yes, call `phase` with `by: "owner"`. If `phase` refuses, report its reasons.
+Stop when `status` reports `completeness.state: "complete"`, an empty `unaddressed` list, and no owner edit pending. Say so to the owner and ask whether to move to the next phase. On a yes, call `phase` with `by: "owner"`. If `phase` refuses, report its reasons.

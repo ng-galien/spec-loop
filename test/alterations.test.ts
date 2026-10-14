@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { diff, features, patch, render, status } from "../src/lib/index.js";
+import { advancePhase, diff, features, featuresReport, patch, render, status, verify } from "../src/lib/index.js";
 import { FEATURE, inFolder, workspace } from "./helpers.js";
 
 async function withSvg() {
@@ -16,6 +16,8 @@ async function withSvg() {
   expect(result.ok).toBe(true);
   return root;
 }
+
+const NOW = "2026-10-14T12:00:00.000Z";
 
 const kinds = async (root: string) => (await diff(FEATURE, { root })).alterations.map((a) => [a.kind, a.path, a.ids]);
 
@@ -73,5 +75,74 @@ describe("alterations", () => {
     expect((await features({ root }))[0]).toMatchObject({ id: "FEAT-001", ownerEdits: "pending", alterations: 1 });
     const result = await render(FEATURE, { root });
     expect(result.refused).toEqual(["assets/screen.svg"]);
+  });
+
+  it("verify removes a file added by hand in rendered/, after saving it, and the phase can advance again", async () => {
+    const root = await withSvg();
+    await writeFile(inFolder(root, "rendered", "notes.md"), "# Mes notes\n");
+    const result = await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root, now: NOW });
+    expect(result.ok).toBe(true);
+    expect(result.patch?.render?.removed).toEqual(["notes.md"]);
+    expect(await readFile(inFolder(root, ".spec-loop", "overwritten", "2026-10-14T12-00-00-000Z", "rendered", "notes.md"), "utf8")).toBe("# Mes notes\n");
+    await expect(readFile(inFolder(root, "rendered", "notes.md"), "utf8")).rejects.toThrow();
+    expect((await status(FEATURE, { root })).ownerEdits.state).toBe("none");
+  });
+
+  it("a deleted rendered file is an owner edit: render and patch refuse, verify recreates it", async () => {
+    const root = await withSvg();
+    await rm(inFolder(root, "rendered", "cadrage.md"));
+    expect((await render(FEATURE, { root })).refused).toEqual(["cadrage.md"]);
+    expect((await patch(FEATURE, [{ op: "add", path: "/framing/glossary/-", value: { term: "curseur", definition: "Position opaque renvoyée par l'API." } }], { root })).ok).toBe(false);
+    expect((await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).ok).toBe(true);
+    expect(await readFile(inFolder(root, "rendered", "cadrage.md"), "utf8")).toContain("# Cadrage");
+  });
+
+  it("a hand-edited feature.json blocks patch, render and phase until verify accepts it with a reason", async () => {
+    const root = await withSvg();
+    const json = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
+    json.framing.intent = `${json.framing.intent} Ajout à la main.`;
+    await writeFile(inFolder(root, "feature.json"), JSON.stringify(json, null, 2));
+    expect((await render(FEATURE, { root })).refused).toEqual(["feature.json"]);
+    const refused = await patch(FEATURE, [{ op: "replace", path: "/title", value: "Autre titre" }], { root });
+    expect(refused.errors[0]!.message).toContain("feature.json was changed outside the MCP");
+    expect((await advancePhase(FEATURE, { root })).ok).toBe(false);
+    expect((await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).errors[0]).toContain("featureChange");
+    const accepted = await verify(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "Précision voulue par le propriétaire." } }, { root, now: NOW });
+    expect(accepted.ok).toBe(true);
+    const after = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
+    expect(after.framing.intent).toContain("Ajout à la main.");
+    expect(after.lifecycle.acceptedChanges).toEqual([{ date: NOW, reason: "Précision voulue par le propriétaire." }]);
+    expect((await status(FEATURE, { root })).ownerEdits.state).toBe("none");
+  });
+
+  it("a phase changed by hand in feature.json cannot be accepted, only restored", async () => {
+    const root = await withSvg();
+    const before = await readFile(inFolder(root, "feature.json"), "utf8");
+    const json = JSON.parse(before);
+    json.phase = "requirements";
+    json.requirements = [];
+    await writeFile(inFolder(root, "feature.json"), JSON.stringify(json, null, 2));
+    expect((await advancePhase(FEATURE, { root })).ok).toBe(false);
+    const accept = await verify(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "x" } }, { root });
+    expect(accept.errors[0]).toContain("phase changed by hand cannot be accepted");
+    const restore = await verify(
+      FEATURE,
+      { ops: [], applied: 0, reported: [{ file: "feature.json", pointer: "/phase", reason: "La phase se change par l'outil phase." }], featureChange: { action: "restore", reason: "Phase changée à la main." } },
+      { root, now: NOW },
+    );
+    expect(restore.ok).toBe(true);
+    const restored = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
+    expect(restored.phase).toBe("framing");
+    expect(restored.requirements).toBeUndefined();
+    expect(await readFile(inFolder(root, ".spec-loop", "overwritten", "2026-10-14T12-00-00-000Z", "feature.json"), "utf8")).toContain('"requirements"');
+  });
+
+  it("lists a corrupted feature.json with its path, and status names the file", async () => {
+    const root = await withSvg();
+    await writeFile(inFolder(root, "feature.json"), "{ broken");
+    const report = await featuresReport({ root });
+    expect(report.root).toBe(root);
+    expect(report.features[0]).toMatchObject({ id: "FEAT-001", corrupted: expect.any(String), path: inFolder(root, "feature.json") });
+    await expect(status(FEATURE, { root })).rejects.toThrow(inFolder(root, "feature.json"));
   });
 });

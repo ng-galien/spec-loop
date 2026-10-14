@@ -1,0 +1,1196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec-loop.local/schema/feature.schema.json",
+  "title": "spec-loop feature",
+  "description": "One feature, maintained by an agent through the spec-loop MCP server and projected into French Markdown for the owner.",
+  "x-phases": [
+    {
+      "name": "framing",
+      "title": "Cadrage",
+      "summary": "intention, acteurs, périmètre, contraintes, hypothèses, questions, glossaire",
+      "description": "Fix what the feature is for, who takes part and where it stops, before any requirement is written.",
+      "produces": [
+        "framing"
+      ],
+      "granularity": "One paragraph of intent, one line per scope item, one object per actor, constraint, assumption, question and glossary term.",
+      "checks": [
+        "noOpenQuestion"
+      ]
+    },
+    {
+      "name": "requirements",
+      "title": "Exigences",
+      "summary": "une phrase EARS par exigence, avec sa priorité",
+      "description": "State each observable response of the system as one EARS sentence with a priority.",
+      "produces": [
+        "requirements"
+      ],
+      "granularity": "One EARS sentence, one observable response, per requirement.",
+      "checks": []
+    },
+    {
+      "name": "acceptance",
+      "title": "Acceptation",
+      "summary": "un exemple Soit/Quand/Alors par critère, groupés par exigence",
+      "description": "Give each requirement concrete Given/When/Then examples that show it satisfied or violated.",
+      "produces": [
+        "criteria"
+      ],
+      "granularity": "One example with values and exactly one action per criterion.",
+      "checks": [
+        "requirementHasCriterion"
+      ]
+    },
+    {
+      "name": "anchoring",
+      "title": "Ancrage",
+      "summary": "les endroits du code qui réalisent les exigences",
+      "description": "Point at the places in the code that realize the requirements, and say how each one changes.",
+      "produces": [
+        "anchors"
+      ],
+      "granularity": "One file path, plus a symbol when there is one, per anchor.",
+      "checks": [
+        "mustRequirementHasAnchor"
+      ]
+    },
+    {
+      "name": "verification",
+      "title": "Vérification",
+      "summary": "les tests qui vérifient les critères, et la couverture",
+      "description": "Bind every criterion to the tests that verify it, named by the criterion id.",
+      "produces": [
+        "tests"
+      ],
+      "granularity": "One test per file plus name, as the test runner reports it.",
+      "checks": [
+        "criterionHasTest",
+        "testNameCarriesCriterion"
+      ]
+    },
+    {
+      "name": "done",
+      "title": "Terminé",
+      "summary": "toutes les règles de couverture tiennent",
+      "description": "Close the feature once every coverage rule holds and every test of a MUST requirement passes.",
+      "produces": [],
+      "granularity": "No new object.",
+      "checks": [
+        "mustTestsPassing"
+      ]
+    }
+  ],
+  "x-checks": {
+    "noOpenQuestion": "Every question of the framing is answered.",
+    "requirementHasCriterion": "Every requirement has at least one criterion.",
+    "mustRequirementHasAnchor": "Every MUST requirement is realized by at least one anchor.",
+    "criterionHasTest": "Every criterion is verified by at least one test.",
+    "testNameCarriesCriterion": "Every test name contains each criterion id it verifies.",
+    "mustTestsPassing": "Every test verifying a criterion of a MUST requirement has status passing."
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "title",
+    "phase",
+    "framing",
+    "lifecycle"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Relative path to the copy of this schema in spec/, for editor completion."
+    },
+    "id": {
+      "$ref": "#/$defs/featureId",
+      "description": "Stable feature id, assigned by the create tool.",
+      "examples": [
+        "FEAT-001"
+      ]
+    },
+    "name": {
+      "$ref": "#/$defs/featureName",
+      "description": "Kebab-case name of the feature, part of its folder name.",
+      "examples": [
+        "maket-http-connector"
+      ]
+    },
+    "title": {
+      "$ref": "#/$defs/text",
+      "description": "Title shown to the owner, in French.",
+      "examples": [
+        "Connecteur HTTP pour les espaces structurés de Maket"
+      ]
+    },
+    "phase": {
+      "enum": [
+        "framing",
+        "requirements",
+        "acceptance",
+        "anchoring",
+        "verification",
+        "done"
+      ],
+      "description": "Current phase, changed only by the phase tool; x-phases gives the order and purpose of each."
+    },
+    "framing": {
+      "$ref": "#/$defs/framing",
+      "description": "What the feature is for, who takes part and where it stops."
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/requirement"
+      },
+      "description": "Observable responses of the system, one EARS sentence each."
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/criterion"
+      },
+      "description": "Concrete Given/When/Then examples, each bound to one requirement."
+    },
+    "anchors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/anchor"
+      },
+      "description": "Places in the code that realize requirements."
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/test"
+      },
+      "description": "Executable checks that verify criteria."
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      },
+      "description": "Decisions with their context and consequences, allowed in every phase."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "description": "Diagrams and screens, allowed in every phase and rendered next to what they illustrate."
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/lifecycle",
+      "description": "Creation date, phase history and last verification, written only by the create, phase and verify tools."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "framing"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "requirements": false,
+          "criteria": false,
+          "anchors": false,
+          "tests": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "requirements"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "criteria": false,
+          "anchors": false,
+          "tests": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "acceptance"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "anchors": false,
+          "tests": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "const": "anchoring"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "tests": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "requirements",
+              "acceptance",
+              "anchoring",
+              "verification",
+              "done"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "requirements"
+        ],
+        "properties": {
+          "requirements": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "acceptance",
+              "anchoring",
+              "verification",
+              "done"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "criteria"
+        ],
+        "properties": {
+          "criteria": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "anchoring",
+              "verification",
+              "done"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "anchors"
+        ],
+        "properties": {
+          "anchors": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "phase": {
+            "enum": [
+              "verification",
+              "done"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "tests"
+        ],
+        "properties": {
+          "tests": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "featureId": {
+      "type": "string",
+      "pattern": "^FEAT-\\d{3}$"
+    },
+    "featureName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "reqId": {
+      "type": "string",
+      "pattern": "^REQ-\\d{3}$"
+    },
+    "acId": {
+      "type": "string",
+      "pattern": "^AC-\\d{3}\\.\\d+$"
+    },
+    "ancId": {
+      "type": "string",
+      "pattern": "^ANC-\\d{2,3}$"
+    },
+    "decId": {
+      "type": "string",
+      "pattern": "^DEC-\\d{2,3}$"
+    },
+    "artId": {
+      "type": "string",
+      "pattern": "^ART-\\d{2,3}$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "anyRef": {
+      "type": "string",
+      "pattern": "^(FEAT-\\d{3}/)?(REQ-\\d{3}|AC-\\d{3}\\.\\d+|ANC-\\d{2,3}|DEC-\\d{2,3}|ART-\\d{2,3}|ACT-\\d{2}|CON-\\d{2}|ASM-\\d{2}|Q-\\d{2})$"
+    },
+    "framing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intent",
+        "actors",
+        "scope"
+      ],
+      "properties": {
+        "intent": {
+          "$ref": "#/$defs/text",
+          "description": "The problem and the outcome wanted, in one French paragraph.",
+          "examples": [
+            "Brancher une API REST sur un espace de travail demande aujourd'hui du code propre à cette API ; le résultat voulu est un connecteur décrit par configuration."
+          ]
+        },
+        "actors": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Humans or systems that interact with the feature.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^ACT-\\d{2}$",
+                "description": "Stable actor id.",
+                "examples": [
+                  "ACT-01"
+                ]
+              },
+              "name": {
+                "$ref": "#/$defs/text",
+                "description": "Name of the actor, in French.",
+                "examples": [
+                  "L'API externe"
+                ]
+              },
+              "description": {
+                "$ref": "#/$defs/text",
+                "description": "What the actor does with the feature, in French."
+              }
+            }
+          }
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "in",
+            "out"
+          ],
+          "description": "Explicit inclusions and exclusions.",
+          "properties": {
+            "in": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/text"
+              },
+              "description": "What the feature covers, one French line per item.",
+              "examples": [
+                [
+                  "Lire un élément par son identité."
+                ]
+              ]
+            },
+            "out": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/text"
+              },
+              "description": "What the feature leaves out on purpose, one French line per item.",
+              "examples": [
+                [
+                  "Authentification OAuth interactive."
+                ]
+              ]
+            }
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Non-negotiable conditions on the solution.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^CON-\\d{2}$",
+                "description": "Stable constraint id.",
+                "examples": [
+                  "CON-01"
+                ]
+              },
+              "statement": {
+                "$ref": "#/$defs/text",
+                "description": "The condition, in one French sentence.",
+                "examples": [
+                  "Aucun secret n'est écrit dans la configuration."
+                ]
+              }
+            }
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Facts taken as true that later work could invalidate.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "statement"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^ASM-\\d{2}$",
+                "description": "Stable assumption id.",
+                "examples": [
+                  "ASM-01"
+                ]
+              },
+              "statement": {
+                "$ref": "#/$defs/text",
+                "description": "The fact assumed, in one French sentence."
+              }
+            }
+          }
+        },
+        "questions": {
+          "type": "array",
+          "description": "Unresolved points, each with a recommended answer.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "question",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^Q-\\d{2}$",
+                "description": "Stable question id.",
+                "examples": [
+                  "Q-01"
+                ]
+              },
+              "question": {
+                "$ref": "#/$defs/text",
+                "description": "The question, in French."
+              },
+              "recommendation": {
+                "$ref": "#/$defs/text",
+                "description": "The answer the agent recommends, with its reason, in French."
+              },
+              "status": {
+                "enum": [
+                  "open",
+                  "answered"
+                ],
+                "description": "Whether the owner has answered."
+              },
+              "answer": {
+                "$ref": "#/$defs/text",
+                "description": "The owner's answer, in French."
+              },
+              "about": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/anyRef"
+                },
+                "description": "Ids of the objects the question concerns.",
+                "examples": [
+                  [
+                    "CON-03"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        "glossary": {
+          "type": "array",
+          "description": "Domain words of this feature, with their meaning and the synonyms to avoid.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "term",
+              "definition"
+            ],
+            "properties": {
+              "term": {
+                "$ref": "#/$defs/text",
+                "description": "The word to use.",
+                "examples": [
+                  "révision"
+                ]
+              },
+              "definition": {
+                "$ref": "#/$defs/text",
+                "description": "Its meaning in this feature, in one French sentence."
+              },
+              "avoid": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/text"
+                },
+                "description": "Synonyms not to use.",
+                "examples": [
+                  [
+                    "version"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "pattern",
+        "statement",
+        "priority",
+        "rationale"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/reqId",
+          "description": "Stable requirement id, never reused.",
+          "examples": [
+            "REQ-001"
+          ]
+        },
+        "pattern": {
+          "enum": [
+            "ubiquitous",
+            "event",
+            "state",
+            "unwanted",
+            "optional",
+            "complex"
+          ],
+          "description": "EARS pattern, which fixes the opening keyword of the statement (The, When, While, If…then, Where, While…when)."
+        },
+        "statement": {
+          "type": "string",
+          "pattern": "\\bSHALL\\b",
+          "description": "One EARS sentence with the system as subject and SHALL before its single observable response.",
+          "examples": [
+            "The connector SHALL send the secret read from the configured environment variable in every request.",
+            "When the agent lists a workspace, the connector SHALL follow the API cursor until the requested page is filled.",
+            "While the workspace is read-only, the connector SHALL refuse every write.",
+            "If the API answers 412 to a PUT, then the connector SHALL report a stale revision to the agent.",
+            "Where polling is configured, the connector SHALL query the API at the configured interval.",
+            "While polling is configured, when the API reports a changed item, the connector SHALL refresh that item."
+          ]
+        },
+        "priority": {
+          "enum": [
+            "MUST",
+            "SHOULD",
+            "MAY"
+          ],
+          "description": "RFC 2119 priority: MUST binding, SHOULD goal, MAY permitted."
+        },
+        "rationale": {
+          "$ref": "#/$defs/text",
+          "description": "Why the requirement exists, in French."
+        },
+        "invariant": {
+          "type": "boolean",
+          "description": "True when the requirement holds in every state."
+        },
+        "source": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/anyRef"
+              },
+              {
+                "$ref": "#/$defs/text"
+              }
+            ]
+          },
+          "description": "Ids or references the requirement comes from.",
+          "examples": [
+            [
+              "ACT-02",
+              "CON-03"
+            ]
+          ]
+        }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "requirement",
+        "title",
+        "given",
+        "when",
+        "then"
+      ],
+      "examples": [
+        {
+          "id": "AC-002.1",
+          "requirement": "REQ-002",
+          "title": "révision périmée",
+          "given": [
+            "un élément de révision 3",
+            "l'API est à la révision 4"
+          ],
+          "when": "l'agent écrit l'élément",
+          "then": [
+            "l'agent reçoit une révision périmée"
+          ]
+        }
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/acId",
+          "description": "Stable criterion id carrying the number of its requirement.",
+          "examples": [
+            "AC-001.2"
+          ]
+        },
+        "requirement": {
+          "$ref": "#/$defs/reqId",
+          "description": "The one requirement this criterion illustrates."
+        },
+        "title": {
+          "$ref": "#/$defs/text",
+          "description": "Short French name of the example."
+        },
+        "given": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "description": "Preconditions with concrete values, in French."
+        },
+        "when": {
+          "$ref": "#/$defs/text",
+          "description": "The single action, in French."
+        },
+        "then": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "description": "Observable outcomes, in French."
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Optional table of values, one object per row with the same keys."
+        }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "path",
+        "change",
+        "realizes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ancId",
+          "description": "Stable anchor id.",
+          "examples": [
+            "ANC-01"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "module",
+            "symbol",
+            "interface",
+            "schema",
+            "route",
+            "config"
+          ],
+          "description": "What the anchor points at."
+        },
+        "path": {
+          "$ref": "#/$defs/text",
+          "description": "Repository-relative file or directory.",
+          "examples": [
+            "src/connectors/http.ts"
+          ]
+        },
+        "symbol": {
+          "$ref": "#/$defs/text",
+          "description": "Qualified name inside the file, when there is one.",
+          "examples": [
+            "HttpConnector.list"
+          ]
+        },
+        "change": {
+          "enum": [
+            "add",
+            "modify",
+            "remove"
+          ],
+          "description": "How the code at this place changes."
+        },
+        "realizes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/reqId"
+          },
+          "description": "Requirements realized here."
+        },
+        "note": {
+          "$ref": "#/$defs/text",
+          "description": "What to know about this place, in French."
+        }
+      }
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "name",
+        "framework",
+        "verifies"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/text",
+          "description": "Repository-relative test file.",
+          "examples": [
+            "test/http-connector.test.ts"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "AC-\\d{3}\\.\\d+|ac_\\d{3}_\\d+",
+          "description": "Test name as the runner reports it, starting with the criterion id.",
+          "examples": [
+            "AC-002.1 reports a stale revision on 412"
+          ]
+        },
+        "framework": {
+          "enum": [
+            "vitest",
+            "playwright",
+            "pytest",
+            "junit",
+            "cucumber",
+            "other"
+          ],
+          "description": "Test runner."
+        },
+        "level": {
+          "enum": [
+            "unit",
+            "integration",
+            "e2e"
+          ],
+          "description": "Test level."
+        },
+        "method": {
+          "enum": [
+            "test",
+            "inspection",
+            "demonstration",
+            "analysis"
+          ],
+          "description": "Verification method, test unless the criterion cannot be automated."
+        },
+        "verifies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/acId"
+          },
+          "description": "Criteria this test verifies."
+        },
+        "status": {
+          "enum": [
+            "missing",
+            "failing",
+            "passing"
+          ],
+          "description": "Last known result, written by the agent from the runner output."
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "status",
+        "context",
+        "decision",
+        "consequences",
+        "affects"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/decId",
+          "description": "Stable decision id.",
+          "examples": [
+            "DEC-01"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/text",
+          "description": "Short French title."
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "accepted",
+            "superseded"
+          ],
+          "description": "Where the decision stands."
+        },
+        "context": {
+          "$ref": "#/$defs/text",
+          "description": "The forces at play, in French."
+        },
+        "decision": {
+          "$ref": "#/$defs/text",
+          "description": "What is decided, in French."
+        },
+        "consequences": {
+          "$ref": "#/$defs/text",
+          "description": "What follows from it, in French."
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "description": "Options considered and set aside."
+        },
+        "affects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/anyRef"
+          },
+          "description": "Ids of the objects the decision affects."
+        },
+        "supersededBy": {
+          "$ref": "#/$defs/decId",
+          "description": "The decision that replaces this one."
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "format",
+        "title",
+        "illustrates"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "format": {
+              "enum": [
+                "mermaid",
+                "ascii"
+              ]
+            }
+          },
+          "required": [
+            "source"
+          ],
+          "not": {
+            "required": [
+              "path"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "format": {
+              "const": "svg"
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "not": {
+            "required": [
+              "source"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/artId",
+          "description": "Stable artifact id.",
+          "examples": [
+            "ART-01"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "context",
+            "flow",
+            "sequence",
+            "state",
+            "screen",
+            "module"
+          ],
+          "description": "What the artifact shows: the feature in its surroundings, a flow, a sequence, states, a screen, or code modules."
+        },
+        "format": {
+          "enum": [
+            "mermaid",
+            "svg",
+            "ascii"
+          ],
+          "description": "Mermaid is the default for every flow and lives inline; svg is for screens and lives in assets/; ascii is a draft only, never a final artifact."
+        },
+        "title": {
+          "$ref": "#/$defs/text",
+          "description": "French title shown above the artifact.",
+          "examples": [
+            "Contexte du connecteur HTTP"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/text",
+          "description": "Inline Mermaid or ascii text, for formats mermaid and ascii.",
+          "examples": [
+            "flowchart LR\n  agent --> maket --> api"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^assets/[^/].*\\.svg$",
+          "description": "File under spec/<feature>/assets/, for format svg.",
+          "examples": [
+            "assets/workspace-screen.svg"
+          ]
+        },
+        "illustrates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(REQ-\\d{3}|AC-\\d{3}\\.\\d+)$"
+          },
+          "description": "Requirements or criteria it illustrates; empty for a framing artifact, which renders in the framing document."
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created",
+        "phaseHistory"
+      ],
+      "properties": {
+        "created": {
+          "$ref": "#/$defs/date",
+          "description": "When the feature was created."
+        },
+        "phaseHistory": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Every phase entered, oldest first.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "phase",
+              "date",
+              "by"
+            ],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "description": "Phase entered."
+              },
+              "date": {
+                "$ref": "#/$defs/date",
+                "description": "When it was entered."
+              },
+              "by": {
+                "enum": [
+                  "agent",
+                  "owner"
+                ],
+                "description": "Who decided the move."
+              }
+            }
+          }
+        },
+        "lastVerify": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "date",
+            "applied",
+            "reported"
+          ],
+          "description": "Outcome of the last verification of the owner's edits.",
+          "properties": {
+            "date": {
+              "$ref": "#/$defs/date",
+              "description": "When it ran."
+            },
+            "applied": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of owner hunks brought into the JSON."
+            },
+            "reported": {
+              "type": "array",
+              "description": "Owner hunks not applied, each with the reason given to the owner.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "file",
+                  "reason"
+                ],
+                "properties": {
+                  "file": {
+                    "$ref": "#/$defs/text",
+                    "description": "Rendered file holding the edit."
+                  },
+                  "pointer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "JSON pointer the edit targeted."
+                  },
+                  "reason": {
+                    "$ref": "#/$defs/text",
+                    "description": "Why it was reported instead of applied, in French."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "acceptedChanges": {
+          "type": "array",
+          "description": "Hand edits of feature.json accepted by verify, each with the reason given.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "date",
+              "reason"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date",
+                "description": "When the edit was accepted."
+              },
+              "reason": {
+                "$ref": "#/$defs/text",
+                "description": "Why it was accepted, in French."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

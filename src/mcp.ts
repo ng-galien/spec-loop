@@ -131,14 +131,18 @@ server.registerTool(
   "features",
   {
     title: "List spec-loop features",
-    description: "One summary line per spec-loop feature under spec/: id, name, phase, completeness, pending owner edits or alterations, last modification.",
+    description: "One summary line per spec-loop feature under spec/: id, name, phase, completeness, pending owner edits or alterations, last modification; echoes the resolved root and spec path.",
     inputSchema: { root },
     outputSchema: {
+      root: z.string().describe("Resolved project root"),
+      spec: z.string().describe("Resolved spec/ folder"),
       features: z.array(
         z.object({
           id: z.string(),
           name: z.string(),
           folder: z.string(),
+          path: z.string().describe("Absolute path of feature.json"),
+          corrupted: z.string().nullable().describe("Parse error when feature.json is not readable JSON"),
           title: z.string().nullable(),
           phase: z.string().nullable(),
           complete: z.boolean(),
@@ -152,7 +156,7 @@ server.registerTool(
     },
     annotations: readOnly,
   },
-  async ({ root }) => run(async () => ({ value: { features: await lib.features({ root }) } })),
+  async ({ root }) => run(async () => ({ value: await lib.featuresReport({ root }) })),
 );
 
 server.registerTool(
@@ -162,6 +166,9 @@ server.registerTool(
     description: "Phase, completeness (recomputed by validate), pending owner edits and alterations (recomputed by diff against the manifest), last verify and phase history of one spec-loop feature.",
     inputSchema: { feature, root },
     outputSchema: {
+      root: z.string().describe("Resolved project root"),
+      spec: z.string().describe("Resolved spec/ folder"),
+      file: z.string().describe("Absolute path of feature.json"),
       id: z.string(),
       name: z.string(),
       folder: z.string(),
@@ -169,6 +176,9 @@ server.registerTool(
       phase: z.string().nullable(),
       nextPhase: z.string().nullable(),
       completeness: z.object({ state: z.enum(["complete", "incomplete"]), missing: z.array(validationError) }),
+      unaddressed: z
+        .array(z.object({ pointer: z.string(), description: z.string() }))
+        .describe("Fields of the current phase never set, optional ones included; a field set to an empty array counts as addressed"),
       ownerEdits: z.object({ state: z.enum(["none", "pending"]), files: z.number(), hunks: z.number(), ids: z.array(z.string()) }),
       alterations: z.array(alteration),
       lastVerify: z.object({ date: z.string(), applied: z.number(), reported: z.array(reportedItem) }).nullable(),
@@ -184,7 +194,11 @@ server.registerTool(
   {
     title: "Create a spec-loop feature",
     description: "Write the skeleton of a new spec-loop feature (next FEAT number, first phase), render it and refresh spec/README.md.",
-    inputSchema: { name: z.string().describe("Kebab-case name, e.g. maket-http-connector"), title: z.string().min(1).describe("Title for the owner, in French"), root },
+    inputSchema: {
+      name: z.string().describe("Kebab-case name, e.g. maket-http-connector"),
+      title: z.string().min(1).describe("Title for the owner, in French"),
+      root: z.string().describe("Absolute path of the project that holds or will hold spec/; required"),
+    },
     outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable() },
     annotations: writes,
   },
@@ -276,20 +290,33 @@ server.registerTool(
   "verify",
   {
     title: "Reconcile owner edits of a spec-loop feature",
-    description: "Close a verification: apply the JSON Patch for the coherent owner edits, list the reported ones, re-render over the owner's files (kept in .spec-loop/overwritten/) and record lastVerify. applied + reported must equal the pending count from diff.",
+    description: "Close a verification of a spec-loop feature: apply the JSON Patch for the coherent owner edits, turn each reported one into an open question, restore the projection exactly (owner files kept in .spec-loop/overwritten/<time>/) and record lastVerify. applied + reported must equal the pending count from diff.",
     inputSchema: {
       feature,
       ops: z.array(operation).describe("JSON Patch for the coherent edits; may be empty"),
       applied: z.number().int().min(0).describe("Number of pending items brought into the JSON or accepted"),
-      reported: z.array(reportedItem).describe("Pending items reported to the owner instead of applied"),
+      reported: z.array(reportedItem).describe("Pending items reported to the owner instead of applied; each becomes an open question in framing.questions"),
+      featureChange: z
+        .object({ action: z.enum(["accept", "restore"]), reason: z.string().min(1).describe("In French") })
+        .optional()
+        .describe("Required when feature.json was changed outside the MCP: accept it (recorded in lifecycle.acceptedChanges) or restore the last known good copy"),
       root,
     },
-    outputSchema: { ok: z.boolean(), feature: z.string(), pending: z.number(), applied: z.number(), reported: z.number(), errors: z.array(z.string()), patch: patchResult.nullable() },
+    outputSchema: {
+      ok: z.boolean(),
+      feature: z.string(),
+      pending: z.number(),
+      applied: z.number(),
+      reported: z.number(),
+      questions: z.array(z.string()).describe("Ids of the open questions created for the reported items"),
+      errors: z.array(z.string()),
+      patch: patchResult.nullable(),
+    },
     annotations: writes,
   },
-  async ({ feature, ops, applied, reported, root }) =>
+  async ({ feature, ops, applied, reported, featureChange, root }) =>
     run(async () => {
-      const value = await lib.verify(feature, { ops: ops as never, applied, reported }, { root });
+      const value = await lib.verify(feature, { ops: ops as never, applied, reported, featureChange }, { root });
       return { value, isError: !value.ok };
     }),
 );

@@ -17,4 +17,6 @@ Alterations. Each render writes `spec/<feature>/.manifest.json`: the sha256 and 
 - `rendered-missing`: a rendered file was deleted.
 - `rendered-extra`: a file was added by hand in `rendered/`.
 
-Every alteration is pending until a `verify` accounts for it. While anything is pending, `patch` and `render` refuse to overwrite the owner's files and `phase` refuses to advance.
+Every alteration is pending until a `verify` accounts for it. While anything is pending, `patch` and `render` refuse to write (a hand-edited `feature.json` included, a deleted rendered file is not silently recreated) and `phase` refuses to advance. `verify` restores the projection exactly: files added by hand are removed, deleted ones recreated, and the owner's versions are kept under `.spec-loop/overwritten/<time>/`. Each render also keeps the last known good `feature.json` under `.spec-loop/feature.last.json`.
+
+`status` and `features` echo the resolved project root and `spec/` path; check them when a feature seems missing. `create` needs an absolute `root`.
