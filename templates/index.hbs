@@ -33,7 +33,7 @@ flowchart LR
 
 {{#if missing.length}}
 {{#each missing}}
-- [ ] {{text}} : `{{pointer}}`
+- [ ] {{text}}
 {{/each}}
 {{else}}
 Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
@@ -52,10 +52,10 @@ Rien : la phase est complète. Le passage à la phase suivante se décide dans l
 ## Historique
 
 {{#each history}}
-- {{date}} : phase « {{label}} », décidée par {{by}}
+- {{date}} : phase « {{label}} », décidée par {{by}}{{#if reason}}, retour en arrière : {{reason}}{{/if}}
 {{/each}}
 {{#if lastVerify}}
-- {{lastVerify.date}} : dernière vérification de vos modifications, {{lastVerify.applied}} appliquée(s), {{lastVerify.reported}} signalée(s)
+- {{lastVerify.date}} : dernière réconciliation de vos modifications, {{lastVerify.applied}} appliquée(s), {{lastVerify.reported}} signalée(s)
 {{/if}}
 
 ## Comment intervenir

@@ -116,14 +116,14 @@ export async function advancePhase(
     else if (phaseIndex(target) >= phaseIndex(current.phase)) reasons.push(`"${target}" is not an earlier phase than "${current.phase}"; only the next phase can be entered forward`);
     if (by !== "owner") reasons.push("a move back to an earlier phase is decided by the owner: pass by owner");
     if (!options.reason?.trim()) reasons.push("a move back to an earlier phase needs a reason, in French");
-    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the verify skill first`);
+    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the reconcile skill first`);
   } else {
     if (!target) reasons.push(`phase "${current.phase}" is the last one`);
     if (current.completeness.state !== "complete") {
       reasons.push(`phase "${current.phase}" is incomplete: ${current.completeness.missing.length} item(s) missing`);
       reasons.push(...current.completeness.missing.map((e) => `${e.pointer}: ${e.message}`));
     }
-    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the verify skill first`);
+    if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the reconcile skill first`);
   }
   if (reasons.length > 0) {
     return { ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, patch: null };
@@ -149,14 +149,14 @@ export async function advancePhase(
   };
 }
 
-export interface VerifyInput {
+export interface ReconcileInput {
   ops: PatchOperation[];
   applied: number;
   reported: { file: string; pointer: string | null; reason: string }[];
   featureChange?: { action: "accept" | "restore"; reason: string };
 }
 
-export interface VerifyResult {
+export interface ReconcileResult {
   ok: boolean;
   feature: string;
   pending: number;
@@ -167,7 +167,7 @@ export interface VerifyResult {
   patch: PatchResult | null;
 }
 
-function questionOps(json: Record<string, unknown>, reported: VerifyInput["reported"]): { ops: PatchOperation[]; ids: string[] } {
+function questionOps(json: Record<string, unknown>, reported: ReconcileInput["reported"]): { ops: PatchOperation[]; ids: string[] } {
   if (reported.length === 0) return { ops: [], ids: [] };
   const framing = (json.framing ?? {}) as { questions?: { id?: string }[] };
   const existing = Array.isArray(framing.questions) ? framing.questions : [];
@@ -191,12 +191,12 @@ function questionOps(json: Record<string, unknown>, reported: VerifyInput["repor
   return { ops, ids };
 }
 
-export async function verify(ref: string, input: VerifyInput, options: Location & { now?: string } = {}): Promise<VerifyResult> {
+export async function reconcile(ref: string, input: ReconcileInput, options: Location & { now?: string } = {}): Promise<ReconcileResult> {
   const folder = await resolveFeature(ref, options);
   const d = await diffFolder(folder, options);
   const pending = d.ownerEdits.hunks;
   const base = { feature: folder, pending, applied: input.applied, reported: input.reported.length, questions: [] as string[] };
-  const refuse = (errors: string[]): VerifyResult => ({ ...base, ok: false, errors, patch: null });
+  const refuse = (errors: string[]): ReconcileResult => ({ ...base, ok: false, errors, patch: null });
   const blocked = input.ops.filter((op) => touchesProtected(op.path) || touchesProtected(op.from));
   if (blocked.length > 0) return refuse(blocked.map((op) => `${op.path}: id, name, phase and lifecycle cannot be patched`));
   if (input.applied + input.reported.length !== pending) {

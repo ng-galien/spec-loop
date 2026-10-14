@@ -25,7 +25,7 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
   if (!options.allowProtected) {
     const blocked = ops.filter((op) => touchesProtected(op.path) || touchesProtected(op.from));
     if (blocked.length > 0) {
-      return fail(blocked.map((op) => ({ pointer: op.path, message: "id, name, phase and lifecycle are written by the create, phase and verify tools only", kind: "invalid" as const })));
+      return fail(blocked.map((op) => ({ pointer: op.path, message: "id, name, phase and lifecycle are written by the create, phase and reconcile tools only", kind: "invalid" as const })));
     }
   }
   let next: Feature;
@@ -41,7 +41,7 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
     const edited = await ownerEditedFiles(folder, renderToMemory(next), next, options);
     if (edited.length > 0) {
       return fail(
-        edited.map((path) => ({ pointer: "", message: `${path} was changed outside the MCP and is not verified yet: run the verify skill first`, kind: "invalid" as const })),
+        edited.map((path) => ({ pointer: "", message: `${path} was changed outside the MCP and is not reconciled yet: run the reconcile skill first`, kind: "invalid" as const })),
         validation,
       );
     }

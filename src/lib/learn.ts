@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { methodDir } from "./paths.js";
-import { checkDescriptions, phases, resolveRef, schema, type JsonSchema } from "./schema.js";
+import { activeChecks, checkDescriptions, phases, resolveRef, schema, type JsonSchema } from "./schema.js";
 
 const GENERATED = ["phases", "fields"];
 
@@ -78,14 +78,16 @@ function phasesDoc(): string {
     `Order: ${phases.map((p) => `\`${p.name}\``).join(" → ")}. Always required: ${((schema.required ?? []) as string[]).map((k) => `\`${k}\``).join(", ")}.`,
   ];
   phases.forEach((p, i) => {
-    const checks = phases.slice(0, i + 1).flatMap((q) => q.checks);
+    const inside = phases.slice(0, i + 1).flatMap((q) => q.checks).filter((c) => activeChecks(p.name).has(c));
+    const next = phases[i + 1];
+    const exit = next ? next.checks.filter((c) => activeChecks(p.name).has(c)) : [];
+    const own = inside.filter((c) => !exit.includes(c));
     lines.push("", `## ${i + 1}. \`${p.name}\` (${p.title})`, "", p.description, "", `Produces: ${p.produces.length ? p.produces.map((s) => `\`${s}\``).join(", ") : "nothing new"}. Granularity: ${p.granularity}`);
     const req = requiredBy(p.name);
     if (req.length) lines.push("", "Schema requires:", ...req.map((r) => `- ${r}`));
-    if (checks.length) lines.push("", "Coverage checks active:", ...checks.map((c) => `- ${checkDescriptions[c] ?? c}`));
-    for (const section of p.produces) {
-      lines.push("", `Fields of \`${section}\`:`, ...fieldLines((schema.properties as JsonSchema)[section] as JsonSchema, ""));
-    }
+    if (own.length) lines.push("", "Coverage checks of this phase:", ...own.map((c) => `- ${checkDescriptions[c] ?? c}`));
+    if (exit.length) lines.push("", `À satisfaire pour sortir (entry rules of \`${next!.name}\`, already checked here):`, ...exit.map((c) => `- ${checkDescriptions[c] ?? c}`));
+    if (p.produces.length) lines.push("", `Fields: \`learn\` topic \`fields\`, section${p.produces.length > 1 ? "s" : ""} ${p.produces.map((s) => `\`${s}\``).join(", ")}.`);
   });
   return `${lines.join("\n")}\n`;
 }

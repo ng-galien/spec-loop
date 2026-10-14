@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { advancePhase, create, features, patch, render, status, verify } from "../src/lib/index.js";
+import { advancePhase, create, features, patch, render, status, reconcile } from "../src/lib/index.js";
 import { FEATURE, guineaPig, inAcceptance, inFolder, workspace } from "./helpers.js";
 import { serializeFeature } from "../src/lib/model.js";
 
@@ -62,7 +62,7 @@ describe("lifecycle", () => {
     await writeFile(path, (await readFile(path, "utf8")).replace("sans la modifier", "sans la modifier ni l'étendre"));
     const result = await advancePhase(FEATURE, { root });
     expect(result.ok).toBe(false);
-    expect(result.reasons).toEqual(["1 owner edit(s) or alteration(s) pending: run the verify skill first"]);
+    expect(result.reasons).toEqual(["1 owner edit(s) or alteration(s) pending: run the reconcile skill first"]);
   });
 
   it("advances a complete phase and records who decided", async () => {
@@ -77,7 +77,7 @@ describe("lifecycle", () => {
     expect(await readFile(inFolder(root, "rendered", "exigences.md"), "utf8")).toContain("# Exigences");
   });
 
-  it("verify requires every pending item to be accounted for, then reconciles and records lastVerify", async () => {
+  it("reconcile requires every pending item to be accounted for, then reconciles and records lastVerify", async () => {
     const root = await workspace();
     await render(FEATURE, { root });
     const path = inFolder(root, "rendered", "cadrage.md");
@@ -86,9 +86,9 @@ describe("lifecycle", () => {
       .replace("API qui ne sont pas REST", "API qui ne sont pas REST, ni SSE");
     await writeFile(path, edited);
     expect((await status(FEATURE, { root })).ownerEdits).toMatchObject({ state: "pending", hunks: 2 });
-    const short = await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root });
+    const short = await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root });
     expect(short.ok).toBe(false);
-    const done = await verify(
+    const done = await reconcile(
       FEATURE,
       {
         ops: [{ op: "replace", path: "/framing/scope/in/1", value: "Lire un élément par son identité ou par son URL." }],

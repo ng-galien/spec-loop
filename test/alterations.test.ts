@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { advancePhase, diff, features, featuresReport, patch, render, status, verify } from "../src/lib/index.js";
+import { advancePhase, diff, features, featuresReport, patch, render, status, reconcile } from "../src/lib/index.js";
 import { FEATURE, inFolder, workspace } from "./helpers.js";
 
 async function withSvg() {
@@ -77,10 +77,10 @@ describe("alterations", () => {
     expect(result.refused).toEqual(["assets/screen.svg"]);
   });
 
-  it("verify removes a file added by hand in rendered/, after saving it, and the phase can advance again", async () => {
+  it("reconcile removes a file added by hand in rendered/, after saving it, and the phase can advance again", async () => {
     const root = await withSvg();
     await writeFile(inFolder(root, "rendered", "notes.md"), "# Mes notes\n");
-    const result = await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root, now: NOW });
+    const result = await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root, now: NOW });
     expect(result.ok).toBe(true);
     expect(result.patch?.render?.removed).toEqual(["notes.md"]);
     expect(await readFile(inFolder(root, ".spec-loop", "overwritten", "2026-10-14T12-00-00-000Z", "rendered", "notes.md"), "utf8")).toBe("# Mes notes\n");
@@ -88,16 +88,16 @@ describe("alterations", () => {
     expect((await status(FEATURE, { root })).ownerEdits.state).toBe("none");
   });
 
-  it("a deleted rendered file is an owner edit: render and patch refuse, verify recreates it", async () => {
+  it("a deleted rendered file is an owner edit: render and patch refuse, reconcile recreates it", async () => {
     const root = await withSvg();
     await rm(inFolder(root, "rendered", "cadrage.md"));
     expect((await render(FEATURE, { root })).refused).toEqual(["cadrage.md"]);
     expect((await patch(FEATURE, [{ op: "add", path: "/framing/glossary/-", value: { term: "curseur", definition: "Position opaque renvoyée par l'API." } }], { root })).ok).toBe(false);
-    expect((await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).ok).toBe(true);
+    expect((await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).ok).toBe(true);
     expect(await readFile(inFolder(root, "rendered", "cadrage.md"), "utf8")).toContain("# Cadrage");
   });
 
-  it("a hand-edited feature.json blocks patch, render and phase until verify accepts it with a reason", async () => {
+  it("a hand-edited feature.json blocks patch, render and phase until reconcile accepts it with a reason", async () => {
     const root = await withSvg();
     const json = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
     json.framing.intent = `${json.framing.intent} Ajout à la main.`;
@@ -106,8 +106,8 @@ describe("alterations", () => {
     const refused = await patch(FEATURE, [{ op: "replace", path: "/title", value: "Autre titre" }], { root });
     expect(refused.errors[0]!.message).toContain("feature.json was changed outside the MCP");
     expect((await advancePhase(FEATURE, { root })).ok).toBe(false);
-    expect((await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).errors[0]).toContain("featureChange");
-    const accepted = await verify(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "Précision voulue par le propriétaire." } }, { root, now: NOW });
+    expect((await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).errors[0]).toContain("featureChange");
+    const accepted = await reconcile(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "Précision voulue par le propriétaire." } }, { root, now: NOW });
     expect(accepted.ok).toBe(true);
     const after = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
     expect(after.framing.intent).toContain("Ajout à la main.");
@@ -123,9 +123,9 @@ describe("alterations", () => {
     json.requirements = [];
     await writeFile(inFolder(root, "feature.json"), JSON.stringify(json, null, 2));
     expect((await advancePhase(FEATURE, { root })).ok).toBe(false);
-    const accept = await verify(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "x" } }, { root });
+    const accept = await reconcile(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "x" } }, { root });
     expect(accept.errors[0]).toContain("phase changed by hand cannot be accepted");
-    const restore = await verify(
+    const restore = await reconcile(
       FEATURE,
       { ops: [], applied: 0, reported: [{ file: "feature.json", pointer: "/phase", reason: "La phase se change par l'outil phase." }], featureChange: { action: "restore", reason: "Phase changée à la main." } },
       { root, now: NOW },

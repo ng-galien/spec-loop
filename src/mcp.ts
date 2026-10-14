@@ -52,7 +52,7 @@ const alteration = z.object({
   hunks: z.number().optional(),
   errors: z.array(validationError).optional().describe("Schema errors of a feature.json changed outside the MCP"),
 });
-const ownerEdits = z.object({ files: z.number(), hunks: z.number().describe("Pending items to account for in verify"), ids: z.array(z.string()) });
+const ownerEdits = z.object({ files: z.number(), hunks: z.number().describe("Pending items to account for in reconcile"), ids: z.array(z.string()) });
 const diffResult = z.object({
   feature: z.string(),
   clean: z.boolean(),
@@ -163,7 +163,7 @@ server.registerTool(
   "status",
   {
     title: "Status of a spec-loop feature",
-    description: "Phase, completeness (recomputed by validate), pending owner edits and alterations (recomputed by diff against the manifest), last verify and phase history of one spec-loop feature.",
+    description: "Phase, completeness (recomputed by validate), pending owner edits and alterations (recomputed by diff against the manifest), last reconciliation and phase history of one spec-loop feature.",
     inputSchema: { feature, root },
     outputSchema: {
       root: z.string().describe("Resolved project root"),
@@ -298,10 +298,10 @@ server.registerTool(
 );
 
 server.registerTool(
-  "verify",
+  "reconcile",
   {
     title: "Reconcile owner edits of a spec-loop feature",
-    description: "Close a verification of a spec-loop feature: apply the JSON Patch for the coherent owner edits, turn each reported one into an open question, restore the projection exactly (owner files kept in .spec-loop/overwritten/<time>/) and record lastVerify. applied + reported must equal the pending count from diff.",
+    description: "Close a reconciliation of the owner edits of a spec-loop feature: apply the JSON Patch for the coherent owner edits, turn each reported one into an open question, restore the projection exactly (owner files kept in .spec-loop/overwritten/<time>/) and record lastVerify. applied + reported must equal the pending count from diff.",
     inputSchema: {
       feature,
       ops: z.array(operation).describe("JSON Patch for the coherent edits; may be empty"),
@@ -327,7 +327,7 @@ server.registerTool(
   },
   async ({ feature, ops, applied, reported, featureChange, root }) =>
     run(async () => {
-      const value = await lib.verify(feature, { ops: ops as never, applied, reported, featureChange }, { root });
+      const value = await lib.reconcile(feature, { ops: ops as never, applied, reported, featureChange }, { root });
       return { value, isError: !value.ok };
     }),
 );

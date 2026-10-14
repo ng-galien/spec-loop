@@ -845,7 +845,15 @@
             "route",
             "config"
           ],
-          "description": "What the anchor points at."
+          "description": "What the anchor points at.",
+          "x-labels": {
+            "module": "module",
+            "symbol": "symbole",
+            "interface": "interface",
+            "schema": "schéma",
+            "route": "route",
+            "config": "configuration"
+          }
         },
         "path": {
           "$ref": "#/$defs/text",
@@ -867,7 +875,12 @@
             "modify",
             "remove"
           ],
-          "description": "How the code at this place changes."
+          "description": "How the code at this place changes.",
+          "x-labels": {
+            "add": "ajout",
+            "modify": "modification",
+            "remove": "suppression"
+          }
         },
         "realizes": {
           "type": "array",
@@ -917,7 +930,15 @@
             "cucumber",
             "other"
           ],
-          "description": "Test runner."
+          "description": "Test runner.",
+          "x-labels": {
+            "vitest": "vitest",
+            "playwright": "playwright",
+            "pytest": "pytest",
+            "junit": "junit",
+            "cucumber": "cucumber",
+            "other": "autre"
+          }
         },
         "level": {
           "enum": [
@@ -925,7 +946,12 @@
             "integration",
             "e2e"
           ],
-          "description": "Test level."
+          "description": "Test level.",
+          "x-labels": {
+            "unit": "unitaire",
+            "integration": "intégration",
+            "e2e": "bout en bout"
+          }
         },
         "method": {
           "enum": [
@@ -934,7 +960,13 @@
             "demonstration",
             "analysis"
           ],
-          "description": "Verification method: test by default; inspection, demonstration or analysis only for a criterion that cannot be automated, with its reason."
+          "description": "Verification method: test by default; inspection, demonstration or analysis only for a criterion that cannot be automated, with its reason.",
+          "x-labels": {
+            "test": "test",
+            "inspection": "inspection",
+            "demonstration": "démonstration",
+            "analysis": "analyse"
+          }
         },
         "reason": {
           "$ref": "#/$defs/text",
@@ -957,7 +989,12 @@
             "failing",
             "passing"
           ],
-          "description": "Last known result, written by the agent from the runner output."
+          "description": "Last known result, written by the agent from the runner output.",
+          "x-labels": {
+            "missing": "à écrire",
+            "failing": "en échec",
+            "passing": "réussi"
+          }
         }
       },
       "allOf": [
@@ -1207,7 +1244,7 @@
             "applied",
             "reported"
           ],
-          "description": "Outcome of the last verification of the owner's edits.",
+          "description": "Outcome of the last reconciliation of the owner's edits (the reconcile tool); the field keeps its first name for compatibility.",
           "properties": {
             "date": {
               "$ref": "#/$defs/date",

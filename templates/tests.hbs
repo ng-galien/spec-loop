@@ -9,15 +9,16 @@
 
 {{#each tests}}
 <!-- ptr: /tests/{{@index}} -->
-- `{{file}}` : « {{name}} » ({{framework}}{{#if level}}, {{level}}{{/if}}{{#if method}}, {{method}}{{/if}}). Vérifie {{verifiesList}}.{{#if statusLabel}} Statut : **{{statusLabel}}**.{{/if}}
+- `{{file}}` : « {{name}} » ({{frameworkLabel}}{{#if levelLabel}}, {{levelLabel}}{{/if}}{{#if methodLabel}}, {{methodLabel}}{{/if}}). Vérifie {{verifiesList}}.{{#if statusLabel}} Statut : **{{statusLabel}}**.{{/if}}{{#if reason}} Raison : {{reason}}{{/if}}
 {{else}}
 _Aucun test pour l'instant._
 {{/each}}
 
 ## Couverture
 
-| Critère | Tests |
-| --- | --- |
+| Critère | Tests | Statut |
+| --- | --- | --- |
 {{#each coverage}}
-| {{id}} | {{tests}} |
+| {{id}} | {{tests}} | {{status}} |
 {{/each}}
+| **Total** | {{coverageTotal.tests}} | {{coverageTotal.verified}} critère(s) vérifié(s) sur {{coverageTotal.criteria}} |

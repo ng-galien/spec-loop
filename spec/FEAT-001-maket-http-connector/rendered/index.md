@@ -48,28 +48,28 @@ flowchart LR
 
 ## Reste à faire pour la phase « Vérification »
 
-- [ ] À compléter : `/tests/0/status`
-- [ ] À compléter : `/tests/1/status`
-- [ ] À compléter : `/tests/10/status`
-- [ ] À compléter : `/tests/11/status`
-- [ ] À compléter : `/tests/12/status`
-- [ ] À compléter : `/tests/13/status`
-- [ ] À compléter : `/tests/14/status`
-- [ ] À compléter : `/tests/15/status`
-- [ ] À compléter : `/tests/16/status`
-- [ ] À compléter : `/tests/17/status`
-- [ ] À compléter : `/tests/18/status`
-- [ ] À compléter : `/tests/19/status`
-- [ ] À compléter : `/tests/2/status`
-- [ ] À compléter : `/tests/20/status`
-- [ ] À compléter : `/tests/21/status`
-- [ ] À compléter : `/tests/3/status`
-- [ ] À compléter : `/tests/4/status`
-- [ ] À compléter : `/tests/5/status`
-- [ ] À compléter : `/tests/6/status`
-- [ ] À compléter : `/tests/7/status`
-- [ ] À compléter : `/tests/8/status`
-- [ ] À compléter : `/tests/9/status`
+- [ ] AC-001.1 · test à écrire
+- [ ] AC-002.1 · test à écrire
+- [ ] AC-003.1 · test à écrire
+- [ ] AC-004.1 · test à écrire
+- [ ] AC-004.2 · test à écrire
+- [ ] AC-005.1 · test à écrire
+- [ ] AC-006.1 · test à écrire
+- [ ] AC-007.1 · test à écrire
+- [ ] AC-008.1 · test à écrire
+- [ ] AC-009.1 · test à écrire
+- [ ] AC-010.1 · test à écrire
+- [ ] AC-011.1 · test à écrire
+- [ ] AC-012.1 · test à écrire
+- [ ] AC-013.1 · test à écrire
+- [ ] AC-014.1 · test à écrire
+- [ ] AC-015.1 · test à écrire
+- [ ] AC-016.1 · test à écrire
+- [ ] AC-017.1 · test à écrire
+- [ ] AC-018.1 · test à écrire
+- [ ] AC-018.2 · test à écrire
+- [ ] AC-019.1 · test à écrire
+- [ ] AC-020.1 · test à écrire
 
 <!-- ptr: /framing/questions -->
 ## Questions
@@ -90,8 +90,8 @@ flowchart LR
 - 2026-10-14 : phase « Ancrage », décidée par le propriétaire
 - 2026-10-14 : phase « Vérification », décidée par le propriétaire
 - 2026-10-14 : phase « Terminé », décidée par le propriétaire
-- 2026-10-14 : phase « Vérification », décidée par le propriétaire
-- 2026-10-14 : dernière vérification de vos modifications, 3 appliquée(s), 0 signalée(s)
+- 2026-10-14 : phase « Vérification », décidée par le propriétaire, retour en arrière : Clôture passée à tort par l'ancienne porte : 22 tests déclarés mais manquants, le connecteur n'est pas développé.
+- 2026-10-14 : dernière réconciliation de vos modifications, 3 appliquée(s), 0 signalée(s)
 
 ## Comment intervenir
 

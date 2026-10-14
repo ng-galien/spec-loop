@@ -126,7 +126,7 @@ describe("render", () => {
   it("index: warns when the phase waits for answers, lists what is left and the questions as task lists", async () => {
     const index = renderToMemory(await guineaPig()).find((f) => f.path === "index.md")!.content;
     expect(index).toContain("> [!WARNING]\n> La phase « Cadrage » attend vos réponses : 5 question(s) ouverte(s), Q-01, Q-02, Q-03, Q-04, Q-05.");
-    expect(index).toContain("- [ ] Question Q-01 à répondre : `/framing/questions/0/status`");
+    expect(index).toContain("- [ ] Q-01 · question à répondre\n- [ ] Q-02 · question à répondre");
     expect(index).toContain("<!-- ptr: /framing/questions -->\n## Questions\n\n- [ ] Q-01 · La création (POST)");
     const done = renderToMemory(await requirementsFixture()).find((f) => f.path === "index.md")!.content;
     expect(done).not.toContain("[!WARNING]");
@@ -190,5 +190,39 @@ describe("render", () => {
       "<!-- nav -->\n**Cadrage** : [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](FEAT-001-maket-http-connector/rendered/index.md) · [FEAT-002 · Autre](FEAT-002-autre/rendered/index.md)\n\n**Exigences** : —",
     );
     expect(index).toContain("| Id | Fonctionnalité |");
+  });
+
+  it("names the object of each thing left to do, in natural order", async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http.ts", symbol: "Http.list", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = [{ file: "t.ts", name: "AC-002.1 x", framework: "vitest", level: "unit", verifies: ["AC-002.1"], status: "failing" }];
+    const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
+    const todo = index.slice(index.indexOf("## Reste à faire"), index.indexOf("## Questions"));
+    expect(todo).toContain("- [ ] AC-001.1 · test à déclarer\n- [ ] AC-002.1 · test à faire passer");
+    expect(todo).not.toContain("`/");
+  });
+
+  it("labels anchors and tests from the schema and totals the coverage with a status per criterion", async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http.ts", symbol: "Http.list", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = [
+      { file: "t.ts", name: "AC-001.1 x", framework: "vitest", level: "unit", method: "test", verifies: ["AC-001.1"], status: "passing" },
+      { file: "t.ts", name: "AC-002.1 y", framework: "vitest", method: "inspection", reason: "À l'œil.", verifies: ["AC-002.1"] },
+    ];
+    const files = renderToMemory(feature);
+    expect(files.find((f) => f.path === "ancrage.md")!.content).toContain("(symbole, ajout)");
+    const verification = files.find((f) => f.path === "verification.md")!.content;
+    expect(verification).toContain("(vitest, unitaire, test). Vérifie AC-001.1. Statut : **réussi**.");
+    expect(verification).toContain("| Critère | Tests | Statut |\n| --- | --- | --- |\n| AC-001.1 | 1 | réussi |\n| AC-002.1 | 1 | inspection, justifié |\n| **Total** | 2 | 2 critère(s) vérifié(s) sur 2 |");
+  });
+
+  it("shows the reason of a backward move in the history", async () => {
+    const feature = await requirementsFixture();
+    (feature.lifecycle as { phaseHistory: unknown[] }).phaseHistory.push({ phase: "framing", date: "2026-10-14T12:00:00.000Z", by: "owner", reason: "Revoir le périmètre." });
+    feature.phase = "framing";
+    const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
+    expect(index).toContain("- 2026-10-14 : phase « Cadrage », décidée par le propriétaire, retour en arrière : Revoir le périmètre.");
   });
 });

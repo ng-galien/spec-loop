@@ -49,6 +49,6 @@ describe("patch", () => {
     await writeFile(path, (await readFile(path, "utf8")).replace("Lire un élément", "Lire vite un élément"));
     const result = await patch(FEATURE, [{ op: "replace", path: "/framing/scope/in/1", value: "Lire un élément par son URL." }], { root });
     expect(result.ok).toBe(false);
-    expect(result.errors[0]!.message).toContain("cadrage.md was changed outside the MCP and is not verified yet");
+    expect(result.errors[0]!.message).toContain("cadrage.md was changed outside the MCP and is not reconciled yet");
   });
 });

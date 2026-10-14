@@ -29,8 +29,6 @@ export const FILE_SPECS: readonly FileSpec[] = [
 
 const LABELS: Record<string, Record<string, string>> = {
   pattern: { ubiquitous: "permanente", event: "sur événement", state: "sur état", unwanted: "comportement indésirable", optional: "option", complex: "complexe" },
-  change: { add: "ajout", modify: "modification", remove: "suppression" },
-  testStatus: { missing: "à écrire", failing: "en échec", passing: "réussi" },
   decisionStatus: { proposed: "proposée", accepted: "acceptée", superseded: "remplacée" },
   artifactKind: { context: "contexte", flow: "flux", sequence: "séquence", state: "états", screen: "écran", module: "modules" },
   by: { agent: "l'agent", owner: "le propriétaire" },
@@ -92,18 +90,50 @@ function table(rows: Rec[]): { header: string[]; rows: string[][] } | null {
   return { header, rows: rows.map((row) => header.map((key) => String(row[key] ?? ""))) };
 }
 
-export function missingLines(feature: Feature, validation: ValidationResult): { pointer: string; text: string }[] {
+const natural = (a: string, b: string) => a.localeCompare(b, "fr", { numeric: true });
+
+export function missingLines(feature: Feature, validation: ValidationResult): { text: string }[] {
   const owners = [...indexIds(feature)].map(([id, pointers]) => ({ id, pointer: pointers[0]! }));
   const ownerOf = (pointer: string) =>
     owners.filter((o) => pointer === o.pointer || pointer.startsWith(`${o.pointer}/`)).sort((a, b) => b.pointer.length - a.pointer.length)[0]?.id ?? null;
-  return validation.errors.map((e) => {
-    const owner = ownerOf(e.pointer);
-    const state = e.kind === "incomplete" ? "à compléter" : "incohérent";
-    return {
-      pointer: e.pointer || "/",
-      text: / is still open$/.test(e.message) ? `Question ${owner ?? ""} à répondre` : owner ? `${owner} ${state}` : `${state[0]!.toUpperCase()}${state.slice(1)}`,
-    };
+  const tests = list(feature.tests);
+  const lines = validation.errors.map((e) => {
+    const testMatch = /^\/tests\/(\d+)/.exec(e.pointer);
+    const test = testMatch ? tests[Number(testMatch[1])] : undefined;
+    const subject = test ? (Array.isArray(test.verifies) && test.verifies.length ? String(test.verifies[0]) : `test ${Number(testMatch![1]) + 1}`) : ownerOf(e.pointer);
+    const field = e.pointer.split("/").filter(Boolean).at(-1) ?? "";
+    const required = /^missing: "(.+)" is required/.exec(e.message);
+    let todo: string;
+    if (/ is still open$/.test(e.message)) todo = "question à répondre";
+    else if (/has no criterion/.test(e.message)) todo = "critère à écrire";
+    else if (/realized by no anchor/.test(e.message)) todo = "ancre à poser";
+    else if (/verified by no test/.test(e.message)) todo = "test à déclarer";
+    else if (/is not passing/.test(e.message)) todo = test?.status === "failing" ? "test à faire passer" : "test à écrire";
+    else if (/maquette/.test(e.message)) todo = "maquette d'écran à dessiner";
+    else if (required) todo = `${required[1]} à renseigner`;
+    else if (e.kind === "incomplete") todo = `${field || "champ"} à compléter`;
+    else todo = `incohérent : ${e.message}`;
+    return { text: subject ? `${subject} · ${todo}` : `${todo[0]!.toUpperCase()}${todo.slice(1)}` };
   });
+  return lines.sort((a, b) => natural(a.text, b.text));
+}
+
+function coverage(feature: Feature): Rec {
+  const tests = list(feature.tests);
+  let verified = 0;
+  const rows = list(feature.criteria).map((c) => {
+    const mine = tests.filter((t) => Array.isArray(t.verifies) && t.verifies.includes(c.id));
+    const justified = mine.length > 0 && mine.every((t) => (t.method ?? "test") !== "test");
+    let status: string;
+    if (mine.length === 0) status = "aucun test";
+    else if (justified) status = `${mine.map((t) => enumLabel("test", "method", t.method) ?? String(t.method)).join(", ")}, justifié`;
+    else if (mine.some((t) => (t.method ?? "test") === "test" && t.status === "failing")) status = enumLabel("test", "status", "failing") ?? "failing";
+    else if (mine.some((t) => (t.method ?? "test") === "test" && t.status !== "passing")) status = enumLabel("test", "status", "missing") ?? "missing";
+    else status = enumLabel("test", "status", "passing") ?? "passing";
+    if (justified || status === enumLabel("test", "status", "passing")) verified++;
+    return { id: c.id, tests: mine.length, status };
+  });
+  return { coverage: rows, coverageTotal: { tests: tests.length, verified, criteria: rows.length } };
 }
 
 function warnings(feature: Feature, phase: string): string[] {
@@ -178,7 +208,12 @@ function view(feature: Feature, validation: ValidationResult): Rec {
     missing: missingLines(feature, validation),
     questionList: list(framing.questions).map((q) => ({ id: q.id, question: q.question, done: q.status === "answered" })),
     warnings: warnings(feature, phase),
-    history: list(lifecycle.phaseHistory).map((h) => ({ date: String(h.date).slice(0, 10), label: phaseTitle(String(h.phase)), by: label("by", h.by) })),
+    history: list(lifecycle.phaseHistory).map((h) => ({
+      date: String(h.date).slice(0, 10),
+      label: phaseTitle(String(h.phase)),
+      by: label("by", h.by),
+      reason: typeof h.reason === "string" ? h.reason : null,
+    })),
     lastVerify: lastVerify
       ? { date: String(lastVerify.date).slice(0, 10), applied: lastVerify.applied, reported: list(lastVerify.reported).length }
       : null,
@@ -202,12 +237,21 @@ function view(feature: Feature, validation: ValidationResult): Rec {
     },
     requirements,
     groups: requirements.map((requirement) => ({ requirement, criteria: criteria.filter((c) => c.requirement === requirement.id) })),
-    anchors: list(feature.anchors).map((a) => ({ ...a, changeLabel: label("change", a.change), realizesList: joined(a.realizes) })),
-    tests: list(feature.tests).map((t) => ({ ...t, statusLabel: t.status ? label("testStatus", t.status) : null, verifiesList: joined(t.verifies) })),
-    coverage: list(feature.criteria).map((c) => ({
-      id: c.id,
-      tests: list(feature.tests).filter((t) => Array.isArray(t.verifies) && t.verifies.includes(c.id)).length,
+    anchors: list(feature.anchors).map((a) => ({
+      ...a,
+      kindLabel: enumLabel("anchor", "kind", a.kind) ?? String(a.kind),
+      changeLabel: enumLabel("anchor", "change", a.change) ?? String(a.change),
+      realizesList: joined(a.realizes),
     })),
+    tests: list(feature.tests).map((t) => ({
+      ...t,
+      frameworkLabel: enumLabel("test", "framework", t.framework) ?? String(t.framework),
+      levelLabel: t.level ? enumLabel("test", "level", t.level) : null,
+      methodLabel: t.method ? enumLabel("test", "method", t.method) : null,
+      statusLabel: t.status ? enumLabel("test", "status", t.status) : null,
+      verifiesList: joined(t.verifies),
+    })),
+    ...coverage(feature),
     decisions: list(feature.decisions).map((d) => ({ ...d, statusLabel: label("decisionStatus", d.status), affectsList: joined(d.affects) })),
   };
 }
