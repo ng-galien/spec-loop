@@ -76,7 +76,7 @@ export async function writeSpecIndex(options: Location = {}): Promise<string> {
     features: list.map((f) => ({ ...f, phaseLabel: phaseTitle(f.phase), pending: f.ownerEdits === "pending" })),
     byPhase: [
       ...phases.map((p) => ({ label: p.title, features: list.filter((f) => f.phase === p.name).map((f) => ({ ...f, title: f.title ?? f.name })) })),
-      ...(list.some((f) => f.corrupted) ? [{ label: "Fichier corrompu", features: list.filter((f) => f.corrupted).map((f) => ({ ...f, title: f.name })) }] : []),
+      ...(list.some((f) => f.corrupted) ? [{ label: "Corrupted file", features: list.filter((f) => f.corrupted).map((f) => ({ ...f, title: f.name })) }] : []),
     ],
   }).trim()}\n`;
   await mkdir(specDir(options), { recursive: true });

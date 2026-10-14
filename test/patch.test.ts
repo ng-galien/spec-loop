@@ -9,11 +9,11 @@ describe("patch", () => {
     await render(FEATURE, { root });
     const result = await patch(FEATURE, [
       { op: "replace", path: "/framing/questions/0/status", value: "answered" },
-      { op: "add", path: "/framing/questions/0/answer", value: "Oui, POST et DELETE en première version." },
+      { op: "add", path: "/framing/questions/0/answer", value: "Yes, POST and DELETE in the first version." },
     ], { root });
     expect(result.ok).toBe(true);
-    expect(result.render?.files.find((f) => f.path === "cadrage.md")?.changed).toBe(true);
-    expect(await readFile(inFolder(root, "rendered", "cadrage.md"), "utf8")).toContain("Réponse : Oui, POST et DELETE en première version.");
+    expect(result.render?.files.find((f) => f.path === "framing.md")?.changed).toBe(true);
+    expect(await readFile(inFolder(root, "rendered", "framing.md"), "utf8")).toContain("> Answer: Yes, POST and DELETE in the first version.");
     const stored = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
     expect(stored.framing.questions[0].status).toBe("answered");
     expect((await diff(FEATURE, { root })).clean).toBe(true);
@@ -45,10 +45,10 @@ describe("patch", () => {
   it("refuses while owner edits are not verified", async () => {
     const root = await workspace();
     await render(FEATURE, { root });
-    const path = inFolder(root, "rendered", "cadrage.md");
-    await writeFile(path, (await readFile(path, "utf8")).replace("Lire un élément", "Lire vite un élément"));
-    const result = await patch(FEATURE, [{ op: "replace", path: "/framing/scope/in/1", value: "Lire un élément par son URL." }], { root });
+    const path = inFolder(root, "rendered", "framing.md");
+    await writeFile(path, (await readFile(path, "utf8")).replace("Read an item", "Quickly read an item"));
+    const result = await patch(FEATURE, [{ op: "replace", path: "/framing/scope/in/1", value: "Read an item by its URL." }], { root });
     expect(result.ok).toBe(false);
-    expect(result.errors[0]!.message).toContain("cadrage.md was changed outside the MCP and is not reconciled yet");
+    expect(result.errors[0]!.message).toContain("framing.md was changed outside the MCP and is not reconciled yet");
   });
 });

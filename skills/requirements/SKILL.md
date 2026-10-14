@@ -30,7 +30,7 @@ If a tool refuses, apply the refusal rule of `learn` topic `loop`.
 - One EARS sentence per answer or scope line: one observable response, with SHALL, in the form its `pattern` fixes. Split a sentence that carries two responses.
 - Set `facet` to the side of the system it fixes, `priority` to MUST, SHOULD or MAY, a short `title`, a `rationale` that says why, and `source` with the ids it comes from.
 - Never renumber an id; a removed requirement's id is never reused.
-- Every requirement of facet `interface` needs a screen wireframe: an svg under `assets/`, declared as an artifact of kind `screen` that lists the requirement in `illustrates`. Write the file, then declare it with `patch`. The phase cannot be left without it (the `interfaceHasScreen` rule, « À satisfaire pour sortir » in `learn` topic `phases`).
+- Every requirement of facet `interface` needs a screen wireframe: an svg under `assets/`, declared as an artifact of kind `screen` that lists the requirement in `illustrates`. Write the file, then declare it with `patch`. The phase cannot be left without it (the `interfaceHasScreen` rule, "To satisfy before leaving" in `learn` topic `phases`).
 - Show the owner what you wrote, a few requirements at a time, and where to read them.
 
 ## Asking the owner

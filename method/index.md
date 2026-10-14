@@ -1,6 +1,6 @@
 # spec-loop method
 
-spec-loop builds software from one JSON object per feature. You, the agent, maintain that object through the spec-loop MCP tools. The owner reads a French Markdown projection of it and answers in the conversation or by editing the projected files.
+spec-loop builds software from one JSON object per feature. You, the agent, maintain that object through the spec-loop MCP tools. The owner reads a Markdown projection of it and answers in the conversation or by editing the projected files.
 
 Topics, read them with `learn`:
 
@@ -33,5 +33,5 @@ Rules that hold everywhere:
 2. Pass `root`, the absolute path of the project, on every call.
 3. Every inner object carries a stable id. Never renumber an id; a removed id is never reused.
 4. References go from the concrete object to the abstract one: a criterion names its requirement, an anchor names the requirements it realizes, a test names the criteria it verifies.
-5. JSON keys are English. Text written for the owner is French. Requirement statements are EARS sentences with SHALL, as the schema describes.
+5. Everything is in English: JSON keys, the text written for the owner, the rendered documents. Requirement statements are EARS sentences with SHALL, as the schema describes.
 6. Each field means what its `description` in the schema says. When in doubt, read `fields` instead of guessing.

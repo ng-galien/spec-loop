@@ -2,19 +2,19 @@
 {{pastNotice}}
 
 {{/if}}
-# Critères d'acceptation : {{title}}
+# Acceptance criteria: {{title}}
 
-Chaque exigence devient une règle ; chaque critère est un exemple de cette règle.
+Each requirement becomes a rule; each criterion is an example of that rule.
 
 {{#each groups}}
 <!-- id: {{requirement.id}} -->
-## Règle {{requirement.id}}{{#if requirement.title}} · {{requirement.title}}{{/if}}
+## Rule {{requirement.id}}{{#if requirement.title}} · {{requirement.title}}{{/if}}
 
 _{{requirement.statement}}_
 
 {{#each criteria}}
 <!-- id: {{id}} -->
-### Exemple {{id}} : {{title}}
+### Example {{id}}: {{title}}
 
 {{#each steps}}
 - **{{keyword}}** {{text}}
@@ -33,7 +33,7 @@ _{{requirement.statement}}_
 
 {{/each}}
 {{else}}
-_Aucun critère pour cette exigence._
+_No criterion for this requirement._
 
 {{/each}}
 {{/each}}

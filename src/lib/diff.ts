@@ -156,6 +156,10 @@ export async function diffFolder(folder: string, options: Location = {}): Promis
   for (const path of await listRenderedOnDisk(folder, options)) {
     if (known.has(path)) continue;
     const disk = (await readOptional(join(base, path))) ?? "";
+    if (manifest?.files[path] && manifest.files[path].hash === sha256(disk)) {
+      files.push(entry(path, { status: "unexpected", editedByOwner: false }));
+      continue;
+    }
     const head = parseHeader(disk.split("\n")[0] ?? "");
     const hunks = mapHunks("", disk, path, { id: null, pointer: head?.source ?? null }, ids);
     files.push(entry(path, { source: head?.source ?? null, template: head?.template ?? null, status: "unexpected", editedByOwner: true, hunks }));

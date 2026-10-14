@@ -2,13 +2,13 @@
 {{pastNotice}}
 
 {{/if}}
-# Ancrage : {{title}}
+# Anchoring: {{title}}
 
-Chaque ancre désigne l'endroit du code qui réalise une ou plusieurs exigences.
+Each anchor names the place in the code that realises one or more requirements.
 
 {{#each anchors}}
 <!-- id: {{id}} -->
-- **{{id}}** · `{{path}}`{{#if symbol}}, symbole `{{symbol}}`{{/if}} ({{kindLabel}}, {{changeLabel}}). Réalise {{realizesList}}.{{#if note}} {{note}}{{/if}}
+- **{{id}}** · `{{path}}`{{#if symbol}}, symbol `{{symbol}}`{{/if}} ({{kindLabel}}, {{changeLabel}}). Realises {{realizesList}}.{{#if note}} {{note}}{{/if}}
 {{else}}
-_Aucune ancre pour l'instant._
+_No anchor yet._
 {{/each}}

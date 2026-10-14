@@ -18,20 +18,20 @@ interface FileSpec {
 }
 
 export const FILE_SPECS: readonly FileSpec[] = [
-  { path: "index.md", source: "", template: "index.hbs", section: null, title: "Vue d'ensemble" },
-  { path: "cadrage.md", source: "/framing", template: "framing.hbs", section: "framing", title: "" },
-  { path: "exigences.md", source: "/requirements", template: "requirements.hbs", section: "requirements", title: "" },
-  { path: "criteres.md", source: "/criteria", template: "criteria.hbs", section: "criteria", title: "" },
-  { path: "ancrage.md", source: "/anchors", template: "anchors.hbs", section: "anchors", title: "" },
+  { path: "index.md", source: "", template: "index.hbs", section: null, title: "Overview" },
+  { path: "framing.md", source: "/framing", template: "framing.hbs", section: "framing", title: "" },
+  { path: "requirements.md", source: "/requirements", template: "requirements.hbs", section: "requirements", title: "" },
+  { path: "criteria.md", source: "/criteria", template: "criteria.hbs", section: "criteria", title: "" },
+  { path: "anchors.md", source: "/anchors", template: "anchors.hbs", section: "anchors", title: "" },
   { path: "verification.md", source: "/tests", template: "tests.hbs", section: "tests", title: "" },
-  { path: "decisions.md", source: "/decisions", template: "decisions.hbs", section: "decisions", title: "Décisions" },
+  { path: "decisions.md", source: "/decisions", template: "decisions.hbs", section: "decisions", title: "Decisions" },
 ];
 
 const LABELS: Record<string, Record<string, string>> = {
-  pattern: { ubiquitous: "permanente", event: "sur événement", state: "sur état", unwanted: "comportement indésirable", optional: "option", complex: "complexe" },
-  decisionStatus: { proposed: "proposée", accepted: "acceptée", superseded: "remplacée" },
-  artifactKind: { context: "contexte", flow: "flux", sequence: "séquence", state: "états", screen: "écran", module: "modules" },
-  by: { agent: "l'agent", owner: "le propriétaire" },
+  pattern: { ubiquitous: "ubiquitous", event: "event-driven", state: "state-driven", unwanted: "unwanted behaviour", optional: "optional feature", complex: "complex" },
+  decisionStatus: { proposed: "proposed", accepted: "accepted", superseded: "superseded" },
+  artifactKind: { context: "context", flow: "flow", sequence: "sequence", state: "states", screen: "screen", module: "modules" },
+  by: { agent: "the agent", owner: "the owner" },
 };
 export function headingSlug(heading: string): string {
   return encodeURI(
@@ -45,7 +45,7 @@ export function headingSlug(heading: string): string {
   );
 }
 
-const label = (table: string, value: unknown) => LABELS[table]![String(value)] ?? "à préciser";
+const label = (table: string, value: unknown) => LABELS[table]![String(value)] ?? "to specify";
 export const phaseTitle = (name: string | null | undefined) => phaseInfo(name)?.title ?? "inconnue";
 
 const handlebars = Handlebars.create();
@@ -71,16 +71,16 @@ function sources(req: Rec): { sourceList: string; footnotes: { label: string; te
   const footnotes = all.filter((s) => !ID_REF.test(s)).map((text, i) => ({ label: `${String(req.id)}-${i + 1}`, text }));
   const ids = all.filter((s) => ID_REF.test(s));
   const refs = footnotes.map((f) => `[^${f.label}]`).join("");
-  return { sourceList: ids.length ? `${ids.join(", ")}${refs}` : refs ? `voir la note${refs}` : "", footnotes };
+  return { sourceList: ids.length ? `${ids.join(", ")}${refs}` : refs ? `see the note${refs}` : "", footnotes };
 }
 
 const quoted = (text: unknown) => String(text ?? "").split("\n").join("\n> ");
 
 function steps(criterion: Rec): { keyword: string; text: string }[] {
   const out: { keyword: string; text: string }[] = [];
-  (Array.isArray(criterion.given) ? criterion.given : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Soit" : "Et", text: String(text) }));
-  if (criterion.when !== undefined) out.push({ keyword: "Quand", text: String(criterion.when) });
-  (Array.isArray(criterion.then) ? criterion.then : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Alors" : "Et", text: String(text) }));
+  (Array.isArray(criterion.given) ? criterion.given : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Given" : "And", text: String(text) }));
+  if (criterion.when !== undefined) out.push({ keyword: "When", text: String(criterion.when) });
+  (Array.isArray(criterion.then) ? criterion.then : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Then" : "And", text: String(text) }));
   return out;
 }
 
@@ -104,15 +104,15 @@ export function missingLines(feature: Feature, validation: ValidationResult): { 
     const field = e.pointer.split("/").filter(Boolean).at(-1) ?? "";
     const required = /^missing: "(.+)" is required/.exec(e.message);
     let todo: string;
-    if (/ is still open$/.test(e.message)) todo = "question à répondre";
-    else if (/has no criterion/.test(e.message)) todo = "critère à écrire";
-    else if (/realized by no anchor/.test(e.message)) todo = "ancre à poser";
-    else if (/verified by no test/.test(e.message)) todo = "test à déclarer";
-    else if (/is not passing/.test(e.message)) todo = test?.status === "failing" ? "test à faire passer" : "test à écrire";
-    else if (/maquette/.test(e.message)) todo = "maquette d'écran à dessiner";
-    else if (required) todo = `${required[1]} à renseigner`;
-    else if (e.kind === "incomplete") todo = `${field || "champ"} à compléter`;
-    else todo = `incohérent : ${e.message}`;
+    if (/ is still open$/.test(e.message)) todo = "question to answer";
+    else if (/has no criterion/.test(e.message)) todo = "criterion to write";
+    else if (/realized by no anchor/.test(e.message)) todo = "anchor to place";
+    else if (/verified by no test/.test(e.message)) todo = "test to declare";
+    else if (/is not passing/.test(e.message)) todo = test?.status === "failing" ? "test to make pass" : "test to write";
+    else if (/screen wireframe/.test(e.message)) todo = "screen wireframe to draw";
+    else if (required) todo = `${required[1]} to fill in`;
+    else if (e.kind === "incomplete") todo = `${field || "field"} to complete`;
+    else todo = `inconsistent: ${e.message}`;
     return { text: subject ? `${subject} · ${todo}` : `${todo[0]!.toUpperCase()}${todo.slice(1)}` };
   });
   return lines.sort((a, b) => natural(a.text, b.text));
@@ -125,8 +125,8 @@ function coverage(feature: Feature): Rec {
     const mine = tests.filter((t) => Array.isArray(t.verifies) && t.verifies.includes(c.id));
     const justified = mine.length > 0 && mine.every((t) => (t.method ?? "test") !== "test");
     let status: string;
-    if (mine.length === 0) status = "aucun test";
-    else if (justified) status = `${mine.map((t) => enumLabel("test", "method", t.method) ?? String(t.method)).join(", ")}, justifié`;
+    if (mine.length === 0) status = "no test";
+    else if (justified) status = `${mine.map((t) => enumLabel("test", "method", t.method) ?? String(t.method)).join(", ")}, justified`;
     else if (mine.some((t) => (t.method ?? "test") === "test" && t.status === "failing")) status = enumLabel("test", "status", "failing") ?? "failing";
     else if (mine.some((t) => (t.method ?? "test") === "test" && t.status !== "passing")) status = enumLabel("test", "status", "missing") ?? "missing";
     else status = enumLabel("test", "status", "passing") ?? "passing";
@@ -141,12 +141,12 @@ function warnings(feature: Feature, phase: string): string[] {
   const framing = (feature.framing ?? {}) as Rec;
   const open = list(framing.questions).filter((q) => q.status === "open");
   if (open.length > 0) {
-    out.push(`La phase « ${phaseTitle(phase)} » attend vos réponses : ${open.length} question(s) ouverte(s), ${open.map((q) => String(q.id)).join(", ")}.`);
+    out.push(`The ${phaseTitle(phase)} phase waits for your answers: ${open.length} open question(s), ${open.map((q) => String(q.id)).join(", ")}.`);
   }
   const producer = phaseProducing("tests");
   if (producer && phaseIndex(phase) >= phaseIndex(producer.name)) {
     const stale = list(feature.tests).filter((t) => (t.method ?? "test") === "test" && t.status !== "passing");
-    if (stale.length > 0) out.push(`Vérification à refaire : ${stale.length} test(s) en échec ou pas encore écrit(s).`);
+    if (stale.length > 0) out.push(`Verification to redo: ${stale.length} test(s) failing or not yet written.`);
   }
   return out;
 }
@@ -188,9 +188,9 @@ function view(feature: Feature, validation: ValidationResult): Rec {
   const at = phaseIndex(phase);
   const framing = (feature.framing ?? {}) as Rec;
   const artifacts = placeArtifacts(feature);
-  const hostFile = (host: string) => (host === "framing" ? "cadrage.md" : host.startsWith("REQ-") ? "exigences.md" : "criteres.md");
+  const hostFile = (host: string) => (host === "framing" ? "framing.md" : host.startsWith("REQ-") ? "requirements.md" : "criteria.md");
   const requirements = list(feature.requirements).map(
-    (req): Rec => ({ ...req, facetLabel: enumLabel("requirement", "facet", req.facet) ?? "à préciser", anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), ...sources(req), artifacts: artifacts.get(String(req.id)) ?? [] }),
+    (req): Rec => ({ ...req, facetLabel: enumLabel("requirement", "facet", req.facet) ?? "to specify", anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), ...sources(req), artifacts: artifacts.get(String(req.id)) ?? [] }),
   );
   const criteria = list(feature.criteria).map((c): Rec => ({ ...c, steps: steps(c), table: table(list(c.examples)), artifacts: artifacts.get(String(c.id)) ?? [] }));
   const lifecycle = (feature.lifecycle ?? {}) as Rec;
@@ -199,12 +199,12 @@ function view(feature: Feature, validation: ValidationResult): Rec {
     ...feature,
     phaseLabel: phaseTitle(phase),
     diagram: [
-      ...phases.map((p, i) => (i === at ? `  ${p.name}(["${p.title} ◀ actuelle"])` : `  ${p.name}["${p.title}"]`)),
+      ...phases.map((p, i) => (i === at ? `  ${p.name}(["${p.title} ◀ current"])` : `  ${p.name}["${p.title}"]`)),
       ...phases.slice(1).map((p, i) => `  ${phases[i]!.name} ${i + 1 <= at ? "-->" : "-.->"} ${p.name}`),
     ].join("\n"),
     documents: filesFor(feature, phase)
       .filter((f) => f.section !== null)
-      .map((f) => ({ path: f.path, label: fileTitle(f), description: phaseProducing(f.section!)?.summary ?? "décisions et leurs conséquences" })),
+      .map((f) => ({ path: f.path, label: fileTitle(f), description: phaseProducing(f.section!)?.summary ?? "decisions and their consequences" })),
     missing: missingLines(feature, validation),
     questionList: list(framing.questions).map((q) => ({ id: q.id, question: q.question, done: q.status === "answered" })),
     warnings: warnings(feature, phase),
@@ -281,7 +281,7 @@ function pastNotice(spec: FileSpec, phase: string): string | null {
   if (!producer || phaseIndex(producer.name) >= phaseIndex(phase)) return null;
   const current = phaseInfo(phase);
   const currentFile = FILE_SPECS.find((f) => f.section !== null && current?.produces.includes(f.section))?.path ?? "index.md";
-  return `_Document de la phase ${producer.title}, close ; la phase actuelle est ${current?.title ?? phase} : [${currentFile}](${currentFile})._`;
+  return `_Document of the closed ${producer.title} phase; the current phase is ${current?.title ?? phase}: [${currentFile}](${currentFile})._`;
 }
 
 function documentOrder(spec: FileSpec): number {
@@ -302,7 +302,7 @@ function navigation(feature: Feature, spec: FileSpec, produced: FileSpec[]): { t
   const featureLabel = `${String(feature.id ?? "")} · ${String(feature.title ?? "")}`;
   const isIndex = spec.section === null;
   const crumbs = [
-    { label: "Toutes les fonctionnalités", path: "../../README.md" },
+    { label: "All features", path: "../../README.md" },
     isIndex ? { label: featureLabel, path: null } : { label: featureLabel, path: "index.md" },
     ...(isIndex ? [] : [{ label: documentLabel(spec), path: null }]),
   ];

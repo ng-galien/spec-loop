@@ -2,151 +2,151 @@
   "$schema": "../feature.schema.json",
   "id": "FEAT-001",
   "name": "maket-http-connector",
-  "title": "Connecteur HTTP pour les espaces structurés de Maket",
+  "title": "HTTP connector for Maket structured workspaces",
   "phase": "verification",
   "framing": {
-    "intent": "Maket est un outil de documents visuels pour agents IA. Ses espaces de travail structurés listent des éléments venus d'une source de données, derrière l'interface ItemSource : liste par curseur, recherche, lecture, création, écriture, suppression, identité déclarée dans le schéma, révision pour détecter les conflits. Aujourd'hui, brancher une API REST demande du code propre à cette API. Le résultat voulu : un connecteur HTTP qui implémente ItemSource au-dessus d'une API REST décrite par configuration, pour qu'un espace de travail lise et écrive les éléments de cette API.",
+    "intent": "Maket is a visual document tool for AI agents. Its structured workspaces list items that come from a data source, behind the ItemSource interface: cursor listing, search, read, create, write, delete, identity declared in the schema, revision to detect conflicts. Today, plugging in a REST API takes code written for that API. The outcome wanted: an HTTP connector that implements ItemSource on top of a REST API described by configuration, so that a workspace reads and writes the items of that API.",
     "actors": [
       {
         "id": "ACT-01",
-        "name": "Le propriétaire",
-        "description": "Choisit les API à brancher, fournit l'URL de base et le nom de la variable d'environnement qui porte le secret, lit les espaces de travail qui en résultent."
+        "name": "The owner",
+        "description": "Chooses the APIs to plug in, provides the base URL and the name of the environment variable that holds the secret, reads the resulting workspaces."
       },
       {
         "id": "ACT-02",
-        "name": "L'agent qui compose les espaces de travail",
-        "description": "Déclare un espace structuré branché sur le connecteur, puis liste, cherche, lit et modifie les éléments par les outils MCP de Maket."
+        "name": "The agent composing workspaces",
+        "description": "Declares a structured workspace plugged into the connector, then lists, searches, reads and edits the items through Maket's MCP tools."
       },
       {
         "id": "ACT-03",
-        "name": "L'API externe",
-        "description": "Service REST tiers qui détient les éléments. Elle fait foi sur leur contenu et sur leur révision."
+        "name": "The external API",
+        "description": "Third-party REST service that holds the items. It is authoritative on their content and their revision."
       }
     ],
     "scope": {
       "in": [
-        "Lister les éléments par curseur, avec les paramètres de pagination et de recherche propres à l'API.",
-        "Lire un élément par son identité.",
-        "Écrire un élément par PUT avec l'en-tête If-Match portant la révision connue ; une réponse 412 est rendue à l'agent comme une révision périmée.",
-        "Identité et révision des éléments déclarées dans le schéma de l'espace : champ d'identité, source de la révision (ETag ou champ de la réponse).",
-        "Authentification par un secret lu dans une variable d'environnement dont seul le nom figure dans la configuration.",
-        "Espace en lecture seule quand l'API n'offre pas d'écriture : le connecteur refuse alors toute écriture.",
-        "En option, détection des changements faits hors de Maket, par webhook ou par interrogation périodique."
+        "List items by cursor, with the API's own pagination and search parameters.",
+        "Read an item by its identity.",
+        "Write an item with PUT and the If-Match header carrying the known revision; a 412 answer is returned to the agent as a stale revision.",
+        "Identity and revision of the items declared in the workspace schema: identity field, source of the revision (ETag or response field).",
+        "Authentication by a secret read from an environment variable of which only the name appears in the configuration.",
+        "Read-only workspace when the API offers no write: the connector then refuses every write.",
+        "Optionally, detection of changes made outside Maket, by webhook or by periodic polling."
       ],
       "out": [
-        "Authentification OAuth interactive et rafraîchissement de jetons.",
-        "API qui ne sont pas REST : GraphQL, SOAP, gRPC.",
-        "Transformation métier des données au-delà du mappage déclaratif des champs.",
-        "Fusion automatique des conflits : un conflit est signalé à l'agent, jamais résolu à sa place."
+        "Interactive OAuth authentication and token refresh.",
+        "APIs that are not REST: GraphQL, SOAP, gRPC.",
+        "Business transformation of the data beyond the declarative field mapping.",
+        "Automatic merging of conflicts: a conflict is reported to the agent, never resolved in its place."
       ]
     },
     "constraints": [
       {
         "id": "CON-01",
-        "statement": "Le connecteur implémente l'interface ItemSource existante sans la modifier."
+        "statement": "The connector implements the existing ItemSource interface without changing it."
       },
       {
         "id": "CON-02",
-        "statement": "Aucun secret n'est écrit dans le schéma, la configuration ou les documents : seulement le nom de la variable d'environnement."
+        "statement": "No secret is written into the schema, the configuration or the documents: only the name of the environment variable."
       },
       {
         "id": "CON-03",
-        "statement": "Une écriture sans révision connue est refusée : aucun écrasement à l'aveugle."
+        "statement": "A write without a known revision is refused: no blind overwrite."
       },
       {
         "id": "CON-04",
-        "statement": "Une erreur HTTP est rendue à l'agent avec son statut et le message de l'API ; une écriture n'est jamais réessayée en silence."
+        "statement": "An HTTP error is returned to the agent with its status and the API's message; a write is never retried silently."
       }
     ],
     "assumptions": [
       {
         "id": "ASM-01",
-        "statement": "Les API visées renvoient du JSON et exposent une identité stable par élément."
+        "statement": "The targeted APIs return JSON and expose a stable identity per item."
       },
       {
         "id": "ASM-02",
-        "statement": "L'interface ItemSource de Maket couvre déjà curseur, recherche et révision, de sorte que le connecteur n'a rien à lui ajouter."
+        "statement": "Maket's ItemSource interface already covers cursor, search and revision, so the connector has nothing to add to it."
       }
     ],
     "questions": [
       {
         "id": "Q-01",
-        "question": "La création (POST) et la suppression (DELETE) font-elles partie de la première version ?",
-        "recommendation": "Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.",
+        "question": "Are creation (POST) and deletion (DELETE) part of the first version?",
+        "recommendation": "Yes: POST with the identity returned by the API, DELETE with If-Match. They complete ItemSource and cost little once PUT is in place.",
         "status": "answered",
         "about": [
           "CON-01"
         ],
-        "answer": "Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation."
+        "answer": "Yes: creation (POST) and deletion (DELETE) are part of the first version, as recommended."
       },
       {
         "id": "Q-02",
-        "question": "Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?",
-        "recommendation": "Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.",
+        "question": "How is the mapping from the API's JSON response to the item's fields declared?",
+        "recommendation": "By JSON pointers in the workspace schema: path of the list, of the next cursor, of the identity, of the revision. No transformation language.",
         "status": "answered",
-        "answer": "Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation."
+        "answer": "By JSON pointers declared in the workspace schema: path of the list, of the next cursor, of the identity and of the revision. No transformation language."
       },
       {
         "id": "Q-03",
-        "question": "Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?",
-        "recommendation": "L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.",
+        "question": "To follow changes made outside Maket, do we start with the webhook or with periodic polling?",
+        "recommendation": "Periodic polling first: it does not require Maket to be reachable from outside. The webhook comes next.",
         "status": "answered",
-        "answer": "L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite."
+        "answer": "Periodic polling first, because it does not require Maket to be reachable from outside; the webhook comes next."
       },
       {
         "id": "Q-04",
-        "question": "Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?",
-        "recommendation": "Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.",
+        "question": "Which forms of pagination does the connector accept: opaque cursor, page number, Link header?",
+        "recommendation": "Opaque cursor and Link header. A page number is converted into a cursor by the connector.",
         "status": "answered",
         "about": [
           "ASM-02"
         ],
-        "answer": "Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur."
+        "answer": "Opaque cursor and Link header; a page number is accepted but converted into a cursor by the connector, so that the workspace only sees the cursor contract."
       },
       {
         "id": "Q-05",
-        "question": "Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?",
-        "recommendation": "Non : l'espace passe en lecture seule.",
+        "question": "If the API returns neither an ETag nor a revision field, is writing still allowed?",
+        "recommendation": "No: the workspace becomes read-only.",
         "status": "answered",
         "about": [
           "CON-03"
         ],
-        "answer": "Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu."
+        "answer": "No. A revision comes from an ETag sent back in If-Match, or from a version or date field declared as the revision by a pointer of the workspace schema. Without either, the write is refused with the reason \"read-only source\" and the workspace is read-only; no write by content comparison."
       },
       {
         "id": "Q-06",
-        "question": "Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?",
-        "recommendation": "La configuration est une définition de l'espace de travail, écrite par l'agent par l'outil MCP de création ou de modification de définition, comme le schéma de données. Maket affiche dans l'espace un panneau de source en lecture : URL, nom de la variable, état joignable ou non, lecture seule ou non, date du dernier rafraîchissement, et un bouton « tester la connexion ». Aucun formulaire de saisie des pointeurs, et le secret ne se saisit jamais dans Maket.",
+        "question": "Where does the owner configure the connector (base URL, environment variable name, JSON pointers), and how does he see the state of the source in Maket?",
+        "recommendation": "The configuration is a workspace definition, written by the agent through the MCP tool that creates or updates definitions, like the data schema. Maket shows in the workspace a read-only source panel: URL, variable name, reachable or not, read-only or not, date of the last refresh, and a \"test the connection\" button. No form to enter the pointers, and the secret is never entered in Maket.",
         "status": "answered",
         "about": [
           "ACT-01",
           "ACT-02"
         ],
-        "answer": "La configuration reste écrite par l'agent dans la définition de l'espace. Maket a un écran « Connecteurs » qui liste toutes les sources en service avec leur type, l'espace qui les utilise, l'URL de base, le nom de la variable d'environnement, l'état joignable ou non, lecture seule ou non, la date du dernier rafraîchissement, la dernière erreur, et un bouton « tester la connexion ». Dans l'espace, un indicateur d'état du connecteur est visible sans ouvrir l'écran. Aucun secret ne se saisit dans Maket."
+        "answer": "The configuration stays written by the agent in the workspace definition. Maket has a \"Connectors\" screen that lists every source in use with its kind, the workspace using it, the base URL, the environment variable name, reachable or not, read-only or not, the date of the last refresh, the last error, and a \"test the connection\" button. In the workspace, a connector status indicator is visible without opening the screen. No secret is entered in Maket."
       }
     ],
     "glossary": [
       {
-        "term": "élément",
-        "definition": "Une entrée d'un espace de travail structuré, lue ou écrite par ItemSource.",
+        "term": "item",
+        "definition": "An entry of a structured workspace, read or written through ItemSource.",
         "avoid": [
-          "enregistrement",
-          "ligne"
+          "record",
+          "row"
         ]
       },
       {
-        "term": "révision",
-        "definition": "Valeur fournie par l'API qui change à chaque modification d'un élément ; elle sert à détecter une écriture concurrente.",
+        "term": "revision",
+        "definition": "Value provided by the API that changes with every modification of an item; it is used to detect a concurrent write.",
         "avoid": [
           "version"
         ]
       },
       {
-        "term": "connecteur HTTP",
-        "definition": "L'implémentation d'ItemSource qui parle à une API REST décrite par configuration.",
+        "term": "HTTP connector",
+        "definition": "The ItemSource implementation that talks to a REST API described by configuration.",
         "avoid": [
           "plugin",
-          "adaptateur"
+          "adapter"
         ]
       }
     ]
@@ -156,16 +156,16 @@
       "id": "ART-01",
       "kind": "context",
       "format": "mermaid",
-      "title": "Contexte du connecteur HTTP",
-      "source": "flowchart LR\n  owner[\"Le propriétaire (ACT-01)\"] -- configure --> config[\"Configuration de l'espace : URL, variable d'environnement, mappage\"]\n  agent[\"L'agent (ACT-02)\"] -- outils MCP --> maket[\"Maket : espace de travail structuré\"]\n  maket -- ItemSource --> connector[\"Connecteur HTTP\"]\n  config --> connector\n  connector -- \"GET liste et lecture, PUT avec If-Match\" --> api[\"L'API externe (ACT-03)\"]\n  api -- \"JSON, ETag, 412\" --> connector",
+      "title": "HTTP connector context",
+      "source": "flowchart LR\n  owner[\"The owner (ACT-01)\"] -- configures --> config[\"Workspace configuration: URL, environment variable, mapping\"]\n  agent[\"The agent (ACT-02)\"] -- MCP tools --> maket[\"Maket: structured workspace\"]\n  maket -- ItemSource --> connector[\"HTTP connector\"]\n  config --> connector\n  connector -- \"GET list and read, PUT with If-Match\" --> api[\"The external API (ACT-03)\"]\n  api -- \"JSON, ETag, 412\" --> connector",
       "illustrates": []
     },
     {
       "id": "ART-02",
       "kind": "sequence",
       "format": "mermaid",
-      "title": "Écriture d'un élément : révision, conflit et lecture seule",
-      "source": "sequenceDiagram\n  participant A as L'agent (ACT-02)\n  participant M as Maket : espace structuré\n  participant C as Connecteur HTTP\n  participant API as L'API externe (ACT-03)\n  A->>M: modifier l'élément X\n  M->>C: put(X, révision connue)\n  alt L'API donne une révision (ETag ou champ déclaré)\n    C->>API: PUT /items/X, If-Match: révision\n    alt Révision inchangée\n      API-->>C: 200, nouvelle révision\n      C-->>M: élément mis à jour\n      M-->>A: ok, révision N+1\n    else Révision périmée\n      API-->>C: 412 Precondition Failed\n      C-->>M: refus « révision périmée », donnée courante relue\n      M-->>A: refus, formulaire rechargé\n    end\n  else L'API ne donne aucune révision (Q-05)\n    C-->>M: refus « source en lecture seule »\n    M-->>A: refus, espace en lecture seule\n  end",
+      "title": "Writing an item: revision, conflict and read-only",
+      "source": "sequenceDiagram\n  participant A as The agent (ACT-02)\n  participant M as Maket: structured workspace\n  participant C as HTTP connector\n  participant API as The external API (ACT-03)\n  A->>M: edit item X\n  M->>C: put(X, known revision)\n  alt The API gives a revision (ETag or declared field)\n    C->>API: PUT /items/X, If-Match: revision\n    alt Revision unchanged\n      API-->>C: 200, new revision\n      C-->>M: item updated\n      M-->>A: ok, revision N+1\n    else Stale revision\n      API-->>C: 412 Precondition Failed\n      C-->>M: refusal \"stale revision\", current data read again\n      M-->>A: refusal, form reloaded\n    end\n  else The API gives no revision (Q-05)\n    C-->>M: refusal \"read-only source\"\n    M-->>A: refusal, workspace read-only\n  end",
       "illustrates": [
         "CON-03",
         "Q-01",
@@ -176,7 +176,7 @@
       "id": "ART-03",
       "kind": "screen",
       "format": "svg",
-      "title": "Écran Connecteurs",
+      "title": "Connectors screen",
       "path": "assets/connectors-screen.svg",
       "illustrates": [
         "REQ-017",
@@ -188,7 +188,7 @@
       "id": "ART-04",
       "kind": "screen",
       "format": "svg",
-      "title": "Index de l’espace avec l’indicateur du connecteur",
+      "title": "Workspace index with the connector status indicator",
       "path": "assets/workspace-index.svg",
       "illustrates": [
         "REQ-019"
@@ -198,8 +198,8 @@
       "id": "ART-05",
       "kind": "module",
       "format": "mermaid",
-      "title": "Modules touchés par le connecteur HTTP",
-      "source": "flowchart LR\n  subgraph shared[\"packages/shared\"]\n    def[\"structured-workspace.ts<br/>source, sourceStatus, contrôle\"]\n    ws[\"ws.ts<br/>test_connector\"]\n  end\n  subgraph server[\"packages/server\"]\n    tool[\"tools/structured-workspaces.ts<br/>définition et erreurs\"]\n    svc[\"services/structured-workspaces.ts<br/>updateItem, deleteItem, vues\"]\n    reg[\"item-sources.ts<br/>registre\"]\n    http[\"http-item-source.ts<br/>ItemSource HTTP\"]\n    pag[\"http-pagination.ts\"]\n    req[\"http-request.ts<br/>secret, délai, erreurs\"]\n    poll[\"http-polling.ts\"]\n    hook[\"routes/connector-webhook.routes.ts\"]\n    wsh[\"ws-handler<br/>handleTestConnector\"]\n    bus((\"bus<br/>source-changed\"))\n  end\n  subgraph client[\"packages/client\"]\n    lib[\"LibraryPanel.tsx\"]\n    con[\"ConnectorsTab.tsx\"]\n    ind[\"StructuredCollectionWorkspace.tsx<br/>indicateur\"]\n    store[\"store/ws.ts\"]\n  end\n  api[[\"API REST externe\"]]\n  tool --> def\n  tool --> svc\n  svc --> reg\n  reg --> http\n  http --> pag\n  http --> req\n  http --> poll\n  req --> api\n  poll --> bus\n  hook --> bus\n  api -. webhook .-> hook\n  wsh --> reg\n  svc --> def\n  lib --> con\n  con --> store\n  store -- test_connector --> wsh\n  ind --> store\n  ws --- wsh\n  ws --- store",
+      "title": "Modules touched by the HTTP connector",
+      "source": "flowchart LR\n  subgraph shared[\"packages/shared\"]\n    def[\"structured-workspace.ts<br/>source, sourceStatus, check\"]\n    ws[\"ws.ts<br/>test_connector\"]\n  end\n  subgraph server[\"packages/server\"]\n    tool[\"tools/structured-workspaces.ts<br/>definition and errors\"]\n    svc[\"services/structured-workspaces.ts<br/>updateItem, deleteItem, views\"]\n    reg[\"item-sources.ts<br/>registry\"]\n    http[\"http-item-source.ts<br/>HTTP ItemSource\"]\n    pag[\"http-pagination.ts\"]\n    req[\"http-request.ts<br/>secret, timeout, errors\"]\n    poll[\"http-polling.ts\"]\n    hook[\"routes/connector-webhook.routes.ts\"]\n    wsh[\"ws-handler<br/>handleTestConnector\"]\n    bus((\"bus<br/>source-changed\"))\n  end\n  subgraph client[\"packages/client\"]\n    lib[\"LibraryPanel.tsx\"]\n    con[\"ConnectorsTab.tsx\"]\n    ind[\"StructuredCollectionWorkspace.tsx<br/>indicator\"]\n    store[\"store/ws.ts\"]\n  end\n  api[[\"External REST API\"]]\n  tool --> def\n  tool --> svc\n  svc --> reg\n  reg --> http\n  http --> pag\n  http --> req\n  http --> poll\n  req --> api\n  poll --> bus\n  hook --> bus\n  api -. webhook .-> hook\n  wsh --> reg\n  svc --> def\n  lib --> con\n  con --> store\n  store -- test_connector --> wsh\n  ind --> store\n  ws --- wsh\n  ws --- store",
       "illustrates": [
         "REQ-001",
         "REQ-002",
@@ -265,8 +265,8 @@
       }
     ],
     "lastVerify": {
-      "date": "2026-10-14T11:50:31.437Z",
-      "applied": 3,
+      "date": "2026-10-14T12:51:22.449Z",
+      "applied": 2,
       "reported": []
     }
   },
@@ -276,12 +276,12 @@
       "pattern": "ubiquitous",
       "statement": "The connector SHALL implement the ItemSource interface of Maket (list, get, create, put, delete, refresh) over a REST API described by the workspace configuration.",
       "priority": "MUST",
-      "rationale": "Le connecteur remplace du code propre à chaque API par une configuration ; l'espace de travail ne voit que l'interface de source d'éléments existante.",
+      "rationale": "The connector replaces code written for each API by configuration; the workspace only sees the existing item source interface.",
       "source": [
         "ACT-02",
         "CON-01"
       ],
-      "title": "Interface ItemSource sur REST",
+      "title": "ItemSource over REST",
       "facet": "integration"
     },
     {
@@ -289,12 +289,12 @@
       "pattern": "ubiquitous",
       "statement": "The connector SHALL read the base URL, the environment variable name holding the secret, and the JSON Pointer mapping (list path, next cursor path, identity path, revision path) from the workspace configuration.",
       "priority": "MUST",
-      "rationale": "La réponse Q-02 fixe le passage de l'API aux champs de l'élément par des pointeurs JSON, sans langage de transformation.",
+      "rationale": "The answer to Q-02 fixes the mapping from the API to the item's fields by JSON pointers, without a transformation language.",
       "source": [
         "Q-02",
         "ACT-01"
       ],
-      "title": "Configuration de l’espace",
+      "title": "Workspace configuration",
       "facet": "data"
     },
     {
@@ -302,11 +302,11 @@
       "pattern": "ubiquitous",
       "statement": "The connector SHALL send the secret read from the configured environment variable in every request, and SHALL never write the secret into the configuration or the workspace.",
       "priority": "MUST",
-      "rationale": "Aucun secret n'est écrit dans la configuration (CON-02) ; seul le nom de la variable y figure.",
+      "rationale": "No secret is written into the configuration (CON-02); only the variable name appears there.",
       "source": [
         "CON-02"
       ],
-      "title": "Secret par variable d’environnement",
+      "title": "Secret from an environment variable",
       "facet": "security"
     },
     {
@@ -314,11 +314,11 @@
       "pattern": "event",
       "statement": "When the workspace asks for a batch of items, the connector SHALL call the list endpoint with the cursor and search parameters of the API and SHALL return items, the next opaque cursor and the total when the API gives one; a batch never exceeds 500 items.",
       "priority": "MUST",
-      "rationale": "La liste par curseur est le contrat de l'espace de travail ; le connecteur traduit ce contrat vers l'API.",
+      "rationale": "Cursor listing is the workspace contract; the connector translates that contract to the API.",
       "source": [
         "ACT-02"
       ],
-      "title": "Liste par curseur",
+      "title": "Cursor listing",
       "facet": "integration"
     },
     {
@@ -326,11 +326,11 @@
       "pattern": "event",
       "statement": "When the API paginates by page number or by a Link header, the connector SHALL convert that pagination into the opaque cursor of the workspace.",
       "priority": "MUST",
-      "rationale": "Réponse Q-04 : l'espace ne voit qu'un seul contrat, celui du curseur.",
+      "rationale": "Answer to Q-04: the workspace sees a single contract, the cursor one.",
       "source": [
         "Q-04"
       ],
-      "title": "Conversion de la pagination",
+      "title": "Pagination conversion",
       "facet": "integration"
     },
     {
@@ -338,11 +338,11 @@
       "pattern": "event",
       "statement": "When the workspace asks for one item by its identity, the connector SHALL call the get endpoint and SHALL return the item data with its revision.",
       "priority": "MUST",
-      "rationale": "La lecture par identité et la révision sont nécessaires à l'ouverture et à l'écriture.",
+      "rationale": "Reading by identity and the revision are needed to open and to write an item.",
       "source": [
         "ACT-02"
       ],
-      "title": "Lecture d’un élément",
+      "title": "Reading an item",
       "facet": "integration"
     },
     {
@@ -350,12 +350,12 @@
       "pattern": "event",
       "statement": "When the workspace writes an item with a known revision, the connector SHALL send PUT with the If-Match header carrying that revision.",
       "priority": "MUST",
-      "rationale": "Aucune écriture sans révision (CON-03) : la révision connue protège contre la perte de mise à jour.",
+      "rationale": "No write without a revision (CON-03): the known revision protects against lost updates.",
       "source": [
         "CON-03",
         "Q-05"
       ],
-      "title": "Écriture avec If-Match",
+      "title": "Write with If-Match",
       "facet": "integration"
     },
     {
@@ -363,11 +363,11 @@
       "pattern": "unwanted",
       "statement": "If the API answers 412 Precondition Failed to a write, then the connector SHALL refuse the write as a stale revision and SHALL return the current item data read again from the API.",
       "priority": "MUST",
-      "rationale": "Un conflit est signalé à l'agent avec la donnée courante, jamais résolu à sa place.",
+      "rationale": "A conflict is reported to the agent with the current data, never resolved in its place.",
       "source": [
         "CON-03"
       ],
-      "title": "Révision périmée (412)",
+      "title": "Stale revision (412)",
       "facet": "behaviour"
     },
     {
@@ -375,12 +375,12 @@
       "pattern": "state",
       "statement": "While the API gives neither an ETag nor a declared revision field, the connector SHALL declare the source read-only and SHALL refuse every write with the reason read_only.",
       "priority": "MUST",
-      "rationale": "Réponse Q-05 : sans révision, l'écriture est refusée plutôt qu'approximative.",
+      "rationale": "Answer to Q-05: without a revision, the write is refused rather than approximate.",
       "source": [
         "Q-05",
         "CON-03"
       ],
-      "title": "Lecture seule sans révision",
+      "title": "Read-only without revision",
       "facet": "behaviour"
     },
     {
@@ -388,11 +388,11 @@
       "pattern": "event",
       "statement": "When the workspace creates an item, the connector SHALL send POST and SHALL return the identity and revision assigned by the API.",
       "priority": "MUST",
-      "rationale": "Réponse Q-01 : la création fait partie de la première version.",
+      "rationale": "Answer to Q-01: creation is part of the first version.",
       "source": [
         "Q-01"
       ],
-      "title": "Création par POST",
+      "title": "Creation with POST",
       "facet": "integration"
     },
     {
@@ -400,12 +400,12 @@
       "pattern": "event",
       "statement": "When the workspace deletes an item with a known revision, the connector SHALL send DELETE with the If-Match header and SHALL report 412 as a stale revision.",
       "priority": "MUST",
-      "rationale": "Réponse Q-01 : la suppression fait partie de la première version, protégée comme l'écriture.",
+      "rationale": "Answer to Q-01: deletion is part of the first version, protected like writing.",
       "source": [
         "Q-01",
         "CON-03"
       ],
-      "title": "Suppression avec If-Match",
+      "title": "Deletion with If-Match",
       "facet": "integration"
     },
     {
@@ -413,11 +413,11 @@
       "pattern": "state",
       "statement": "While a polling interval is configured, the connector SHALL re-read the list at that interval and SHALL emit a source-changed signal when any item revision differs from the last read.",
       "priority": "MUST",
-      "rationale": "Réponse Q-03 : l'interrogation périodique vient avant le webhook, parce qu'elle n'exige pas que Maket soit joignable.",
+      "rationale": "Answer to Q-03: periodic polling comes before the webhook, because it does not require Maket to be reachable.",
       "source": [
         "Q-03"
       ],
-      "title": "Interrogation périodique",
+      "title": "Periodic polling",
       "facet": "behaviour"
     },
     {
@@ -425,11 +425,11 @@
       "pattern": "optional",
       "statement": "Where the API offers a webhook, the connector MAY accept its calls and SHALL emit the same source-changed signal as polling.",
       "priority": "MAY",
-      "rationale": "Réponse Q-03 : le webhook vient ensuite, pour les API qui le proposent.",
+      "rationale": "Answer to Q-03: the webhook comes next, for the APIs that offer it.",
       "source": [
         "Q-03"
       ],
-      "title": "Webhook optionnel",
+      "title": "Optional webhook",
       "facet": "integration"
     },
     {
@@ -437,11 +437,11 @@
       "pattern": "unwanted",
       "statement": "If the API is unreachable or answers with a server error, then the connector SHALL report source_unreachable with the retry delay and SHALL NOT retry silently.",
       "priority": "MUST",
-      "rationale": "Aucun réessai silencieux (CON-04) : l'espace garde sa dernière fenêtre datée et l'agent sait pourquoi.",
+      "rationale": "No silent retry (CON-04): the workspace keeps its last dated window and the agent knows why.",
       "source": [
         "CON-04"
       ],
-      "title": "API injoignable",
+      "title": "Unreachable API",
       "facet": "behaviour"
     },
     {
@@ -449,20 +449,20 @@
       "pattern": "event",
       "statement": "When a request to the API exceeds the configured timeout, the connector SHALL abort it and SHALL report source_unreachable with the timeout as retry delay.",
       "priority": "MUST",
-      "rationale": "Une API lente ne doit pas figer l'espace de travail ; le délai est une configuration, pas une constante.",
+      "rationale": "A slow API must not freeze the workspace; the timeout is configuration, not a constant.",
       "source": [
         "CON-04"
       ],
-      "title": "Délai dépassé",
+      "title": "Timeout exceeded",
       "facet": "behaviour"
     },
     {
       "id": "REQ-016",
-      "title": "Configuration par la définition",
+      "title": "Configuration in the definition",
       "pattern": "ubiquitous",
       "statement": "The connector configuration (base URL, environment variable name, JSON Pointer mapping, polling interval, timeout) SHALL be part of the workspace definition written through the structured workspace definition tool, and SHALL be validated by the same check as the rest of the definition.",
       "priority": "MUST",
-      "rationale": "Réponse Q-06 : la configuration est une définition de l'espace, donc du ressort de l'agent, comme le schéma de données.",
+      "rationale": "Answer to Q-06: the configuration is a workspace definition, so it is the agent's job, like the data schema.",
       "source": [
         "Q-06",
         "ACT-02"
@@ -471,11 +471,11 @@
     },
     {
       "id": "REQ-017",
-      "title": "Écran Connecteurs",
+      "title": "Connectors screen",
       "pattern": "ubiquitous",
       "statement": "The Maket application SHALL show a Connectors screen listing every data source in use with its kind, the workspace using it, the base URL, the environment variable name, whether it is reachable, whether it is read-only, the last refresh date and the last error.",
       "priority": "MUST",
-      "rationale": "Réponse Q-06 : le propriétaire doit voir ce qui est branché et si ça marche, sans lire de JSON.",
+      "rationale": "Answer to Q-06: the owner must see what is plugged in and whether it works, without reading JSON.",
       "source": [
         "Q-06",
         "ACT-01"
@@ -484,11 +484,11 @@
     },
     {
       "id": "REQ-018",
-      "title": "Test de connexion",
+      "title": "Connection test",
       "pattern": "event",
       "statement": "When the owner asks to test a connector from the Connectors screen, the connector SHALL perform one list request with the configured secret and SHALL report reachable or the error received, without changing any item.",
       "priority": "MUST",
-      "rationale": "Un retour immédiat sur la configuration, sans effet sur les données.",
+      "rationale": "Immediate feedback on the configuration, with no effect on the data.",
       "source": [
         "Q-06",
         "ACT-01"
@@ -497,11 +497,11 @@
     },
     {
       "id": "REQ-019",
-      "title": "Indicateur d'état dans l'espace",
+      "title": "Status indicator in the workspace",
       "pattern": "ubiquitous",
       "statement": "The workspace index SHALL show a connector status indicator (reachable, unreachable since a date, read-only) visible without opening the Connectors screen.",
       "priority": "MUST",
-      "rationale": "Réponse Q-06 : l'état de la source se voit là où le propriétaire travaille.",
+      "rationale": "Answer to Q-06: the state of the source shows where the owner works.",
       "source": [
         "Q-06",
         "ACT-01"
@@ -510,11 +510,11 @@
     },
     {
       "id": "REQ-020",
-      "title": "Aucune saisie de secret",
+      "title": "No secret entry",
       "pattern": "unwanted",
       "statement": "If any screen or tool of Maket receives a secret value for a connector, then Maket SHALL refuse it and SHALL point at the environment variable name instead.",
       "priority": "MUST",
-      "rationale": "Le secret vit dans l'environnement de la machine ; Maket n'en connaît que le nom (CON-02).",
+      "rationale": "The secret lives in the machine's environment; Maket only knows its name (CON-02).",
       "source": [
         "CON-02",
         "Q-06"
@@ -526,169 +526,169 @@
     {
       "id": "AC-001.1",
       "requirement": "REQ-001",
-      "title": "Un espace branché sur une API de test",
+      "title": "A workspace plugged into a test API",
       "given": [
-        "Une API REST de test avec 3 clients sous /items"
+        "A test REST API with 3 customers under /items"
       ],
-      "when": "l'agent crée un espace structuré dont la source est le connecteur HTTP de cette API",
+      "when": "the agent creates a structured workspace whose source is the HTTP connector of that API",
       "then": [
-        "les 3 clients apparaissent dans l'index de l'espace,",
-        "la vue MCP de l'espace renvoie un lot de 3 éléments avec leur identité et leur révision"
+        "the 3 customers appear in the workspace index,",
+        "the workspace's MCP view returns a batch of 3 items with their identity and revision"
       ]
     },
     {
       "id": "AC-002.1",
       "requirement": "REQ-002",
-      "title": "Lecture de la configuration",
+      "title": "Reading the configuration",
       "given": [
-        "Une définition d'espace avec baseUrl https://api.exemple.fr/v1, secretEnv CRM_TOKEN, les pointeurs /data pour la liste, /next pour le curseur, /id pour l'identité, /etag pour la révision"
+        "A workspace definition with baseUrl https://api.example.com/v1, secretEnv CRM_TOKEN, the pointers /data for the list, /next for the cursor, /id for the identity, /etag for the revision"
       ],
-      "when": "le connecteur démarre",
+      "when": "the connector starts",
       "then": [
-        "il lit ces cinq valeurs sans en inventer d'autre",
-        "une définition sans le pointeur d'identité est refusée par la vérification de l'espace avec le nom du champ manquant"
+        "it reads these five values and invents no other",
+        "a definition without the identity pointer is refused by the workspace check with the name of the missing field"
       ]
     },
     {
       "id": "AC-003.1",
       "requirement": "REQ-003",
-      "title": "Le secret part, jamais écrit",
+      "title": "The secret is sent, never written",
       "given": [
-        "La variable d'environnement CRM_TOKEN vaut s3cret et la définition ne contient que son nom"
+        "The environment variable CRM_TOKEN is s3cret and the definition holds only its name"
       ],
-      "when": "le connecteur appelle l'API",
+      "when": "the connector calls the API",
       "then": [
-        "chaque requête porte l'en-tête Authorization avec s3cret",
-        "ni la définition, ni l'espace, ni les journaux ne contiennent la chaîne s3cret"
+        "every request carries the Authorization header with s3cret",
+        "neither the definition, nor the workspace, nor the logs contain the string s3cret"
       ]
     },
     {
       "id": "AC-004.1",
       "requirement": "REQ-004",
-      "title": "Un lot avec curseur et total",
+      "title": "A batch with cursor and total",
       "given": [
-        "Une API qui pagine par curseur avec 120 éléments et un total"
+        "An API that paginates by cursor with 120 items and a total"
       ],
-      "when": "l'espace demande un premier lot de 50",
+      "when": "the workspace asks for a first batch of 50",
       "then": [
-        "le connecteur renvoie 50 éléments, un curseur suivant opaque et le total 120",
-        "un lot demandé avec ce curseur renvoie les 50 suivants sans doublon"
+        "the connector returns 50 items, an opaque next cursor and the total 120",
+        "a batch asked with that cursor returns the next 50 without duplicates"
       ]
     },
     {
       "id": "AC-004.2",
       "requirement": "REQ-004",
-      "title": "Le lot est borné",
+      "title": "The batch is bounded",
       "given": [
-        "Une API qui accepte une taille de lot de 1000"
+        "An API that accepts a batch size of 1000"
       ],
-      "when": "l'espace demande un lot de 1000",
+      "when": "the workspace asks for a batch of 1000",
       "then": [
-        "le connecteur demande au plus 500 à l'API et renvoie au plus 500"
+        "the connector asks the API for at most 500 and returns at most 500"
       ]
     },
     {
       "id": "AC-005.1",
       "requirement": "REQ-005",
-      "title": "Pagination par en-tête Link",
+      "title": "Pagination by Link header",
       "given": [
-        "Une API qui pagine par en-tête Link rel=next"
+        "An API that paginates by a Link rel=next header"
       ],
-      "when": "l'espace demande le lot suivant avec le curseur reçu",
+      "when": "the workspace asks for the next batch with the cursor it received",
       "then": [
-        "le connecteur suit l'URL de l'en-tête Link",
-        "l'espace ne voit jamais l'URL, seulement un curseur opaque"
+        "the connector follows the URL of the Link header",
+        "the workspace never sees the URL, only an opaque cursor"
       ]
     },
     {
       "id": "AC-006.1",
       "requirement": "REQ-006",
-      "title": "Lecture par identité",
+      "title": "Reading by identity",
       "given": [
-        "Un élément d'identité 42 avec l'ETag W/\"7\""
+        "An item with identity 42 and the ETag W/\"7\""
       ],
-      "when": "l'espace demande l'élément 42",
+      "when": "the workspace asks for item 42",
       "then": [
-        "le connecteur renvoie la donnée de l'élément et la révision W/\"7\""
+        "the connector returns the item's data and the revision W/\"7\""
       ]
     },
     {
       "id": "AC-007.1",
       "requirement": "REQ-007",
-      "title": "Écriture avec la révision connue",
+      "title": "Write with the known revision",
       "given": [
-        "L'élément 42 lu avec la révision W/\"7\""
+        "Item 42 read with the revision W/\"7\""
       ],
-      "when": "l'espace écrit l'élément 42 avec cette révision",
+      "when": "the workspace writes item 42 with that revision",
       "then": [
-        "la requête PUT /items/42 porte If-Match: W/\"7\"",
-        "l'API répond 200 et le connecteur renvoie la nouvelle révision"
+        "the PUT /items/42 request carries If-Match: W/\"7\"",
+        "the API answers 200 and the connector returns the new revision"
       ]
     },
     {
       "id": "AC-008.1",
       "requirement": "REQ-008",
-      "title": "Conflit de révision",
+      "title": "Revision conflict",
       "given": [
-        "L'élément 42 modifié dans l'API depuis sa lecture, révision passée de W/\"7\" à W/\"8\""
+        "Item 42 changed in the API since it was read, revision moved from W/\"7\" to W/\"8\""
       ],
-      "when": "l'espace écrit l'élément 42 avec la révision W/\"7\"",
+      "when": "the workspace writes item 42 with the revision W/\"7\"",
       "then": [
-        "l'API répond 412",
-        "le connecteur refuse avec la raison stale_revision et renvoie la donnée courante avec W/\"8\"",
-        "le formulaire de Maket se recharge avec cette donnée"
+        "the API answers 412",
+        "the connector refuses with the reason stale_revision and returns the current data with W/\"8\"",
+        "Maket's form reloads with that data"
       ]
     },
     {
       "id": "AC-009.1",
       "requirement": "REQ-009",
-      "title": "Source sans révision",
+      "title": "Source without revision",
       "given": [
-        "Une API qui ne renvoie ni ETag ni champ de révision déclaré"
+        "An API that returns neither an ETag nor a declared revision field"
       ],
-      "when": "l'espace tente d'écrire un élément",
+      "when": "the workspace tries to write an item",
       "then": [
-        "le connecteur refuse avec la raison read_only",
-        "l'espace est marqué en lecture seule dans son index"
+        "the connector refuses with the reason read_only",
+        "the workspace is marked read-only in its index"
       ]
     },
     {
       "id": "AC-010.1",
       "requirement": "REQ-010",
-      "title": "Création d'un élément",
+      "title": "Creating an item",
       "given": [
-        "Une API qui accepte POST /items et renvoie l'identité 43 et l'ETag W/\"1\""
+        "An API that accepts POST /items and returns the identity 43 and the ETag W/\"1\""
       ],
-      "when": "l'espace crée un élément",
+      "when": "the workspace creates an item",
       "then": [
-        "le connecteur renvoie l'identité 43 et la révision W/\"1\"",
-        "l'élément 43 apparaît au lot suivant"
+        "the connector returns the identity 43 and the revision W/\"1\"",
+        "item 43 appears in the next batch"
       ]
     },
     {
       "id": "AC-011.1",
       "requirement": "REQ-011",
-      "title": "Suppression avec révision",
+      "title": "Deletion with revision",
       "given": [
-        "L'élément 43 lu avec la révision W/\"1\""
+        "Item 43 read with the revision W/\"1\""
       ],
-      "when": "l'espace supprime l'élément 43 avec cette révision",
+      "when": "the workspace deletes item 43 with that revision",
       "then": [
-        "la requête DELETE /items/43 porte If-Match: W/\"1\"",
-        "une réponse 412 est rendue comme stale_revision"
+        "the DELETE /items/43 request carries If-Match: W/\"1\"",
+        "a 412 answer is returned as stale_revision"
       ]
     },
     {
       "id": "AC-012.1",
       "requirement": "REQ-012",
-      "title": "Interrogation périodique",
+      "title": "Periodic polling",
       "given": [
-        "Un intervalle de 60 secondes configuré, et un élément modifié dans l'API après la dernière lecture"
+        "An interval of 60 seconds configured, and an item changed in the API after the last read"
       ],
-      "when": "l'intervalle expire",
+      "when": "the interval expires",
       "then": [
-        "le connecteur relit la liste et émet un signal source-changed",
-        "l'index de l'espace montre la nouvelle révision de l'élément"
+        "the connector reads the list again and emits a source-changed signal",
+        "the workspace index shows the item's new revision"
       ]
     },
     {
@@ -696,114 +696,114 @@
       "requirement": "REQ-013",
       "title": "Webhook",
       "given": [
-        "Une API qui appelle le webhook déclaré quand un élément change"
+        "An API that calls the declared webhook when an item changes"
       ],
-      "when": "l'API appelle le webhook pour l'élément 42",
+      "when": "the API calls the webhook for item 42",
       "then": [
-        "le connecteur émet le même signal source-changed que l'interrogation périodique"
+        "the connector emits the same source-changed signal as periodic polling"
       ]
     },
     {
       "id": "AC-014.1",
       "requirement": "REQ-014",
-      "title": "API injoignable",
+      "title": "Unreachable API",
       "given": [
-        "Une API qui répond 503 avec Retry-After: 30"
+        "An API that answers 503 with Retry-After: 30"
       ],
-      "when": "l'espace demande un lot",
+      "when": "the workspace asks for a batch",
       "then": [
-        "le connecteur rapporte source_unreachable avec un délai de 30 secondes",
-        "aucune nouvelle requête n'est envoyée avant ce délai",
-        "l'index garde sa dernière fenêtre, datée"
+        "the connector reports source_unreachable with a delay of 30 seconds",
+        "no new request is sent before that delay",
+        "the index keeps its last window, dated"
       ]
     },
     {
       "id": "AC-015.1",
       "requirement": "REQ-015",
-      "title": "Délai dépassé",
+      "title": "Timeout exceeded",
       "given": [
-        "Un délai de 5 secondes configuré et une API qui ne répond pas"
+        "A timeout of 5 seconds configured and an API that does not answer"
       ],
-      "when": "l'espace demande un lot",
+      "when": "the workspace asks for a batch",
       "then": [
-        "la requête est abandonnée après 5 secondes",
-        "le connecteur rapporte source_unreachable avec 5 secondes comme délai de nouvel essai"
+        "the request is aborted after 5 seconds",
+        "the connector reports source_unreachable with 5 seconds as the retry delay"
       ]
     },
     {
       "id": "AC-016.1",
       "requirement": "REQ-016",
-      "title": "Configuration vérifiée avec la définition",
+      "title": "Configuration checked with the definition",
       "given": [
-        "Une définition d'espace dont le connecteur a un intervalle d'interrogation de -1"
+        "A workspace definition whose connector has a polling interval of -1"
       ],
-      "when": "l'agent vérifie l'espace",
+      "when": "the agent checks the workspace",
       "then": [
-        "la vérification signale l'intervalle invalide avec son pointeur et une correction"
+        "the check reports the invalid interval with its pointer and a correction"
       ]
     },
     {
       "id": "AC-017.1",
       "requirement": "REQ-017",
-      "title": "Écran Connecteurs",
+      "title": "Connectors screen",
       "given": [
-        "Trois espaces branchés sur trois API, dont une injoignable depuis 9 h 15 avec une erreur 503"
+        "Three workspaces plugged into three APIs, one of them unreachable since 9:15 with a 503 error"
       ],
-      "when": "le propriétaire ouvre l'écran Connecteurs",
+      "when": "the owner opens the Connectors screen",
       "then": [
-        "il voit trois lignes avec le type, l'espace, l'URL, le nom de la variable, joignable ou non, lecture seule ou non, le dernier rafraîchissement et la dernière erreur",
-        "la ligne injoignable indique « non, depuis 09:15 » et « 503 »"
+        "he sees three rows with the kind, the workspace, the URL, the variable name, reachable or not, read-only or not, the last refresh and the last error",
+        "the unreachable row shows \"no, since 09:15\" and \"503\""
       ]
     },
     {
       "id": "AC-018.1",
       "requirement": "REQ-018",
-      "title": "Test de connexion",
+      "title": "Connection test",
       "given": [
-        "Un connecteur configuré vers une API qui répond 200 à la liste"
+        "A connector configured towards an API that answers 200 to the list"
       ],
-      "when": "le propriétaire clique sur Tester",
+      "when": "the owner clicks Test",
       "then": [
-        "l'écran affiche « joignable » avec la date",
-        "aucun élément n'est créé, modifié ni supprimé dans l'API"
+        "the screen shows \"reachable\" with the date",
+        "no item is created, changed or deleted in the API"
       ]
     },
     {
       "id": "AC-018.2",
       "requirement": "REQ-018",
-      "title": "Test de connexion en échec",
+      "title": "Failed connection test",
       "given": [
-        "Un connecteur configuré vers une API qui répond 401"
+        "A connector configured towards an API that answers 401"
       ],
-      "when": "le propriétaire clique sur Tester",
+      "when": "the owner clicks Test",
       "then": [
-        "l'écran affiche l'erreur 401 et la variable d'environnement à vérifier"
+        "the screen shows the 401 error and the environment variable to check"
       ]
     },
     {
       "id": "AC-019.1",
       "requirement": "REQ-019",
-      "title": "Indicateur dans l'espace",
+      "title": "Indicator in the workspace",
       "given": [
-        "Un espace dont la source est injoignable depuis 9 h 15"
+        "A workspace whose source has been unreachable since 9:15"
       ],
-      "when": "le propriétaire ouvre l'espace",
+      "when": "the owner opens the workspace",
       "then": [
-        "l'index montre l'indicateur « source injoignable depuis 09:15 » sans ouvrir l'écran Connecteurs",
-        "l'indicateur mène à l'écran Connecteurs"
+        "the index shows the indicator \"source unreachable since 09:15\" without opening the Connectors screen",
+        "the indicator leads to the Connectors screen"
       ]
     },
     {
       "id": "AC-020.1",
       "requirement": "REQ-020",
-      "title": "Secret refusé",
+      "title": "Secret refused",
       "given": [
-        "Un agent qui passe la valeur s3cret dans la définition du connecteur"
+        "An agent that passes the value s3cret in the connector definition"
       ],
-      "when": "l'agent vérifie ou enregistre la définition",
+      "when": "the agent checks or saves the definition",
       "then": [
-        "Maket refuse et demande le nom d'une variable d'environnement à la place",
-        "la valeur s3cret n'est écrite nulle part"
+        "Maket refuses and asks for the name of an environment variable instead",
+        "the value s3cret is written nowhere"
       ]
     }
   ],
@@ -818,7 +818,7 @@
         "REQ-001",
         "REQ-009"
       ],
-      "note": "Nouvelle fabrique à côté de createLocalItemSource : elle implémente ItemSource sans la modifier. capabilities() rend readOnly vrai, sans create, put ni delete, quand la configuration ne déclare ni ETag ni champ de révision ; l'écriture est alors refusée en read_only par sourceWrite."
+      "note": "New factory next to createLocalItemSource: it implements ItemSource without changing it. capabilities() returns readOnly true, without create, put or delete, when the configuration declares neither an ETag nor a revision field; writing is then refused as read_only by sourceWrite."
     },
     {
       "id": "ANC-02",
@@ -830,7 +830,7 @@
         "REQ-004",
         "REQ-006"
       ],
-      "note": "list et get sont synchrones dans ItemSource : refresh appelle l'API (liste par curseur et recherche, au plus 500 éléments par lot, total si l'API le donne ; élément seul avec sa révision) et remplit la mémoire que list et get servent ensuite."
+      "note": "list and get are synchronous in ItemSource: refresh calls the API (cursor listing and search, at most 500 items per batch, total when the API gives it; single item with its revision) and fills the memory that list and get then serve."
     },
     {
       "id": "ANC-03",
@@ -842,7 +842,7 @@
         "REQ-007",
         "REQ-008"
       ],
-      "note": "Envoie PUT avec If-Match portant la révision attendue ; sur 412, relit l'élément et lève stale_revision avec currentRevision et les données courantes."
+      "note": "Sends PUT with If-Match carrying the expected revision; on 412, reads the item again and raises stale_revision with currentRevision and the current data."
     },
     {
       "id": "ANC-04",
@@ -853,7 +853,7 @@
       "realizes": [
         "REQ-010"
       ],
-      "note": "Envoie POST et rend l'identité et la révision attribuées par l'API, lues aux pointeurs JSON déclarés."
+      "note": "Sends POST and returns the identity and revision assigned by the API, read at the declared JSON pointers."
     },
     {
       "id": "ANC-05",
@@ -864,7 +864,7 @@
       "realizes": [
         "REQ-011"
       ],
-      "note": "Envoie DELETE avec If-Match portant la révision attendue ; une réponse 412 devient stale_revision."
+      "note": "Sends DELETE with If-Match carrying the expected revision; a 412 answer becomes stale_revision."
     },
     {
       "id": "ANC-06",
@@ -875,7 +875,7 @@
       "realizes": [
         "REQ-005"
       ],
-      "note": "Convertit la pagination de l'API (numéro de page, en-tête Link ou pointeur du curseur suivant) en curseur opaque de l'espace, encodé comme celui de la source locale."
+      "note": "Converts the API's pagination (page number, Link header or next-cursor pointer) into the workspace's opaque cursor, encoded like the local source's one."
     },
     {
       "id": "ANC-07",
@@ -888,7 +888,7 @@
         "REQ-014",
         "REQ-015"
       ],
-      "note": "Seul point d'appel réseau : lit le secret dans process.env sous le nom configuré et l'envoie à chaque requête sans jamais l'écrire ; coupe la requête au délai configuré par AbortSignal ; rend source_unreachable avec retryAfter sur erreur réseau, 5xx ou délai dépassé, sans nouvel essai."
+      "note": "Only network call site: reads the secret from process.env under the configured name and sends it with every request without ever writing it; aborts the request at the configured timeout with an AbortSignal; returns source_unreachable with retryAfter on a network error, a 5xx or a timeout, without retrying."
     },
     {
       "id": "ANC-08",
@@ -899,7 +899,7 @@
       "realizes": [
         "REQ-012"
       ],
-      "note": "Relit la liste à l'intervalle configuré, compare les révisions à la dernière lecture et émet structured-workspace:source-changed sur le bus quand l'une diffère ; arrêté par close()."
+      "note": "Reads the list again at the configured interval, compares the revisions with the last read and emits structured-workspace:source-changed on the bus when one differs; stopped by close()."
     },
     {
       "id": "ANC-09",
@@ -910,7 +910,7 @@
       "realizes": [
         "REQ-013"
       ],
-      "note": "Route optionnelle qui reçoit les appels du webhook de l'API et émet le même structured-workspace:source-changed que l'interrogation ; montée par ROUTER_NAMES dans packages/server/src/routes/index.ts et enregistrée dans bootstrap.ts."
+      "note": "Optional route that receives the API's webhook calls and emits the same structured-workspace:source-changed as polling; mounted through ROUTER_NAMES in packages/server/src/routes/index.ts and registered in bootstrap.ts."
     },
     {
       "id": "ANC-10",
@@ -923,7 +923,7 @@
         "REQ-017",
         "REQ-018"
       ],
-      "note": "Le registre ouvre createHttpItemSource quand la définition déclare une source HTTP, createLocalItemSource sinon ; il gagne l'état de chaque connecteur (joignable, lecture seule, dernier rafraîchissement, dernière erreur) et un test de connexion qui fait une seule lecture de liste sans écrire."
+      "note": "The registry opens createHttpItemSource when the definition declares an HTTP source, createLocalItemSource otherwise; it gains the state of each connector (reachable, read-only, last refresh, last error) and a connection test that performs a single list read without writing."
     },
     {
       "id": "ANC-11",
@@ -935,7 +935,7 @@
         "REQ-002",
         "REQ-016"
       ],
-      "note": "Ajoute source, de type StructuredWorkspaceHttpSource : URL de base, nom de la variable d'environnement du secret, pointeurs JSON de liste, curseur suivant, identité et révision (ETag ou champ), intervalle d'interrogation, délai. Elle est stockée avec la définition, sans changement de dépôt."
+      "note": "Adds source, of type StructuredWorkspaceHttpSource: base URL, name of the secret's environment variable, JSON pointers for the list, next cursor, identity and revision (ETag or field), polling interval, timeout. It is stored with the definition, with no repository change."
     },
     {
       "id": "ANC-12",
@@ -948,7 +948,7 @@
         "REQ-020",
         "REQ-003"
       ],
-      "note": "Ajoute la vérification de la source au même contrôle que le reste de la définition ; une valeur de secret (clé secret, token, password ou valeur d'en-tête) est refusée avec une correction qui renvoie au nom de la variable d'environnement."
+      "note": "Adds the check of the source to the same check as the rest of the definition; a secret value (secret, token or password key, or header value) is refused with a correction that points to the name of the environment variable."
     },
     {
       "id": "ANC-13",
@@ -960,7 +960,7 @@
         "REQ-016",
         "REQ-020"
       ],
-      "note": "Le schéma zod de representation_schema accepte source, écrite par create et update_definition ; la description de l'outil dit qu'on n'y donne que le nom de la variable du secret."
+      "note": "The zod schema of representation_schema accepts source, written by create and update_definition; the tool description says that only the name of the secret's variable is given there."
     },
     {
       "id": "ANC-14",
@@ -974,7 +974,7 @@
         "REQ-014",
         "REQ-015"
       ],
-      "note": "Rend à l'agent stale_revision avec la révision et les données courantes, read_only avec sa raison, source_unreachable avec le statut, le message de l'API et le délai avant nouvel essai ; aujourd'hui seuls les refus de requête sont traduits."
+      "note": "Returns to the agent stale_revision with the current revision and data, read_only with its reason, source_unreachable with the status, the API's message and the delay before a retry; today only request refusals are translated."
     },
     {
       "id": "ANC-15",
@@ -985,7 +985,7 @@
       "realizes": [
         "REQ-011"
       ],
-      "note": "Transmet expected_revision à deleteItem ; expected_revision accepte aussi une révision texte (ETag) pour update_item et delete_item."
+      "note": "Passes expected_revision to deleteItem; expected_revision also accepts a text revision (ETag) for update_item and delete_item."
     },
     {
       "id": "ANC-16",
@@ -997,7 +997,7 @@
         "REQ-007",
         "REQ-008"
       ],
-      "note": "Passe la révision de la source telle quelle au put ; staleItemRevision ne convertit plus currentRevision en nombre et joint les données relues après un 412."
+      "note": "Passes the source's revision as is to put; staleItemRevision no longer converts currentRevision to a number and attaches the data read again after a 412."
     },
     {
       "id": "ANC-17",
@@ -1008,7 +1008,7 @@
       "realizes": [
         "REQ-011"
       ],
-      "note": "Reçoit la révision attendue et la passe à delete de la source, qui l'envoie en If-Match."
+      "note": "Receives the expected revision and passes it to the source's delete, which sends it in If-Match."
     },
     {
       "id": "ANC-18",
@@ -1019,7 +1019,7 @@
       "realizes": [
         "REQ-016"
       ],
-      "note": "Conserve source de la représentation saisie dans la définition matérialisée, pour create comme pour update_definition."
+      "note": "Keeps source from the entered representation in the materialised definition, for create as for update_definition."
     },
     {
       "id": "ANC-19",
@@ -1031,7 +1031,7 @@
         "REQ-017",
         "REQ-019"
       ],
-      "note": "Joint à chaque vue l'état du connecteur lu dans ItemSources, diffusé par structured_workspaces_changed à chaque changement d'état."
+      "note": "Attaches to each view the connector state read in ItemSources, broadcast by structured_workspaces_changed at every state change."
     },
     {
       "id": "ANC-20",
@@ -1043,7 +1043,7 @@
         "REQ-017",
         "REQ-019"
       ],
-      "note": "Ajoute sourceStatus : type, URL de base, nom de la variable, joignable ou injoignable depuis une date, lecture seule, dernier rafraîchissement, dernière erreur ; jamais la valeur du secret."
+      "note": "Adds sourceStatus: kind, base URL, variable name, reachable or unreachable since a date, read-only, last refresh, last error; never the secret's value."
     },
     {
       "id": "ANC-21",
@@ -1054,7 +1054,7 @@
       "realizes": [
         "REQ-018"
       ],
-      "note": "Nouvelle commande test_connector et son signal de résultat connector_test_result (joignable, ou statut, message et délai conseillé), ajoutés aux unions WorkspaceCommand et WorkspaceSignal."
+      "note": "New command test_connector and its result signal connector_test_result (reachable, or status, message and advised delay), added to the WorkspaceCommand and WorkspaceSignal unions."
     },
     {
       "id": "ANC-22",
@@ -1065,7 +1065,7 @@
       "realizes": [
         "REQ-018"
       ],
-      "note": "Traite test_connector : appelle le test de connexion du registre et répond au client ; branché dans le switch de createWsHandler."
+      "note": "Handles test_connector: calls the registry's connection test and answers the client; plugged into the switch of createWsHandler."
     },
     {
       "id": "ANC-23",
@@ -1078,7 +1078,7 @@
         "REQ-018",
         "REQ-020"
       ],
-      "note": "Écran Connecteurs de la maquette ART-03 : une ligne par source avec type, espace, URL de base, nom de la variable, joignable, lecture seule, dernier rafraîchissement, dernière erreur et un bouton Tester ; aucun champ de saisie de secret."
+      "note": "Connectors screen of wireframe ART-03: one row per source with kind, workspace, base URL, variable name, reachable, read-only, last refresh, last error and a Test button; no field to enter a secret."
     },
     {
       "id": "ANC-24",
@@ -1089,7 +1089,7 @@
       "realizes": [
         "REQ-017"
       ],
-      "note": "Ajoute la vue connectors à la barre de la bibliothèque, à côté de structured-workspaces, qui affiche ConnectorsTab."
+      "note": "Adds the connectors view to the library bar, next to structured-workspaces, which shows ConnectorsTab."
     },
     {
       "id": "ANC-25",
@@ -1100,7 +1100,7 @@
       "realizes": [
         "REQ-018"
       ],
-      "note": "Envoie test_connector pour un espace et range le résultat reçu pour l'écran Connecteurs."
+      "note": "Sends test_connector for a workspace and stores the result received for the Connectors screen."
     },
     {
       "id": "ANC-26",
@@ -1111,7 +1111,7 @@
       "realizes": [
         "REQ-019"
       ],
-      "note": "Indicateur de la maquette ART-04 placé dans CollectionDocument au-dessus de la recherche de l'index : joignable avec la date de rafraîchissement, injoignable depuis une date avec la dernière erreur, ou lecture seule, avec un lien vers l'écran Connecteurs."
+      "note": "Indicator of wireframe ART-04 placed in CollectionDocument above the index search: reachable with the refresh date, unreachable since a date with the last error, or read-only, with a link to the Connectors screen."
     },
     {
       "id": "ANC-27",
@@ -1122,13 +1122,13 @@
         "REQ-017",
         "REQ-019"
       ],
-      "note": "Libellés français de l'écran Connecteurs et de l'indicateur ; les mêmes clés en anglais dans packages/client/src/i18n/en.json."
+      "note": "French labels of the Connectors screen and of the indicator; the same keys in English in packages/client/src/i18n/en.json."
     }
   ],
   "tests": [
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-001.1 Un espace branché sur une API de test",
+      "name": "AC-001.1 A workspace plugged into a test API",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1139,7 +1139,7 @@
     },
     {
       "file": "packages/server/src/tools/structured-workspaces.test.ts",
-      "name": "AC-002.1 Lecture de la configuration",
+      "name": "AC-002.1 Reading the configuration",
       "framework": "vitest",
       "level": "integration",
       "method": "test",
@@ -1150,7 +1150,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-003.1 Le secret part, jamais écrit",
+      "name": "AC-003.1 The secret is sent, never written",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1161,7 +1161,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-004.1 Un lot avec curseur et total",
+      "name": "AC-004.1 A batch with cursor and total",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1172,7 +1172,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-004.2 Le lot est borné",
+      "name": "AC-004.2 The batch is bounded",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1183,7 +1183,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-005.1 Pagination par en-tête Link",
+      "name": "AC-005.1 Pagination by Link header",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1194,7 +1194,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-006.1 Lecture par identité",
+      "name": "AC-006.1 Reading by identity",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1205,7 +1205,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-007.1 Écriture avec la révision connue",
+      "name": "AC-007.1 Write with the known revision",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1216,7 +1216,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-008.1 Conflit de révision",
+      "name": "AC-008.1 Revision conflict",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1227,7 +1227,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-009.1 Source sans révision",
+      "name": "AC-009.1 Source without revision",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1238,7 +1238,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-010.1 Création d'un élément",
+      "name": "AC-010.1 Creating an item",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1249,7 +1249,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-011.1 Suppression avec révision",
+      "name": "AC-011.1 Deletion with revision",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1260,7 +1260,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-012.1 Interrogation périodique",
+      "name": "AC-012.1 Periodic polling",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1282,7 +1282,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-014.1 API injoignable",
+      "name": "AC-014.1 Unreachable API",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1293,7 +1293,7 @@
     },
     {
       "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
-      "name": "AC-015.1 Délai dépassé",
+      "name": "AC-015.1 Timeout exceeded",
       "framework": "vitest",
       "level": "unit",
       "method": "test",
@@ -1304,7 +1304,7 @@
     },
     {
       "file": "packages/server/src/tools/structured-workspaces.test.ts",
-      "name": "AC-016.1 Configuration vérifiée avec la définition",
+      "name": "AC-016.1 Configuration checked with the definition",
       "framework": "vitest",
       "level": "integration",
       "method": "test",
@@ -1315,7 +1315,7 @@
     },
     {
       "file": "packages/client/e2e/connectors.spec.ts",
-      "name": "AC-017.1 Écran Connecteurs",
+      "name": "AC-017.1 Connectors screen",
       "framework": "playwright",
       "level": "e2e",
       "method": "test",
@@ -1326,7 +1326,7 @@
     },
     {
       "file": "packages/client/e2e/connectors.spec.ts",
-      "name": "AC-018.1 Test de connexion",
+      "name": "AC-018.1 Connection test",
       "framework": "playwright",
       "level": "e2e",
       "method": "test",
@@ -1337,7 +1337,7 @@
     },
     {
       "file": "packages/client/e2e/connectors.spec.ts",
-      "name": "AC-018.2 Test de connexion en échec",
+      "name": "AC-018.2 Failed connection test",
       "framework": "playwright",
       "level": "e2e",
       "method": "test",
@@ -1348,7 +1348,7 @@
     },
     {
       "file": "packages/client/e2e/connectors.spec.ts",
-      "name": "AC-019.1 Indicateur dans l'espace",
+      "name": "AC-019.1 Indicator in the workspace",
       "framework": "playwright",
       "level": "e2e",
       "method": "test",
@@ -1359,7 +1359,7 @@
     },
     {
       "file": "packages/server/src/tools/structured-workspaces.test.ts",
-      "name": "AC-020.1 Secret refusé",
+      "name": "AC-020.1 Secret refused",
       "framework": "vitest",
       "level": "integration",
       "method": "test",

@@ -2,140 +2,140 @@
   "$schema": "../feature.schema.json",
   "id": "FEAT-001",
   "name": "maket-http-connector",
-  "title": "Connecteur HTTP pour les espaces structurés de Maket",
+  "title": "HTTP connector for Maket structured workspaces",
   "phase": "requirements",
   "framing": {
-    "intent": "Maket est un outil de documents visuels pour agents IA. Ses espaces de travail structurés listent des éléments venus d'une source de données, derrière l'interface ItemSource : liste par curseur, recherche, lecture, création, écriture, suppression, identité déclarée dans le schéma, révision pour détecter les conflits. Aujourd'hui, brancher une API REST demande du code propre à cette API. Le résultat voulu : un connecteur HTTP qui implémente ItemSource au-dessus d'une API REST décrite par configuration, pour qu'un espace de travail lise et écrive les éléments de cette API.",
+    "intent": "Maket is a visual document tool for AI agents. Its structured workspaces list items that come from a data source, behind the ItemSource interface: cursor listing, search, read, create, write, delete, identity declared in the schema, revision to detect conflicts. Today, plugging in a REST API takes code written for that API. The outcome wanted: an HTTP connector that implements ItemSource on top of a REST API described by configuration, so that a workspace reads and writes the items of that API.",
     "actors": [
       {
         "id": "ACT-01",
-        "name": "Le propriétaire",
-        "description": "Choisit les API à brancher, fournit l'URL de base et le nom de la variable d'environnement qui porte le secret, lit les espaces de travail qui en résultent."
+        "name": "The owner",
+        "description": "Chooses the APIs to plug in, provides the base URL and the name of the environment variable that holds the secret, reads the resulting workspaces."
       },
       {
         "id": "ACT-02",
-        "name": "L'agent qui compose les espaces de travail",
-        "description": "Déclare un espace structuré branché sur le connecteur, puis liste, cherche, lit et modifie les éléments par les outils MCP de Maket."
+        "name": "The agent composing workspaces",
+        "description": "Declares a structured workspace plugged into the connector, then lists, searches, reads and edits the items through Maket's MCP tools."
       },
       {
         "id": "ACT-03",
-        "name": "L'API externe",
-        "description": "Service REST tiers qui détient les éléments. Elle fait foi sur leur contenu et sur leur révision."
+        "name": "The external API",
+        "description": "Third-party REST service that holds the items. It is authoritative on their content and their revision."
       }
     ],
     "scope": {
       "in": [
-        "Lister les éléments par curseur, avec les paramètres de pagination et de recherche propres à l'API.",
-        "Lire un élément par son identité.",
-        "Écrire un élément par PUT avec l'en-tête If-Match portant la révision connue ; une réponse 412 est rendue à l'agent comme une révision périmée.",
-        "Identité et révision des éléments déclarées dans le schéma de l'espace : champ d'identité, source de la révision (ETag ou champ de la réponse).",
-        "Authentification par un secret lu dans une variable d'environnement dont seul le nom figure dans la configuration.",
-        "Espace en lecture seule quand l'API n'offre pas d'écriture : le connecteur refuse alors toute écriture.",
-        "En option, détection des changements faits hors de Maket, par webhook ou par interrogation périodique."
+        "List items by cursor, with the API's own pagination and search parameters.",
+        "Read an item by its identity.",
+        "Write an item with PUT and the If-Match header carrying the known revision; a 412 answer is returned to the agent as a stale revision.",
+        "Identity and revision of the items declared in the workspace schema: identity field, source of the revision (ETag or response field).",
+        "Authentication by a secret read from an environment variable of which only the name appears in the configuration.",
+        "Read-only workspace when the API offers no write: the connector then refuses every write.",
+        "Optionally, detection of changes made outside Maket, by webhook or by periodic polling."
       ],
       "out": [
-        "Authentification OAuth interactive et rafraîchissement de jetons.",
-        "API qui ne sont pas REST : GraphQL, SOAP, gRPC.",
-        "Transformation métier des données au-delà du mappage déclaratif des champs.",
-        "Fusion automatique des conflits : un conflit est signalé à l'agent, jamais résolu à sa place."
+        "Interactive OAuth authentication and token refresh.",
+        "APIs that are not REST: GraphQL, SOAP, gRPC.",
+        "Business transformation of the data beyond the declarative field mapping.",
+        "Automatic merging of conflicts: a conflict is reported to the agent, never resolved in its place."
       ]
     },
     "constraints": [
       {
         "id": "CON-01",
-        "statement": "Le connecteur implémente l'interface ItemSource existante sans la modifier."
+        "statement": "The connector implements the existing ItemSource interface without changing it."
       },
       {
         "id": "CON-02",
-        "statement": "Aucun secret n'est écrit dans le schéma, la configuration ou les documents : seulement le nom de la variable d'environnement."
+        "statement": "No secret is written into the schema, the configuration or the documents: only the name of the environment variable."
       },
       {
         "id": "CON-03",
-        "statement": "Une écriture sans révision connue est refusée : aucun écrasement à l'aveugle."
+        "statement": "A write without a known revision is refused: no blind overwrite."
       },
       {
         "id": "CON-04",
-        "statement": "Une erreur HTTP est rendue à l'agent avec son statut et le message de l'API ; une écriture n'est jamais réessayée en silence."
+        "statement": "An HTTP error is returned to the agent with its status and the API's message; a write is never retried silently."
       }
     ],
     "assumptions": [
       {
         "id": "ASM-01",
-        "statement": "Les API visées renvoient du JSON et exposent une identité stable par élément."
+        "statement": "The targeted APIs return JSON and expose a stable identity per item."
       },
       {
         "id": "ASM-02",
-        "statement": "L'interface ItemSource de Maket couvre déjà curseur, recherche et révision, de sorte que le connecteur n'a rien à lui ajouter."
+        "statement": "Maket's ItemSource interface already covers cursor, search and revision, so the connector has nothing to add to it."
       }
     ],
     "questions": [
       {
         "id": "Q-01",
-        "question": "La création (POST) et la suppression (DELETE) font-elles partie de la première version ?",
-        "recommendation": "Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.",
+        "question": "Are creation (POST) and deletion (DELETE) part of the first version?",
+        "recommendation": "Yes: POST with the identity returned by the API, DELETE with If-Match. They complete ItemSource and cost little once PUT is in place.",
         "status": "answered",
         "about": [
           "CON-01"
         ],
-        "answer": "Recommandation retenue."
+        "answer": "Recommendation accepted."
       },
       {
         "id": "Q-02",
-        "question": "Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?",
-        "recommendation": "Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.",
+        "question": "How is the mapping from the API's JSON response to the item's fields declared?",
+        "recommendation": "By JSON pointers in the workspace schema: path of the list, of the next cursor, of the identity, of the revision. No transformation language.",
         "status": "answered",
-        "answer": "Recommandation retenue."
+        "answer": "Recommendation accepted."
       },
       {
         "id": "Q-03",
-        "question": "Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?",
-        "recommendation": "L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.",
+        "question": "To follow changes made outside Maket, do we start with the webhook or with periodic polling?",
+        "recommendation": "Periodic polling first: it does not require Maket to be reachable from outside. The webhook comes next.",
         "status": "answered",
-        "answer": "Recommandation retenue."
+        "answer": "Recommendation accepted."
       },
       {
         "id": "Q-04",
-        "question": "Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?",
-        "recommendation": "Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.",
+        "question": "Which forms of pagination does the connector accept: opaque cursor, page number, Link header?",
+        "recommendation": "Opaque cursor and Link header. A page number is converted into a cursor by the connector.",
         "status": "answered",
         "about": [
           "ASM-02"
         ],
-        "answer": "Recommandation retenue."
+        "answer": "Recommendation accepted."
       },
       {
         "id": "Q-05",
-        "question": "Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?",
-        "recommendation": "Non : l'espace passe en lecture seule.",
+        "question": "If the API returns neither an ETag nor a revision field, is writing still allowed?",
+        "recommendation": "No: the workspace becomes read-only.",
         "status": "answered",
         "about": [
           "CON-03"
         ],
-        "answer": "Recommandation retenue."
+        "answer": "Recommendation accepted."
       }
     ],
     "glossary": [
       {
-        "term": "élément",
-        "definition": "Une entrée d'un espace de travail structuré, lue ou écrite par ItemSource.",
+        "term": "item",
+        "definition": "An entry of a structured workspace, read or written through ItemSource.",
         "avoid": [
-          "enregistrement",
-          "ligne"
+          "record",
+          "row"
         ]
       },
       {
-        "term": "révision",
-        "definition": "Valeur fournie par l'API qui change à chaque modification d'un élément ; elle sert à détecter une écriture concurrente.",
+        "term": "revision",
+        "definition": "Value provided by the API that changes with every modification of an item; it is used to detect a concurrent write.",
         "avoid": [
           "version"
         ]
       },
       {
-        "term": "connecteur HTTP",
-        "definition": "L'implémentation d'ItemSource qui parle à une API REST décrite par configuration.",
+        "term": "HTTP connector",
+        "definition": "The ItemSource implementation that talks to a REST API described by configuration.",
         "avoid": [
           "plugin",
-          "adaptateur"
+          "adapter"
         ]
       }
     ]
@@ -145,8 +145,8 @@
       "id": "ART-01",
       "kind": "context",
       "format": "mermaid",
-      "title": "Contexte du connecteur HTTP",
-      "source": "flowchart LR\n  owner[\"Le propriétaire (ACT-01)\"] -- configure --> config[\"Configuration de l'espace : URL, variable d'environnement, mappage\"]\n  agent[\"L'agent (ACT-02)\"] -- outils MCP --> maket[\"Maket : espace de travail structuré\"]\n  maket -- ItemSource --> connector[\"Connecteur HTTP\"]\n  config --> connector\n  connector -- \"GET liste et lecture, PUT avec If-Match\" --> api[\"L'API externe (ACT-03)\"]\n  api -- \"JSON, ETag, 412\" --> connector",
+      "title": "HTTP connector context",
+      "source": "flowchart LR\n  owner[\"The owner (ACT-01)\"] -- configures --> config[\"Workspace configuration: URL, environment variable, mapping\"]\n  agent[\"The agent (ACT-02)\"] -- MCP tools --> maket[\"Maket: structured workspace\"]\n  maket -- ItemSource --> connector[\"HTTP connector\"]\n  config --> connector\n  connector -- \"GET list and read, PUT with If-Match\" --> api[\"The external API (ACT-03)\"]\n  api -- \"JSON, ETag, 412\" --> connector",
       "illustrates": []
     }
   ],
@@ -172,7 +172,7 @@
       "facet": "integration",
       "statement": "When the agent lists a workspace, the connector SHALL follow the API cursor until the requested page is filled.",
       "priority": "MUST",
-      "rationale": "Le listage par curseur est la base d'ItemSource.",
+      "rationale": "Cursor listing is the basis of ItemSource.",
       "source": [
         "ACT-02"
       ]
@@ -183,7 +183,7 @@
       "facet": "behaviour",
       "statement": "If the API answers 412 to a PUT, then the connector SHALL report a stale revision to the agent.",
       "priority": "MUST",
-      "rationale": "Aucun écrasement à l'aveugle.",
+      "rationale": "No blind overwrite.",
       "source": [
         "CON-03"
       ]

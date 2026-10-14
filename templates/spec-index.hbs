@@ -1,15 +1,15 @@
 <!-- source: "spec/*/feature.json" template: "templates/spec-index.hbs" -->
 
-# Fonctionnalités
+# Features
 
-Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonctionnalité pour la lire. **À vérifier** signale des modifications faites hors de l'agent (fichiers rendus, schémas, `feature.json`) : demandez à l'agent de les vérifier.
+Generated index: one line per feature. Open a feature's documents to read it. **To reconcile** marks edits made outside the agent (rendered files, screens, `feature.json`): ask the agent to take them into account.
 
 <!-- nav -->
 {{#each byPhase}}
 {{#unless @first}}
 
 {{/unless}}
-**{{label}}** : {{#if features.length}}{{#each features}}{{#unless @first}} · {{/unless}}[{{id}} · {{title}}]({{folder}}/rendered/index.md){{/each}}{{else}}—{{/if}}
+**{{label}}**: {{#if features.length}}{{#each features}}{{#unless @first}} · {{/unless}}[{{id}} · {{title}}]({{folder}}/rendered/index.md){{/each}}{{else}}—{{/if}}
 {{/each}}
 
 ---
@@ -18,12 +18,12 @@ Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonc
 {{#each features}}
 {{#if pending}}
 > [!WARNING]
-> {{id}} : {{alterations}} modification(s) faite(s) hors de l'agent, à vérifier avant toute suite.
+> {{id}}: {{alterations}} edit(s) made outside the agent, to reconcile before anything else.
 
 {{/if}}
 {{/each}}
-| Id | Fonctionnalité | Phase | Complétude | Modifications | Documents |
+| Id | Feature | Phase | Completeness | Edits | Documents |
 | --- | --- | --- | --- | --- | --- |
 {{#each features}}
-| {{id}} | {{#if title}}{{title}}{{else}}{{name}}{{/if}} | {{#if corrupted}}**fichier corrompu**{{else}}{{phaseLabel}}{{/if}} | {{#if corrupted}}illisible{{else}}{{#if complete}}complète{{else}}{{missingCount}} manque(s){{/if}}{{/if}} | {{#if pending}}**À vérifier** ({{alterations}}){{else}}aucune{{/if}} | [ouvrir]({{folder}}/rendered/index.md) |
+| {{id}} | {{#if title}}{{title}}{{else}}{{name}}{{/if}} | {{#if corrupted}}**corrupted file**{{else}}{{phaseLabel}}{{/if}} | {{#if corrupted}}unreadable{{else}}{{#if complete}}complete{{else}}{{missingCount}} missing{{/if}}{{/if}} | {{#if pending}}**To reconcile** ({{alterations}}){{else}}none{{/if}} | [open]({{folder}}/rendered/index.md) |
 {{/each}}

@@ -3,7 +3,7 @@
   "owner": {
     "name": "Alexandre Boyer"
   },
-  "description": "spec-loop: a JSON feature model kept by an agent, projected into French Markdown for the owner, with the owner's feedback loop.",
+  "description": "spec-loop: a JSON feature model kept by an agent, projected into Markdown for the owner, with the owner's feedback loop.",
   "plugins": [
     {
       "name": "spec-loop",

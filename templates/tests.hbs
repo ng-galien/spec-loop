@@ -2,23 +2,23 @@
 {{pastNotice}}
 
 {{/if}}
-# Vérification : {{title}}
+# Verification: {{title}}
 
 <!-- ptr: /tests -->
 ## Tests
 
 {{#each tests}}
 <!-- ptr: /tests/{{@index}} -->
-- `{{file}}` : « {{name}} » ({{frameworkLabel}}{{#if levelLabel}}, {{levelLabel}}{{/if}}{{#if methodLabel}}, {{methodLabel}}{{/if}}). Vérifie {{verifiesList}}.{{#if statusLabel}} Statut : **{{statusLabel}}**.{{/if}}{{#if reason}} Raison : {{reason}}{{/if}}
+- `{{file}}`: "{{name}}" ({{frameworkLabel}}{{#if levelLabel}}, {{levelLabel}}{{/if}}{{#if methodLabel}}, {{methodLabel}}{{/if}}). Verifies {{verifiesList}}.{{#if statusLabel}} Status: **{{statusLabel}}**.{{/if}}{{#if reason}} Reason: {{reason}}{{/if}}
 {{else}}
-_Aucun test pour l'instant._
+_No test yet._
 {{/each}}
 
-## Couverture
+## Coverage
 
-| Critère | Tests | Statut |
+| Criterion | Tests | Status |
 | --- | --- | --- |
 {{#each coverage}}
 | {{id}} | {{tests}} | {{status}} |
 {{/each}}
-| **Total** | {{coverageTotal.tests}} | {{coverageTotal.verified}} critère(s) vérifié(s) sur {{coverageTotal.criteria}} |
+| **Total** | {{coverageTotal.tests}} | {{coverageTotal.verified}} of {{coverageTotal.criteria}} criteria verified |

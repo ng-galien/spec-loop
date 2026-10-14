@@ -2,12 +2,12 @@
 {{pastNotice}}
 
 {{/if}}
-# Cadrage : {{title}}
+# Framing: {{title}}
 
 <!-- ptr: /framing/intent -->
-## Intention
+## Intent
 
-{{#if framing.intent}}{{framing.intent}}{{else}}_À compléter._{{/if}}
+{{#if framing.intent}}{{framing.intent}}{{else}}_To complete._{{/if}}
 
 {{#each framing.artifacts}}
 {{> artifact}}
@@ -15,7 +15,7 @@
 {{/each}}
 
 <!-- ptr: /framing/actors -->
-## Acteurs
+## Actors
 
 {{#each framing.actors}}
 <!-- id: {{id}} -->
@@ -24,53 +24,53 @@
 {{description}}
 
 {{else}}
-_Aucun acteur pour l'instant._
+_No actor yet._
 {{/each}}
 
-## Périmètre
+## Scope
 
 <!-- ptr: /framing/scope/in -->
-### Dans le périmètre
+### In scope
 
 {{#each framing.scope.in}}
 <!-- ptr: /framing/scope/in/{{@index}} -->
 - {{this}}
 {{else}}
-_À compléter._
+_To complete._
 {{/each}}
 
 <!-- ptr: /framing/scope/out -->
-### Hors périmètre
+### Out of scope
 
 {{#each framing.scope.out}}
 <!-- ptr: /framing/scope/out/{{@index}} -->
 - {{this}}
 {{else}}
-_À compléter._
+_To complete._
 {{/each}}
 
 <!-- ptr: /framing/constraints -->
-## Contraintes
+## Constraints
 
 {{#each framing.constraints}}
 <!-- id: {{id}} -->
 - **{{id}}** · {{statement}}
 {{else}}
-_Aucune contrainte pour l'instant._
+_No constraint yet._
 {{/each}}
 
 <!-- ptr: /framing/assumptions -->
-## Hypothèses
+## Assumptions
 
 {{#each framing.assumptions}}
 <!-- id: {{id}} -->
 - **{{id}}** · {{statement}}
 {{else}}
-_Aucune hypothèse pour l'instant._
+_No assumption yet._
 {{/each}}
 
 <!-- ptr: /framing/questions -->
-## À trancher
+## Open questions
 
 {{#each framing.openQuestions}}
 <!-- id: {{id}} -->
@@ -78,45 +78,45 @@ _Aucune hypothèse pour l'instant._
 > **{{id}}** · {{question}}
 {{#if recommendation}}
 >
-> Recommandation : {{recommendation}}
+> Recommendation: {{recommendation}}
 {{/if}}
 {{#if aboutList}}
 >
-> Concerne : {{aboutList}}.
+> Concerns: {{aboutList}}.
 {{/if}}
 
 {{else}}
-_Aucune question à trancher._
+_No open question._
 {{/each}}
 
 <!-- ptr: /framing/questions -->
-## Tranché
+## Answered questions
 
 {{#each framing.answeredQuestions}}
 <!-- id: {{id}} -->
 > [!NOTE]
 > **{{id}}** · {{question}}
 >
-> Réponse : {{#if answer}}{{answer}}{{else}}_non consignée._{{/if}}
+> Answer: {{#if answer}}{{answer}}{{else}}_not recorded._{{/if}}
 {{#if recommendation}}
 >
-> _Recommandation proposée : {{recommendation}}_
+> _Proposed recommendation: {{recommendation}}_
 {{/if}}
 {{#if aboutList}}
 >
-> Concerne : {{aboutList}}.
+> Concerns: {{aboutList}}.
 {{/if}}
 
 {{else}}
-_Aucune question tranchée pour l'instant._
+_No answered question yet._
 {{/each}}
 
 <!-- ptr: /framing/glossary -->
-## Glossaire
+## Glossary
 
 {{#each framing.glossary}}
 <!-- ptr: /framing/glossary/{{@index}} -->
-- **{{term}}** : {{definition}}{{#if avoidList}} À éviter : {{avoidList}}.{{/if}}
+- **{{term}}**: {{definition}}{{#if avoidList}} Avoid: {{avoidList}}.{{/if}}
 {{else}}
-_Aucun terme pour l'instant._
+_No term yet._
 {{/each}}

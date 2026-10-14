@@ -2,7 +2,7 @@
 
 ## 1. Starting a feature
 
-The owner asks for an HTTP connector. You call `features` to see what exists, then `create` with the name `maket-http-connector` and a French title: the feature becomes FEAT-001 in phase `framing`. You run the `framing` skill: one question at a time with your recommended answer, the repository explored before asking. Each answer becomes a `patch`. When `status` reports the phase complete, you ask the owner whether to advance, then call `phase` with `by: "owner"`.
+The owner asks for an HTTP connector. You call `features` to see what exists, then `create` with the name `maket-http-connector` and a title: the feature becomes FEAT-001 in phase `framing`. You run the `framing` skill: one question at a time with your recommended answer, the repository explored before asking. Each answer becomes a `patch`. When `status` reports the phase complete, you ask the owner whether to advance, then call `phase` with `by: "owner"`.
 
 ## 2. The owner edits a rendered file
 

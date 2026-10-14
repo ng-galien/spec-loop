@@ -184,7 +184,7 @@ function questionOps(json: Record<string, unknown>, reported: ReconcileInput["re
     ops.push({
       op: "add",
       path: "/framing/questions/-",
-      value: { id, question: `Modification signalée (${where}) : ${item.reason}`, status: "open", ...(owner ? { about: [owner] } : {}) },
+      value: { id, question: `Reported edit (${where}): ${item.reason}`, status: "open", ...(owner ? { about: [owner] } : {}) },
     });
     ids.push(id);
   }

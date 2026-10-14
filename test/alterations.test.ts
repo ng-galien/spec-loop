@@ -10,7 +10,7 @@ async function withSvg() {
   await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>\n');
   const result = await patch(
     FEATURE,
-    [{ op: "add", path: "/artifacts/-", value: { id: "ART-02", kind: "screen", format: "svg", title: "Écran de l'espace", path: "assets/screen.svg", illustrates: [] } }],
+    [{ op: "add", path: "/artifacts/-", value: { id: "ART-02", kind: "screen", format: "svg", title: "Workspace screen", path: "assets/screen.svg", illustrates: [] } }],
     { root },
   );
   expect(result.ok).toBe(true);
@@ -27,16 +27,16 @@ describe("alterations", () => {
     const manifest = JSON.parse(await readFile(inFolder(root, ".manifest.json"), "utf8"));
     expect(Object.keys(manifest)).toEqual(["feature", "files", "assets"]);
     expect(manifest.feature.hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(Object.keys(manifest.files)).toEqual(["index.md", "cadrage.md"]);
+    expect(Object.keys(manifest.files)).toEqual(["index.md", "framing.md"]);
     expect(Object.keys(manifest.assets)).toEqual(["assets/screen.svg"]);
     expect(manifest.assets["assets/screen.svg"].renderedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it("classifies an edited rendered file, with the ids it touches", async () => {
     const root = await withSvg();
-    const path = inFolder(root, "rendered", "cadrage.md");
-    await writeFile(path, (await readFile(path, "utf8")).replace("sans la modifier", "sans la modifier ni l'étendre"));
-    expect(await kinds(root)).toEqual([["rendered-changed", "rendered/cadrage.md", ["CON-01"]]]);
+    const path = inFolder(root, "rendered", "framing.md");
+    await writeFile(path, (await readFile(path, "utf8")).replace("without changing it", "without changing or extending it"));
+    expect(await kinds(root)).toEqual([["rendered-changed", "rendered/framing.md", ["CON-01"]]]);
   });
 
   it("classifies an edited svg as an asset to review visually, with its ART id", async () => {
@@ -59,10 +59,10 @@ describe("alterations", () => {
 
   it("classifies a deleted rendered file and a file added by hand", async () => {
     const root = await withSvg();
-    await rm(inFolder(root, "rendered", "cadrage.md"));
+    await rm(inFolder(root, "rendered", "framing.md"));
     await writeFile(inFolder(root, "rendered", "notes.md"), "# Mes notes\n");
     expect(await kinds(root)).toEqual([
-      ["rendered-missing", "rendered/cadrage.md", []],
+      ["rendered-missing", "rendered/framing.md", []],
       ["rendered-extra", "rendered/notes.md", []],
     ]);
   });
@@ -90,28 +90,28 @@ describe("alterations", () => {
 
   it("a deleted rendered file is an owner edit: render and patch refuse, reconcile recreates it", async () => {
     const root = await withSvg();
-    await rm(inFolder(root, "rendered", "cadrage.md"));
-    expect((await render(FEATURE, { root })).refused).toEqual(["cadrage.md"]);
-    expect((await patch(FEATURE, [{ op: "add", path: "/framing/glossary/-", value: { term: "curseur", definition: "Position opaque renvoyée par l'API." } }], { root })).ok).toBe(false);
+    await rm(inFolder(root, "rendered", "framing.md"));
+    expect((await render(FEATURE, { root })).refused).toEqual(["framing.md"]);
+    expect((await patch(FEATURE, [{ op: "add", path: "/framing/glossary/-", value: { term: "cursor", definition: "Opaque position returned by the API." } }], { root })).ok).toBe(false);
     expect((await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).ok).toBe(true);
-    expect(await readFile(inFolder(root, "rendered", "cadrage.md"), "utf8")).toContain("# Cadrage");
+    expect(await readFile(inFolder(root, "rendered", "framing.md"), "utf8")).toContain("# Framing");
   });
 
   it("a hand-edited feature.json blocks patch, render and phase until reconcile accepts it with a reason", async () => {
     const root = await withSvg();
     const json = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
-    json.framing.intent = `${json.framing.intent} Ajout à la main.`;
+    json.framing.intent = `${json.framing.intent} Added by hand.`;
     await writeFile(inFolder(root, "feature.json"), JSON.stringify(json, null, 2));
     expect((await render(FEATURE, { root })).refused).toEqual(["feature.json"]);
     const refused = await patch(FEATURE, [{ op: "replace", path: "/title", value: "Autre titre" }], { root });
     expect(refused.errors[0]!.message).toContain("feature.json was changed outside the MCP");
     expect((await advancePhase(FEATURE, { root })).ok).toBe(false);
     expect((await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root })).errors[0]).toContain("featureChange");
-    const accepted = await reconcile(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "Précision voulue par le propriétaire." } }, { root, now: NOW });
+    const accepted = await reconcile(FEATURE, { ops: [], applied: 1, reported: [], featureChange: { action: "accept", reason: "Precision wanted by the owner." } }, { root, now: NOW });
     expect(accepted.ok).toBe(true);
     const after = JSON.parse(await readFile(inFolder(root, "feature.json"), "utf8"));
-    expect(after.framing.intent).toContain("Ajout à la main.");
-    expect(after.lifecycle.acceptedChanges).toEqual([{ date: NOW, reason: "Précision voulue par le propriétaire." }]);
+    expect(after.framing.intent).toContain("Added by hand.");
+    expect(after.lifecycle.acceptedChanges).toEqual([{ date: NOW, reason: "Precision wanted by the owner." }]);
     expect((await status(FEATURE, { root })).ownerEdits.state).toBe("none");
   });
 
@@ -127,7 +127,7 @@ describe("alterations", () => {
     expect(accept.errors[0]).toContain("phase changed by hand cannot be accepted");
     const restore = await reconcile(
       FEATURE,
-      { ops: [], applied: 0, reported: [{ file: "feature.json", pointer: "/phase", reason: "La phase se change par l'outil phase." }], featureChange: { action: "restore", reason: "Phase changée à la main." } },
+      { ops: [], applied: 0, reported: [{ file: "feature.json", pointer: "/phase", reason: "The phase is changed with the phase tool." }], featureChange: { action: "restore", reason: "Phase changed by hand." } },
       { root, now: NOW },
     );
     expect(restore.ok).toBe(true);
@@ -144,5 +144,19 @@ describe("alterations", () => {
     expect(report.root).toBe(root);
     expect(report.features[0]).toMatchObject({ id: "FEAT-001", corrupted: expect.any(String), path: inFolder(root, "feature.json") });
     await expect(status(FEATURE, { root })).rejects.toThrow(inFolder(root, "feature.json"));
+  });
+
+  it("a file the MCP wrote and no longer produces is a stale projection, not an owner edit", async () => {
+    const root = await withSvg();
+    const manifestPath = inFolder(root, ".manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const old = await readFile(inFolder(root, "rendered", "framing.md"), "utf8");
+    await writeFile(inFolder(root, "rendered", "old-name.md"), old);
+    manifest.files["old-name.md"] = manifest.files["framing.md"];
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+    const result = await diff(FEATURE, { root });
+    expect(result.alterations).toEqual([]);
+    expect(result.files.find((f) => f.path === "old-name.md")).toMatchObject({ status: "unexpected", editedByOwner: false });
+    expect((await render(FEATURE, { root })).removed).toEqual(["old-name.md"]);
   });
 });

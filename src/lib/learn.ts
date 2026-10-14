@@ -86,7 +86,7 @@ function phasesDoc(): string {
     const req = requiredBy(p.name);
     if (req.length) lines.push("", "Schema requires:", ...req.map((r) => `- ${r}`));
     if (own.length) lines.push("", "Coverage checks of this phase:", ...own.map((c) => `- ${checkDescriptions[c] ?? c}`));
-    if (exit.length) lines.push("", `À satisfaire pour sortir (entry rules of \`${next!.name}\`, already checked here):`, ...exit.map((c) => `- ${checkDescriptions[c] ?? c}`));
+    if (exit.length) lines.push("", `To satisfy before leaving (entry rules of \`${next!.name}\`, already checked here):`, ...exit.map((c) => `- ${checkDescriptions[c] ?? c}`));
     if (p.produces.length) lines.push("", `Fields: \`learn\` topic \`fields\`, section${p.produces.length > 1 ? "s" : ""} ${p.produces.map((s) => `\`${s}\``).join(", ")}.`);
   });
   return `${lines.join("\n")}\n`;

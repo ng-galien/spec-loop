@@ -2,13 +2,13 @@
 {{pastNotice}}
 
 {{/if}}
-# Exigences : {{title}}
+# Requirements: {{title}}
 
-Chaque exigence est une phrase EARS qui décrit une réponse observable du système. Son identifiant reste stable.
+Each requirement is one EARS sentence that states an observable response of the system. Its id is stable.
 
 {{#if requirements.length}}
 <!-- ptr: /requirements -->
-| Exigence | Titre | Facette | Priorité | Forme EARS | Origine |
+| Requirement | Title | Facet | Priority | EARS pattern | Source |
 | --- | --- | --- | --- | --- | --- |
 {{#each requirements}}
 | [{{id}}](#{{anchor}}) | {{#if title}}{{title}}{{else}}—{{/if}} | {{facetLabel}} | {{priority}} | {{patternLabel}} | {{#if sourceList}}{{sourceList}}{{else}}—{{/if}} |
@@ -21,12 +21,12 @@ Chaque exigence est une phrase EARS qui décrit une réponse observable du syst�
 
 {{statement}}
 
-Facette : **{{facetLabel}}**. Forme EARS : **{{patternLabel}}**. Priorité : **{{priority}}**.{{#if invariant}} Invariant : vrai dans tout état.{{/if}}
+Facet: **{{facetLabel}}**. EARS pattern: **{{patternLabel}}**. Priority: **{{priority}}**.{{#if invariant}} Invariant: holds in every state.{{/if}}
 
-Justification : {{rationale}}
+Rationale: {{rationale}}
 {{#if sourceList}}
 
-Origine : {{sourceList}}
+Source: {{sourceList}}
 {{/if}}
 {{#each footnotes}}
 
@@ -39,5 +39,5 @@ Origine : {{sourceList}}
 {{/each}}
 
 {{else}}
-_Aucune exigence pour l'instant._
+_No requirement yet._
 {{/each}}

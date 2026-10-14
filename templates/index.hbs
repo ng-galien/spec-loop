@@ -1,7 +1,7 @@
 <!-- ptr: /title -->
 # {{title}}
 
-Fonctionnalité `{{id}}`. Phase actuelle : **{{phaseLabel}}**.
+Feature `{{id}}`. Current phase: **{{phaseLabel}}**.
 
 {{#each warnings}}
 > [!WARNING]
@@ -18,25 +18,25 @@ flowchart LR
 ## Documents
 
 {{#each documents}}
-- [{{label}}]({{path}}) : {{description}}
+- [{{label}}]({{path}}): {{description}}
 {{/each}}
 
 {{#if artifactIndex.length}}
-## Artefacts
+## Artifacts
 
 {{#each artifactIndex}}
-- {{id}} : {{title}} ({{kindLabel}}, {{format}}), dans [{{file}}]({{file}})
+- {{id}}: {{title}} ({{kindLabel}}, {{format}}), in [{{file}}]({{file}})
 {{/each}}
 
 {{/if}}
-## Reste à faire pour la phase « {{phaseLabel}} »
+## Left to do in the {{phaseLabel}} phase
 
 {{#if missing.length}}
 {{#each missing}}
 - [ ] {{text}}
 {{/each}}
 {{else}}
-Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
+Nothing: the phase is complete. Moving to the next phase is decided in the conversation.
 {{/if}}
 
 {{#if questionList.length}}
@@ -49,15 +49,15 @@ Rien : la phase est complète. Le passage à la phase suivante se décide dans l
 
 {{/if}}
 <!-- ptr: /lifecycle -->
-## Historique
+## History
 
 {{#each history}}
-- {{date}} : phase « {{label}} », décidée par {{by}}{{#if reason}}, retour en arrière : {{reason}}{{/if}}
+- {{date}}: phase {{label}}, decided by {{by}}{{#if reason}}, moved back: {{reason}}{{/if}}
 {{/each}}
 {{#if lastVerify}}
-- {{lastVerify.date}} : dernière réconciliation de vos modifications, {{lastVerify.applied}} appliquée(s), {{lastVerify.reported}} signalée(s)
+- {{lastVerify.date}}: last reconciliation of your edits, {{lastVerify.applied}} applied, {{lastVerify.reported}} reported
 {{/if}}
 
-## Comment intervenir
+## How to take part
 
-Lisez les documents. Répondez dans la conversation, ou modifiez directement ces fichiers puis demandez à l'agent de vérifier vos modifications. Les commentaires `<!-- id: … -->` et `<!-- ptr: … -->` repèrent chaque bloc : laissez-les en place ; pour ajouter un bloc, recopiez la forme d'un bloc voisin. Un écran SVG se modifie dans son fichier, sous `assets/`.
+Read the documents. Answer in the conversation, or edit these files directly and ask the agent to take your edits into account. The `<!-- id: … -->` and `<!-- ptr: … -->` comments mark each block: leave them in place; to add a block, copy the shape of a neighbouring one. An SVG screen is edited in its file, under `assets/`.

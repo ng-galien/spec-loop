@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://spec-loop.local/schema/feature.schema.json",
   "title": "spec-loop feature",
-  "description": "One feature, maintained by an agent through the spec-loop MCP server and projected into French Markdown for the owner.",
+  "description": "One feature, maintained by an agent through the spec-loop MCP server and projected into Markdown documents for the owner.",
   "x-phases": [
     {
       "name": "framing",
-      "title": "Cadrage",
-      "summary": "intention, acteurs, périmètre, contraintes, hypothèses, questions, glossaire",
+      "title": "Framing",
+      "summary": "intent, actors, scope, constraints, assumptions, questions, glossary",
       "description": "Fix what the feature is for, who takes part and where it stops, before any requirement is written.",
       "produces": [
         "framing"
@@ -19,8 +19,8 @@
     },
     {
       "name": "requirements",
-      "title": "Exigences",
-      "summary": "une phrase EARS par exigence, avec sa priorité",
+      "title": "Requirements",
+      "summary": "one EARS sentence per requirement, with facet and priority",
       "description": "State each observable response of the system as one EARS sentence with a priority.",
       "produces": [
         "requirements"
@@ -30,8 +30,8 @@
     },
     {
       "name": "acceptance",
-      "title": "Acceptation",
-      "summary": "un exemple Soit/Quand/Alors par critère, groupés par exigence",
+      "title": "Acceptance",
+      "summary": "one Given/When/Then example per criterion, grouped by requirement",
       "description": "Give each requirement concrete Given/When/Then examples that show it satisfied or violated.",
       "produces": [
         "criteria"
@@ -44,8 +44,8 @@
     },
     {
       "name": "anchoring",
-      "title": "Ancrage",
-      "summary": "les endroits du code qui réalisent les exigences",
+      "title": "Anchoring",
+      "summary": "the places in the code that realise the requirements",
       "description": "Point at the places in the code that realize the requirements, and say how each one changes.",
       "produces": [
         "anchors"
@@ -57,8 +57,8 @@
     },
     {
       "name": "verification",
-      "title": "Vérification",
-      "summary": "les tests qui vérifient les critères, et la couverture",
+      "title": "Verification",
+      "summary": "the tests that verify the criteria, and the coverage",
       "description": "Bind every criterion to the tests that verify it, named by the criterion id.",
       "produces": [
         "tests"
@@ -71,8 +71,8 @@
     },
     {
       "name": "done",
-      "title": "Terminé",
-      "summary": "toutes les règles de couverture tiennent",
+      "title": "Done",
+      "summary": "every coverage rule holds",
       "description": "Close the feature once every requirement has a criterion, every criterion a test, and every test passes or is replaced by a justified method.",
       "produces": [],
       "granularity": "No new object.",
@@ -97,7 +97,7 @@
         "kind": "screen",
         "format": "svg"
       },
-      "message": "{id} attend sa maquette d'écran"
+      "message": "{id} needs its screen wireframe"
     },
     "testsPassingOrJustified": {
       "description": "Every test has status passing, or uses a method other than test with its reason recorded, before the feature enters the done phase.",
@@ -135,9 +135,9 @@
     },
     "title": {
       "$ref": "#/$defs/text",
-      "description": "Title shown to the owner, in French.",
+      "description": "Title shown to the owner, in English.",
       "examples": [
-        "Connecteur HTTP pour les espaces structurés de Maket"
+        "HTTP connector for Maket structured workspaces"
       ]
     },
     "phase": {
@@ -412,9 +412,9 @@
       "properties": {
         "intent": {
           "$ref": "#/$defs/text",
-          "description": "The problem and the outcome wanted, in one French paragraph.",
+          "description": "The problem and the outcome wanted, in one paragraph.",
           "examples": [
-            "Brancher une API REST sur un espace de travail demande aujourd'hui du code propre à cette API ; le résultat voulu est un connecteur décrit par configuration."
+            "Plugging a REST API into a workspace takes code written for that API today; the outcome wanted is a connector described by configuration."
           ]
         },
         "actors": {
@@ -439,14 +439,14 @@
               },
               "name": {
                 "$ref": "#/$defs/text",
-                "description": "Name of the actor, in French.",
+                "description": "Name of the actor, in English.",
                 "examples": [
-                  "L'API externe"
+                  "The external API"
                 ]
               },
               "description": {
                 "$ref": "#/$defs/text",
-                "description": "What the actor does with the feature, in French."
+                "description": "What the actor does with the feature, in English."
               }
             }
           }
@@ -466,10 +466,10 @@
               "items": {
                 "$ref": "#/$defs/text"
               },
-              "description": "What the feature covers, one French line per item.",
+              "description": "What the feature covers, one line per item.",
               "examples": [
                 [
-                  "Lire un élément par son identité."
+                  "Read an item by its identity."
                 ]
               ]
             },
@@ -479,10 +479,10 @@
               "items": {
                 "$ref": "#/$defs/text"
               },
-              "description": "What the feature leaves out on purpose, one French line per item.",
+              "description": "What the feature leaves out on purpose, one line per item.",
               "examples": [
                 [
-                  "Authentification OAuth interactive."
+                  "Interactive OAuth authentication."
                 ]
               ]
             }
@@ -509,9 +509,9 @@
               },
               "statement": {
                 "$ref": "#/$defs/text",
-                "description": "The condition, in one French sentence.",
+                "description": "The condition, in one sentence.",
                 "examples": [
-                  "Aucun secret n'est écrit dans la configuration."
+                  "No secret is written into the configuration."
                 ]
               }
             }
@@ -538,7 +538,7 @@
               },
               "statement": {
                 "$ref": "#/$defs/text",
-                "description": "The fact assumed, in one French sentence."
+                "description": "The fact assumed, in one sentence."
               }
             }
           }
@@ -565,11 +565,11 @@
               },
               "question": {
                 "$ref": "#/$defs/text",
-                "description": "The question, in French."
+                "description": "The question, in English."
               },
               "recommendation": {
                 "$ref": "#/$defs/text",
-                "description": "The answer the agent recommends, with its reason, in French."
+                "description": "The answer the agent recommends, with its reason, in English."
               },
               "status": {
                 "enum": [
@@ -580,7 +580,7 @@
               },
               "answer": {
                 "$ref": "#/$defs/text",
-                "description": "The owner's answer, in French."
+                "description": "The owner's answer, in English."
               },
               "about": {
                 "type": "array",
@@ -612,12 +612,12 @@
                 "$ref": "#/$defs/text",
                 "description": "The word to use.",
                 "examples": [
-                  "révision"
+                  "revision"
                 ]
               },
               "definition": {
                 "$ref": "#/$defs/text",
-                "description": "Its meaning in this feature, in one French sentence."
+                "description": "Its meaning in this feature, in one sentence."
               },
               "avoid": {
                 "type": "array",
@@ -657,9 +657,9 @@
         },
         "title": {
           "$ref": "#/$defs/text",
-          "description": "Short French name of the requirement, shown in its heading and in the summary table.",
+          "description": "Short name of the requirement, shown in its heading and in the summary table.",
           "examples": [
-            "Liste par curseur"
+            "Cursor listing"
           ]
         },
         "facet": {
@@ -680,10 +680,10 @@
           },
           "x-labels": {
             "interface": "interface",
-            "behaviour": "comportement",
-            "data": "données",
-            "integration": "intégration",
-            "security": "sécurité"
+            "behaviour": "behaviour",
+            "data": "data",
+            "integration": "integration",
+            "security": "security"
           }
         },
         "pattern": {
@@ -720,7 +720,7 @@
         },
         "rationale": {
           "$ref": "#/$defs/text",
-          "description": "Why the requirement exists, in French."
+          "description": "Why the requirement exists, in English."
         },
         "invariant": {
           "type": "boolean",
@@ -763,14 +763,14 @@
         {
           "id": "AC-002.1",
           "requirement": "REQ-002",
-          "title": "révision périmée",
+          "title": "stale revision",
           "given": [
-            "un élément de révision 3",
-            "l'API est à la révision 4"
+            "an item at revision 3",
+            "the API is at revision 4"
           ],
-          "when": "l'agent écrit l'élément",
+          "when": "the agent writes the item",
           "then": [
-            "l'agent reçoit une révision périmée"
+            "the agent receives a stale revision"
           ]
         }
       ],
@@ -788,18 +788,18 @@
         },
         "title": {
           "$ref": "#/$defs/text",
-          "description": "Short French name of the example."
+          "description": "Short name of the example."
         },
         "given": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/text"
           },
-          "description": "Preconditions with concrete values, in French."
+          "description": "Preconditions with concrete values, in English."
         },
         "when": {
           "$ref": "#/$defs/text",
-          "description": "The single action, in French."
+          "description": "The single action, in English."
         },
         "then": {
           "type": "array",
@@ -807,7 +807,7 @@
           "items": {
             "$ref": "#/$defs/text"
           },
-          "description": "Observable outcomes, in French."
+          "description": "Observable outcomes, in English."
         },
         "examples": {
           "type": "array",
@@ -848,9 +848,9 @@
           "description": "What the anchor points at.",
           "x-labels": {
             "module": "module",
-            "symbol": "symbole",
+            "symbol": "symbol",
             "interface": "interface",
-            "schema": "schéma",
+            "schema": "schema",
             "route": "route",
             "config": "configuration"
           }
@@ -877,9 +877,9 @@
           ],
           "description": "How the code at this place changes.",
           "x-labels": {
-            "add": "ajout",
+            "add": "addition",
             "modify": "modification",
-            "remove": "suppression"
+            "remove": "removal"
           }
         },
         "realizes": {
@@ -892,7 +892,7 @@
         },
         "note": {
           "$ref": "#/$defs/text",
-          "description": "What to know about this place, in French."
+          "description": "What to know about this place, in English."
         }
       }
     },
@@ -937,7 +937,7 @@
             "pytest": "pytest",
             "junit": "junit",
             "cucumber": "cucumber",
-            "other": "autre"
+            "other": "other"
           }
         },
         "level": {
@@ -948,9 +948,9 @@
           ],
           "description": "Test level.",
           "x-labels": {
-            "unit": "unitaire",
-            "integration": "intégration",
-            "e2e": "bout en bout"
+            "unit": "unit",
+            "integration": "integration",
+            "e2e": "end to end"
           }
         },
         "method": {
@@ -964,15 +964,15 @@
           "x-labels": {
             "test": "test",
             "inspection": "inspection",
-            "demonstration": "démonstration",
-            "analysis": "analyse"
+            "demonstration": "demonstration",
+            "analysis": "analysis"
           }
         },
         "reason": {
           "$ref": "#/$defs/text",
-          "description": "Why a method other than test is accepted for this criterion, in French.",
+          "description": "Why a method other than test is accepted for this criterion, in English.",
           "examples": [
-            "Le rendu de l'écran se vérifie à l'œil sur la maquette ART-03."
+            "The screen layout is checked by eye against wireframe ART-03."
           ]
         },
         "verifies": {
@@ -991,9 +991,9 @@
           ],
           "description": "Last known result, written by the agent from the runner output.",
           "x-labels": {
-            "missing": "à écrire",
-            "failing": "en échec",
-            "passing": "réussi"
+            "missing": "to write",
+            "failing": "failing",
+            "passing": "passing"
           }
         }
       },
@@ -1043,7 +1043,7 @@
         },
         "title": {
           "$ref": "#/$defs/text",
-          "description": "Short French title."
+          "description": "Short title."
         },
         "status": {
           "enum": [
@@ -1055,15 +1055,15 @@
         },
         "context": {
           "$ref": "#/$defs/text",
-          "description": "The forces at play, in French."
+          "description": "The forces at play, in English."
         },
         "decision": {
           "$ref": "#/$defs/text",
-          "description": "What is decided, in French."
+          "description": "What is decided, in English."
         },
         "consequences": {
           "$ref": "#/$defs/text",
-          "description": "What follows from it, in French."
+          "description": "What follows from it, in English."
         },
         "alternatives": {
           "type": "array",
@@ -1160,9 +1160,9 @@
         },
         "title": {
           "$ref": "#/$defs/text",
-          "description": "French title shown above the artifact.",
+          "description": "Title shown above the artifact.",
           "examples": [
-            "Contexte du connecteur HTTP"
+            "HTTP connector context"
           ]
         },
         "source": {
@@ -1231,7 +1231,7 @@
               },
               "reason": {
                 "$ref": "#/$defs/text",
-                "description": "Why the owner moved the feature back to this earlier phase, in French."
+                "description": "Why the owner moved the feature back to this earlier phase, in English."
               }
             }
           }
@@ -1279,7 +1279,7 @@
                   },
                   "reason": {
                     "$ref": "#/$defs/text",
-                    "description": "Why it was reported instead of applied, in French."
+                    "description": "Why it was reported instead of applied, in English."
                   }
                 }
               }
@@ -1303,7 +1303,7 @@
               },
               "reason": {
                 "$ref": "#/$defs/text",
-                "description": "Why it was accepted, in French."
+                "description": "Why it was accepted, in English."
               }
             }
           }

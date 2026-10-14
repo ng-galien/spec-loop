@@ -89,16 +89,16 @@ describe("validate", () => {
   it("requirements: an interface requirement waits for its svg screen before leaving the phase", async () => {
     const feature = inRequirements(await guineaPig());
     (feature.requirements as { facet: string }[])[0]!.facet = "interface";
-    expect(validate(feature).errors).toEqual([{ pointer: "/requirements/0", message: "REQ-001 attend sa maquette d'écran", kind: "incomplete" }]);
+    expect(validate(feature).errors).toEqual([{ pointer: "/requirements/0", message: "REQ-001 needs its screen wireframe", kind: "incomplete" }]);
     (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "ascii", title: "Brouillon", source: "+--+", illustrates: ["REQ-001"] });
     expect(validate(feature).complete).toBe(false);
-    (feature.artifacts as unknown[]).push({ id: "ART-03", kind: "screen", format: "svg", title: "Écran", path: "assets/screen.svg", illustrates: ["REQ-001"] });
+    (feature.artifacts as unknown[]).push({ id: "ART-03", kind: "screen", format: "svg", title: "Screen", path: "assets/screen.svg", illustrates: ["REQ-001"] });
     expect(validate(feature).complete).toBe(true);
   });
 
   it("framing: the screen rule is not checked yet", async () => {
     const feature = await guineaPig();
-    expect(validate(feature).errors.every((e) => !e.message.includes("maquette"))).toBe(true);
+    expect(validate(feature).errors.every((e) => !e.message.includes("wireframe"))).toBe(true);
   });
 
   const verified = async () => {
@@ -139,7 +139,7 @@ describe("validate", () => {
     tests[0]!.method = "inspection";
     delete tests[0]!.status;
     expect(validate(feature).errors).toEqual([expect.objectContaining({ pointer: "/tests/0/reason", kind: "incomplete" })]);
-    tests[0]!.reason = "Le rendu de l'écran se vérifie à l'œil sur la maquette.";
+    tests[0]!.reason = "The screen layout is checked by eye against the wireframe.";
     expect(validate(feature).complete).toBe(true);
   });
 
@@ -156,7 +156,7 @@ describe("validate", () => {
     feature.lifecycle = {
       created: "2026-10-14T10:00:00.000Z",
       phaseHistory: ["framing", "requirements", "acceptance", "anchoring", "verification"].map((phase) => ({ phase, date: "2026-10-14T10:00:00.000Z", by: "owner" })).concat([
-        { phase: "requirements", date: "2026-10-14T11:00:00.000Z", by: "owner", reason: "Revoir REQ-002." } as never,
+        { phase: "requirements", date: "2026-10-14T11:00:00.000Z", by: "owner", reason: "Review REQ-002." } as never,
       ]),
     };
     expect(validate(feature)).toMatchObject({ valid: true, complete: true });

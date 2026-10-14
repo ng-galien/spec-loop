@@ -1,25 +1,25 @@
 <!-- source: "spec/*/feature.json" template: "templates/spec-index.hbs" -->
 
-# Fonctionnalités
+# Features
 
-Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonctionnalité pour la lire. **À vérifier** signale des modifications faites hors de l'agent (fichiers rendus, schémas, `feature.json`) : demandez à l'agent de les vérifier.
+Generated index: one line per feature. Open a feature's documents to read it. **To reconcile** marks edits made outside the agent (rendered files, screens, `feature.json`): ask the agent to take them into account.
 
 <!-- nav -->
-**Cadrage** : —
+**Framing**: —
 
-**Exigences** : —
+**Requirements**: —
 
-**Acceptation** : —
+**Acceptance**: —
 
-**Ancrage** : —
+**Anchoring**: —
 
-**Vérification** : [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](FEAT-001-maket-http-connector/rendered/index.md)
+**Verification**: [FEAT-001 · HTTP connector for Maket structured workspaces](FEAT-001-maket-http-connector/rendered/index.md)
 
-**Terminé** : —
+**Done**: —
 
 ---
 <!-- /nav -->
 
-| Id | Fonctionnalité | Phase | Complétude | Modifications | Documents |
+| Id | Feature | Phase | Completeness | Edits | Documents |
 | --- | --- | --- | --- | --- | --- |
-| FEAT-001 | Connecteur HTTP pour les espaces structurés de Maket | Vérification | 22 manque(s) | aucune | [ouvrir](FEAT-001-maket-http-connector/rendered/index.md) |
+| FEAT-001 | HTTP connector for Maket structured workspaces | Verification | 22 missing | none | [open](FEAT-001-maket-http-connector/rendered/index.md) |

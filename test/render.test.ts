@@ -10,18 +10,18 @@ describe("render", () => {
     const feature = inRequirements(await guineaPig());
     const first = renderToMemory(feature);
     expect(renderToMemory(structuredClone(feature))).toEqual(first);
-    expect(first.map((f) => f.path)).toEqual(["index.md", "cadrage.md", "exigences.md"]);
+    expect(first.map((f) => f.path)).toEqual(["index.md", "framing.md", "requirements.md"]);
   });
 
   it("writes identical files on a second render and reports nothing changed", async () => {
     const root = await workspace();
     const first = await render(FEATURE, { root });
-    const bytes = await readFile(inFolder(root, "rendered", "cadrage.md"));
+    const bytes = await readFile(inFolder(root, "rendered", "framing.md"));
     const second = await render(FEATURE, { root });
     expect(first.ok && second.ok).toBe(true);
     expect(first.files.every((f) => f.changed)).toBe(true);
     expect(second.files.every((f) => !f.changed)).toBe(true);
-    expect(await readFile(inFolder(root, "rendered", "cadrage.md"))).toEqual(bytes);
+    expect(await readFile(inFolder(root, "rendered", "framing.md"))).toEqual(bytes);
   });
 
   it("starts each file with its source pointer and template, and heads each block with its id", async () => {
@@ -33,25 +33,25 @@ describe("render", () => {
   });
 
   it("renders each criterion as a Gherkin example under the rule of its requirement", async () => {
-    const criteria = renderToMemory(inAcceptance(await guineaPig())).find((f) => f.path === "criteres.md")!.content;
-    expect(criteria).toContain("<!-- id: REQ-002 -->\n## Règle REQ-002");
+    const criteria = renderToMemory(inAcceptance(await guineaPig())).find((f) => f.path === "criteria.md")!.content;
+    expect(criteria).toContain("<!-- id: REQ-002 -->\n## Rule REQ-002");
     expect(criteria).toContain(
-      "<!-- id: AC-002.1 -->\n### Exemple AC-002.1 : révision périmée\n\n- **Soit** un élément de révision 3\n- **Et** l'API est à la révision 4\n- **Quand** l'agent écrit l'élément\n- **Alors** l'agent reçoit une révision périmée",
+      "<!-- id: AC-002.1 -->\n### Example AC-002.1: stale revision\n\n- **Given** an item at revision 3\n- **And** the API is at revision 4\n- **When** the agent writes the item\n- **Then** the agent receives a stale revision",
     );
   });
 
   it("places each artifact next to what it illustrates, and lists it in the index", async () => {
     const feature = inRequirements(await guineaPig());
-    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Écran de l'espace", path: "assets/screen.svg", illustrates: ["REQ-002"] });
+    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Workspace screen", path: "assets/screen.svg", illustrates: ["REQ-002"] });
     const files = renderToMemory(feature);
-    const cadrage = files.find((f) => f.path === "cadrage.md")!.content;
-    expect(cadrage).toMatch(/## Intention\n\n[^\n]+\n\n<!-- id: ART-01 -->\n\*\*Contexte du connecteur HTTP\*\* \(`ART-01`, contexte\)\n\n```mermaid\nflowchart LR/);
-    const exigences = files.find((f) => f.path === "exigences.md")!.content;
+    const cadrage = files.find((f) => f.path === "framing.md")!.content;
+    expect(cadrage).toMatch(/## Intent\n\n[^\n]+\n\n<!-- id: ART-01 -->\n\*\*HTTP connector context\*\* \(`ART-01`, context\)\n\n```mermaid\nflowchart LR/);
+    const exigences = files.find((f) => f.path === "requirements.md")!.content;
     expect(exigences.indexOf("<!-- id: ART-02 -->")).toBeGreaterThan(exigences.indexOf("<!-- id: REQ-002 -->"));
-    expect(exigences).toContain("![Écran de l'espace](../assets/screen.svg)");
+    expect(exigences).toContain("![Workspace screen](../assets/screen.svg)");
     const index = files.find((f) => f.path === "index.md")!.content;
-    expect(index).toContain("- ART-01 : Contexte du connecteur HTTP (contexte, mermaid), dans [cadrage.md](cadrage.md)");
-    expect(index).toContain("- ART-02 : Écran de l'espace (écran, svg), dans [exigences.md](exigences.md)");
+    expect(index).toContain("- ART-01: HTTP connector context (context, mermaid), in [framing.md](framing.md)");
+    expect(index).toContain("- ART-02: Workspace screen (screen, svg), in [requirements.md](requirements.md)");
   });
 
   it("uses fixtures that stand for the framing and requirements phases", async () => {
@@ -59,24 +59,24 @@ describe("render", () => {
     expect(validate(await requirementsFixture())).toMatchObject({ valid: true, complete: true, phase: "requirements" });
   });
 
-  it("lists open questions under « À trancher » and answered ones, with their answer, under « Tranché »", async () => {
-    const framing = renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content;
-    const open = framing.slice(framing.indexOf("## À trancher"), framing.indexOf("## Tranché"));
-    expect(open).toContain("<!-- id: Q-01 -->\n> [!IMPORTANT]\n> **Q-01** · La création (POST) et la suppression (DELETE) font-elles partie de la première version ?\n>\n> Recommandation : Oui : POST");
-    expect(framing.slice(framing.indexOf("## Tranché"))).toContain("_Aucune question tranchée pour l'instant._");
-    const answered = renderToMemory(await requirementsFixture()).find((f) => f.path === "cadrage.md")!.content;
-    expect(answered.slice(answered.indexOf("## À trancher"), answered.indexOf("## Tranché"))).toContain("_Aucune question à trancher._");
-    expect(answered.slice(answered.indexOf("## Tranché"))).toContain("<!-- id: Q-05 -->\n> [!NOTE]\n> **Q-05** · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n>\n> Réponse : Recommandation retenue.");
+  it("lists open questions apart from answered ones, which show their answer", async () => {
+    const framing = renderToMemory(await guineaPig()).find((f) => f.path === "framing.md")!.content;
+    const open = framing.slice(framing.indexOf("## Open questions"), framing.indexOf("## Answered questions"));
+    expect(open).toContain("<!-- id: Q-01 -->\n> [!IMPORTANT]\n> **Q-01** · Are creation (POST) and deletion (DELETE) part of the first version?\n>\n> Recommendation: Yes: POST");
+    expect(framing.slice(framing.indexOf("## Answered questions"))).toContain("_No answered question yet._");
+    const answered = renderToMemory(await requirementsFixture()).find((f) => f.path === "framing.md")!.content;
+    expect(answered.slice(answered.indexOf("## Open questions"), answered.indexOf("## Answered questions"))).toContain("_No open question._");
+    expect(answered.slice(answered.indexOf("## Answered questions"))).toContain("<!-- id: Q-05 -->\n> [!NOTE]\n> **Q-05** · If the API returns neither an ETag nor a revision field, is writing still allowed?\n>\n> Answer: Recommendation accepted.");
   });
 
   it("opens a past phase document with one line pointing at the current phase document", async () => {
     const files = renderToMemory(await requirementsFixture());
     const afterNav = (content: string) => content.split("<!-- /nav -->\n\n")[1]!.split("\n");
-    const cadrage = afterNav(files.find((f) => f.path === "cadrage.md")!.content);
-    expect(cadrage[0]).toBe("_Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._");
-    expect(cadrage[2]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
-    expect(afterNav(files.find((f) => f.path === "exigences.md")!.content)[0]).toBe("# Exigences : Connecteur HTTP pour les espaces structurés de Maket");
-    expect(afterNav(renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content)[0]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
+    const cadrage = afterNav(files.find((f) => f.path === "framing.md")!.content);
+    expect(cadrage[0]).toBe("_Document of the closed Framing phase; the current phase is Requirements: [requirements.md](requirements.md)._");
+    expect(cadrage[2]).toBe("# Framing: HTTP connector for Maket structured workspaces");
+    expect(afterNav(files.find((f) => f.path === "requirements.md")!.content)[0]).toBe("# Requirements: HTTP connector for Maket structured workspaces");
+    expect(afterNav(renderToMemory(await guineaPig()).find((f) => f.path === "framing.md")!.content)[0]).toBe("# Framing: HTTP connector for Maket structured workspaces");
   });
 
   it("puts every id and ptr comment alone on its line, so the Markdown after it is parsed", async () => {
@@ -86,51 +86,51 @@ describe("render", () => {
     feature.tests = [{ file: "test/http.test.ts", name: "AC-001.1 AC-002.1 lists and writes", framework: "vitest", verifies: ["AC-001.1", "AC-002.1"] }];
     feature.decisions = [{ id: "DEC-01", title: "Interrogation d'abord", status: "accepted", context: "c", decision: "d", consequences: "e", affects: ["REQ-001"] }];
     const files = renderToMemory(feature);
-    expect(files.map((f) => f.path)).toEqual(["index.md", "cadrage.md", "exigences.md", "criteres.md", "ancrage.md", "verification.md", "decisions.md"]);
+    expect(files.map((f) => f.path)).toEqual(["index.md", "framing.md", "requirements.md", "criteria.md", "anchors.md", "verification.md", "decisions.md"]);
     for (const file of files) {
       expect(file.content.replace(/`[^`]*`/g, "").replace(/<!-- (id|ptr): [^ ]+ -->/g, "").replace(/^<!-- source: .* -->$/m, "").replace(/^<!-- \/?nav -->$/gm, ""), file.path).not.toMatch(/<[a-z!/]/i);
       for (const line of file.content.split("\n").filter((l) => /<!-- (id|ptr):/.test(l.replace(/`[^`]*`/g, "")))) {
         expect(line, `${file.path}: ${line}`).toMatch(/^<!-- (id: [A-Z]+-[0-9]+(\.[0-9]+)?|ptr: \/[^ ]*) -->$/);
       }
     }
-    const cadrage = files.find((f) => f.path === "cadrage.md")!.content;
-    expect(cadrage).toContain("<!-- id: CON-01 -->\n- **CON-01** · Le connecteur implémente l'interface ItemSource existante sans la modifier.");
-    expect(cadrage).toContain("<!-- ptr: /framing/scope/in/1 -->\n- Lire un élément par son identité.");
+    const cadrage = files.find((f) => f.path === "framing.md")!.content;
+    expect(cadrage).toContain("<!-- id: CON-01 -->\n- **CON-01** · The connector implements the existing ItemSource interface without changing it.");
+    expect(cadrage).toContain("<!-- ptr: /framing/scope/in/1 -->\n- Read an item by its identity.");
   });
 
   it("opens the requirements document with a summary table linking to titled headings", async () => {
     const feature = await requirementsFixture();
-    (feature.requirements as { title?: string }[])[0]!.title = "Liste par curseur";
-    const exigences = renderToMemory(feature).find((f) => f.path === "exigences.md")!.content;
+    (feature.requirements as { title?: string }[])[0]!.title = "Cursor listing";
+    const exigences = renderToMemory(feature).find((f) => f.path === "requirements.md")!.content;
     expect(exigences).toContain(
-      "<!-- ptr: /requirements -->\n| Exigence | Titre | Facette | Priorité | Forme EARS | Origine |\n| --- | --- | --- | --- | --- | --- |\n| [REQ-001](#req-001--liste-par-curseur) | Liste par curseur | intégration | MUST | sur événement | ACT-02 |\n| [REQ-002](#req-002) | — | comportement | MUST | comportement indésirable | CON-03 |",
+      "<!-- ptr: /requirements -->\n| Requirement | Title | Facet | Priority | EARS pattern | Source |\n| --- | --- | --- | --- | --- | --- |\n| [REQ-001](#req-001--cursor-listing) | Cursor listing | integration | MUST | event-driven | ACT-02 |\n| [REQ-002](#req-002) | — | behaviour | MUST | unwanted behaviour | CON-03 |",
     );
-    expect(exigences).toContain("<!-- id: REQ-001 -->\n## REQ-001 · Liste par curseur\n");
+    expect(exigences).toContain("<!-- id: REQ-001 -->\n## REQ-001 · Cursor listing\n");
     expect(headingSlug("REQ-003 · Écrire avec révision")).toBe("req-003--%C3%A9crire-avec-r%C3%A9vision");
     expect(validate(feature).valid).toBe(true);
   });
 
   it("shows the recommendation of an answered question on one line after the answer", async () => {
-    const cadrage = renderToMemory(await requirementsFixture()).find((f) => f.path === "cadrage.md")!.content;
-    expect(cadrage).toContain("> **Q-05** · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n>\n> Réponse : Recommandation retenue.\n>\n> _Recommandation proposée : Non : l'espace passe en lecture seule._\n>\n> Concerne : CON-03.\n");
+    const cadrage = renderToMemory(await requirementsFixture()).find((f) => f.path === "framing.md")!.content;
+    expect(cadrage).toContain("> **Q-05** · If the API returns neither an ETag nor a revision field, is writing still allowed?\n>\n> Answer: Recommendation accepted.\n>\n> _Proposed recommendation: No: the workspace becomes read-only._\n>\n> Concerns: CON-03.\n");
   });
 
   it("marks the current phase in the index diagram by label, shape and dashed links, without colours", async () => {
     const index = renderToMemory(await requirementsFixture()).find((f) => f.path === "index.md")!.content;
     expect(index).toContain(
-      '```mermaid\nflowchart LR\n  framing["Cadrage"]\n  requirements(["Exigences ◀ actuelle"])\n  acceptance["Acceptation"]\n  anchoring["Ancrage"]\n  verification["Vérification"]\n  done["Terminé"]\n  framing --> requirements\n  requirements -.-> acceptance\n  acceptance -.-> anchoring\n  anchoring -.-> verification\n  verification -.-> done\n```',
+      '```mermaid\nflowchart LR\n  framing["Framing"]\n  requirements(["Requirements ◀ current"])\n  acceptance["Acceptance"]\n  anchoring["Anchoring"]\n  verification["Verification"]\n  done["Done"]\n  framing --> requirements\n  requirements -.-> acceptance\n  acceptance -.-> anchoring\n  anchoring -.-> verification\n  verification -.-> done\n```',
     );
     expect(index).not.toContain("classDef");
   });
 
   it("index: warns when the phase waits for answers, lists what is left and the questions as task lists", async () => {
     const index = renderToMemory(await guineaPig()).find((f) => f.path === "index.md")!.content;
-    expect(index).toContain("> [!WARNING]\n> La phase « Cadrage » attend vos réponses : 5 question(s) ouverte(s), Q-01, Q-02, Q-03, Q-04, Q-05.");
-    expect(index).toContain("- [ ] Q-01 · question à répondre\n- [ ] Q-02 · question à répondre");
-    expect(index).toContain("<!-- ptr: /framing/questions -->\n## Questions\n\n- [ ] Q-01 · La création (POST)");
+    expect(index).toContain("> [!WARNING]\n> The Framing phase waits for your answers: 5 open question(s), Q-01, Q-02, Q-03, Q-04, Q-05.");
+    expect(index).toContain("- [ ] Q-01 · question to answer\n- [ ] Q-02 · question to answer");
+    expect(index).toContain("<!-- ptr: /framing/questions -->\n## Questions\n\n- [ ] Q-01 · Are creation (POST)");
     const done = renderToMemory(await requirementsFixture()).find((f) => f.path === "index.md")!.content;
     expect(done).not.toContain("[!WARNING]");
-    expect(done).toContain("- [x] Q-05 · Si l'API ne renvoie ni ETag ni champ de révision");
+    expect(done).toContain("- [x] Q-05 · If the API returns neither an ETag nor a revision field");
   });
 
   it("index: warns when tests fail or are missing in the verification phase", async () => {
@@ -139,57 +139,57 @@ describe("render", () => {
     feature.anchors = [{ id: "ANC-01", kind: "module", path: "src/http.ts", change: "add", realizes: ["REQ-001", "REQ-002"] }];
     feature.tests = [{ file: "t.ts", name: "AC-001.1 x", framework: "vitest", verifies: ["AC-001.1"], status: "failing" }];
     const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
-    expect(index).toContain("> [!WARNING]\n> Vérification à refaire : 1 test(s) en échec ou pas encore écrit(s).");
+    expect(index).toContain("> [!WARNING]\n> Verification to redo: 1 test(s) failing or not yet written.");
   });
 
   it("cites a textual source of a requirement as a footnote, ids inline", async () => {
     const feature = await requirementsFixture();
-    (feature.requirements as { source: string[] }[])[0]!.source = ["ACT-02", "Entretien du 14 octobre avec le propriétaire"];
-    const exigences = renderToMemory(feature).find((f) => f.path === "exigences.md")!.content;
-    expect(exigences).toContain("Origine : ACT-02[^REQ-001-1]\n\n[^REQ-001-1]: Entretien du 14 octobre avec le propriétaire\n");
+    (feature.requirements as { source: string[] }[])[0]!.source = ["ACT-02", "Interview with the owner on 14 October"];
+    const exigences = renderToMemory(feature).find((f) => f.path === "requirements.md")!.content;
+    expect(exigences).toContain("Source: ACT-02[^REQ-001-1]\n\n[^REQ-001-1]: Interview with the owner on 14 October\n");
   });
 
   it("spec index warns about a feature with pending owner edits", async () => {
     const root = await workspace();
     await render(FEATURE, { root });
-    const path = inFolder(root, "rendered", "cadrage.md");
-    await writeFile(path, (await readFile(path, "utf8")).replace("sans la modifier", "sans la toucher"));
-    await create("autre", "Autre", { root });
+    const path = inFolder(root, "rendered", "framing.md");
+    await writeFile(path, (await readFile(path, "utf8")).replace("without changing it", "without touching it"));
+    await create("other", "Other", { root });
     const index = await readFile(join(root, "spec", "README.md"), "utf8");
-    expect(index).toContain("> [!WARNING]\n> FEAT-001 : 1 modification(s) faite(s) hors de l'agent, à vérifier avant toute suite.");
+    expect(index).toContain("> [!WARNING]\n> FEAT-001: 1 edit(s) made outside the agent, to reconcile before anything else.");
   });
 
   it("opens every document with the breadcrumb, the menu of documents in phase order and a rule", async () => {
     const files = renderToMemory(await requirementsFixture());
-    const cadrage = files.find((f) => f.path === "cadrage.md")!.content;
+    const cadrage = files.find((f) => f.path === "framing.md")!.content;
     expect(cadrage.startsWith(
       '<!-- source: "/framing" template: "templates/framing.hbs" -->\n\n<!-- nav -->\n' +
-        "[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage\n\n" +
-        "[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions\n\n---\n<!-- /nav -->\n\n_Document de la phase Cadrage, close",
+        "[All features](../../README.md) › [FEAT-001 · HTTP connector for Maket structured workspaces](index.md) › Framing\n\n" +
+        "[Index](index.md) · **Framing** · [Requirements](requirements.md) · Acceptance · Anchoring · Verification · Decisions\n\n---\n<!-- /nav -->\n\n_Document of the closed Framing phase",
     )).toBe(true);
     expect(cadrage.endsWith(
-      "<!-- nav -->\n\n---\n\n[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage\n\n" +
-        "[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions\n\n" +
-        "← Précédent : [Index](index.md) · Suivant : [Exigences](exigences.md) →\n<!-- /nav -->\n",
+      "<!-- nav -->\n\n---\n\n[All features](../../README.md) › [FEAT-001 · HTTP connector for Maket structured workspaces](index.md) › Framing\n\n" +
+        "[Index](index.md) · **Framing** · [Requirements](requirements.md) · Acceptance · Anchoring · Verification · Decisions\n\n" +
+        "← Previous: [Index](index.md) · Next: [Requirements](requirements.md) →\n<!-- /nav -->\n",
     )).toBe(true);
-    const exigences = files.find((f) => f.path === "exigences.md")!.content;
-    expect(exigences).toContain("[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation");
-    expect(exigences).toContain("← Précédent : [Cadrage](cadrage.md)\n<!-- /nav -->");
+    const exigences = files.find((f) => f.path === "requirements.md")!.content;
+    expect(exigences).toContain("[Index](index.md) · [Framing](framing.md) · **Requirements** · Acceptance");
+    expect(exigences).toContain("← Previous: [Framing](framing.md)\n<!-- /nav -->");
     const index = files.find((f) => f.path === "index.md")!.content;
-    expect(index).toContain("<!-- nav -->\n[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket\n\n---\n<!-- /nav -->");
-    expect(index).toContain("Suivant : [Cadrage](cadrage.md) →\n<!-- /nav -->");
+    expect(index).toContain("<!-- nav -->\n[All features](../../README.md) › FEAT-001 · HTTP connector for Maket structured workspaces\n\n---\n<!-- /nav -->");
+    expect(index).toContain("Next: [Framing](framing.md) →\n<!-- /nav -->");
     expect(index).not.toContain("**Index**");
   });
 
   it("spec index lists the features by phase", async () => {
     const root = await workspace();
     await render(FEATURE, { root });
-    await create("autre", "Autre", { root });
+    await create("other", "Other", { root });
     const index = await readFile(join(root, "spec", "README.md"), "utf8");
     expect(index).toContain(
-      "<!-- nav -->\n**Cadrage** : [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](FEAT-001-maket-http-connector/rendered/index.md) · [FEAT-002 · Autre](FEAT-002-autre/rendered/index.md)\n\n**Exigences** : —",
+      "<!-- nav -->\n**Framing**: [FEAT-001 · HTTP connector for Maket structured workspaces](FEAT-001-maket-http-connector/rendered/index.md) · [FEAT-002 · Other](FEAT-002-other/rendered/index.md)\n\n**Requirements**: —",
     );
-    expect(index).toContain("| Id | Fonctionnalité |");
+    expect(index).toContain("| Id | Feature |");
   });
 
   it("names the object of each thing left to do, in natural order", async () => {
@@ -198,8 +198,8 @@ describe("render", () => {
     feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http.ts", symbol: "Http.list", change: "add", realizes: ["REQ-001", "REQ-002"] }];
     feature.tests = [{ file: "t.ts", name: "AC-002.1 x", framework: "vitest", level: "unit", verifies: ["AC-002.1"], status: "failing" }];
     const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
-    const todo = index.slice(index.indexOf("## Reste à faire"), index.indexOf("## Questions"));
-    expect(todo).toContain("- [ ] AC-001.1 · test à déclarer\n- [ ] AC-002.1 · test à faire passer");
+    const todo = index.slice(index.indexOf("## Left to do"), index.indexOf("## Questions"));
+    expect(todo).toContain("- [ ] AC-001.1 · test to declare\n- [ ] AC-002.1 · test to make pass");
     expect(todo).not.toContain("`/");
   });
 
@@ -209,20 +209,20 @@ describe("render", () => {
     feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http.ts", symbol: "Http.list", change: "add", realizes: ["REQ-001", "REQ-002"] }];
     feature.tests = [
       { file: "t.ts", name: "AC-001.1 x", framework: "vitest", level: "unit", method: "test", verifies: ["AC-001.1"], status: "passing" },
-      { file: "t.ts", name: "AC-002.1 y", framework: "vitest", method: "inspection", reason: "À l'œil.", verifies: ["AC-002.1"] },
+      { file: "t.ts", name: "AC-002.1 y", framework: "vitest", method: "inspection", reason: "By eye.", verifies: ["AC-002.1"] },
     ];
     const files = renderToMemory(feature);
-    expect(files.find((f) => f.path === "ancrage.md")!.content).toContain("(symbole, ajout)");
+    expect(files.find((f) => f.path === "anchors.md")!.content).toContain("(symbol, addition)");
     const verification = files.find((f) => f.path === "verification.md")!.content;
-    expect(verification).toContain("(vitest, unitaire, test). Vérifie AC-001.1. Statut : **réussi**.");
-    expect(verification).toContain("| Critère | Tests | Statut |\n| --- | --- | --- |\n| AC-001.1 | 1 | réussi |\n| AC-002.1 | 1 | inspection, justifié |\n| **Total** | 2 | 2 critère(s) vérifié(s) sur 2 |");
+    expect(verification).toContain("(vitest, unit, test). Verifies AC-001.1. Status: **passing**.");
+    expect(verification).toContain("| Criterion | Tests | Status |\n| --- | --- | --- |\n| AC-001.1 | 1 | passing |\n| AC-002.1 | 1 | inspection, justified |\n| **Total** | 2 | 2 of 2 criteria verified |");
   });
 
   it("shows the reason of a backward move in the history", async () => {
     const feature = await requirementsFixture();
-    (feature.lifecycle as { phaseHistory: unknown[] }).phaseHistory.push({ phase: "framing", date: "2026-10-14T12:00:00.000Z", by: "owner", reason: "Revoir le périmètre." });
+    (feature.lifecycle as { phaseHistory: unknown[] }).phaseHistory.push({ phase: "framing", date: "2026-10-14T12:00:00.000Z", by: "owner", reason: "Review the scope." });
     feature.phase = "framing";
     const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
-    expect(index).toContain("- 2026-10-14 : phase « Cadrage », décidée par le propriétaire, retour en arrière : Revoir le périmètre.");
+    expect(index).toContain("- 2026-10-14: phase Framing, decided by the owner, moved back: Review the scope.");
   });
 });

@@ -1,28 +1,28 @@
 <!-- source: "" template: "templates/index.hbs" -->
 
 <!-- nav -->
-[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket
+[All features](../../README.md) › FEAT-001 · HTTP connector for Maket structured workspaces
 
 ---
 <!-- /nav -->
 
 <!-- ptr: /title -->
-# Connecteur HTTP pour les espaces structurés de Maket
+# HTTP connector for Maket structured workspaces
 
-Fonctionnalité `FEAT-001`. Phase actuelle : **Vérification**.
+Feature `FEAT-001`. Current phase: **Verification**.
 
 > [!WARNING]
-> Vérification à refaire : 22 test(s) en échec ou pas encore écrit(s).
+> Verification to redo: 22 test(s) failing or not yet written.
 
 <!-- ptr: /phase -->
 ```mermaid
 flowchart LR
-  framing["Cadrage"]
-  requirements["Exigences"]
-  acceptance["Acceptation"]
-  anchoring["Ancrage"]
-  verification(["Vérification ◀ actuelle"])
-  done["Terminé"]
+  framing["Framing"]
+  requirements["Requirements"]
+  acceptance["Acceptance"]
+  anchoring["Anchoring"]
+  verification(["Verification ◀ current"])
+  done["Done"]
   framing --> requirements
   requirements --> acceptance
   acceptance --> anchoring
@@ -32,76 +32,76 @@ flowchart LR
 
 ## Documents
 
-- [Cadrage](cadrage.md) : intention, acteurs, périmètre, contraintes, hypothèses, questions, glossaire
-- [Exigences](exigences.md) : une phrase EARS par exigence, avec sa priorité
-- [Acceptation](criteres.md) : un exemple Soit/Quand/Alors par critère, groupés par exigence
-- [Ancrage](ancrage.md) : les endroits du code qui réalisent les exigences
-- [Vérification](verification.md) : les tests qui vérifient les critères, et la couverture
+- [Framing](framing.md): intent, actors, scope, constraints, assumptions, questions, glossary
+- [Requirements](requirements.md): one EARS sentence per requirement, with facet and priority
+- [Acceptance](criteria.md): one Given/When/Then example per criterion, grouped by requirement
+- [Anchoring](anchors.md): the places in the code that realise the requirements
+- [Verification](verification.md): the tests that verify the criteria, and the coverage
 
-## Artefacts
+## Artifacts
 
-- ART-01 : Contexte du connecteur HTTP (contexte, mermaid), dans [cadrage.md](cadrage.md)
-- ART-02 : Écriture d'un élément : révision, conflit et lecture seule (séquence, mermaid), dans [cadrage.md](cadrage.md)
-- ART-03 : Écran Connecteurs (écran, svg), dans [exigences.md](exigences.md)
-- ART-04 : Index de l’espace avec l’indicateur du connecteur (écran, svg), dans [exigences.md](exigences.md)
-- ART-05 : Modules touchés par le connecteur HTTP (modules, mermaid), dans [exigences.md](exigences.md)
+- ART-01: HTTP connector context (context, mermaid), in [framing.md](framing.md)
+- ART-02: Writing an item: revision, conflict and read-only (sequence, mermaid), in [framing.md](framing.md)
+- ART-03: Connectors screen (screen, svg), in [requirements.md](requirements.md)
+- ART-04: Workspace index with the connector status indicator (screen, svg), in [requirements.md](requirements.md)
+- ART-05: Modules touched by the HTTP connector (modules, mermaid), in [requirements.md](requirements.md)
 
-## Reste à faire pour la phase « Vérification »
+## Left to do in the Verification phase
 
-- [ ] AC-001.1 · test à écrire
-- [ ] AC-002.1 · test à écrire
-- [ ] AC-003.1 · test à écrire
-- [ ] AC-004.1 · test à écrire
-- [ ] AC-004.2 · test à écrire
-- [ ] AC-005.1 · test à écrire
-- [ ] AC-006.1 · test à écrire
-- [ ] AC-007.1 · test à écrire
-- [ ] AC-008.1 · test à écrire
-- [ ] AC-009.1 · test à écrire
-- [ ] AC-010.1 · test à écrire
-- [ ] AC-011.1 · test à écrire
-- [ ] AC-012.1 · test à écrire
-- [ ] AC-013.1 · test à écrire
-- [ ] AC-014.1 · test à écrire
-- [ ] AC-015.1 · test à écrire
-- [ ] AC-016.1 · test à écrire
-- [ ] AC-017.1 · test à écrire
-- [ ] AC-018.1 · test à écrire
-- [ ] AC-018.2 · test à écrire
-- [ ] AC-019.1 · test à écrire
-- [ ] AC-020.1 · test à écrire
+- [ ] AC-001.1 · test to write
+- [ ] AC-002.1 · test to write
+- [ ] AC-003.1 · test to write
+- [ ] AC-004.1 · test to write
+- [ ] AC-004.2 · test to write
+- [ ] AC-005.1 · test to write
+- [ ] AC-006.1 · test to write
+- [ ] AC-007.1 · test to write
+- [ ] AC-008.1 · test to write
+- [ ] AC-009.1 · test to write
+- [ ] AC-010.1 · test to write
+- [ ] AC-011.1 · test to write
+- [ ] AC-012.1 · test to write
+- [ ] AC-013.1 · test to write
+- [ ] AC-014.1 · test to write
+- [ ] AC-015.1 · test to write
+- [ ] AC-016.1 · test to write
+- [ ] AC-017.1 · test to write
+- [ ] AC-018.1 · test to write
+- [ ] AC-018.2 · test to write
+- [ ] AC-019.1 · test to write
+- [ ] AC-020.1 · test to write
 
 <!-- ptr: /framing/questions -->
 ## Questions
 
-- [x] Q-01 · La création (POST) et la suppression (DELETE) font-elles partie de la première version ?
-- [x] Q-02 · Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
-- [x] Q-03 · Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
-- [x] Q-04 · Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
-- [x] Q-05 · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
-- [x] Q-06 · Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?
+- [x] Q-01 · Are creation (POST) and deletion (DELETE) part of the first version?
+- [x] Q-02 · How is the mapping from the API's JSON response to the item's fields declared?
+- [x] Q-03 · To follow changes made outside Maket, do we start with the webhook or with periodic polling?
+- [x] Q-04 · Which forms of pagination does the connector accept: opaque cursor, page number, Link header?
+- [x] Q-05 · If the API returns neither an ETag nor a revision field, is writing still allowed?
+- [x] Q-06 · Where does the owner configure the connector (base URL, environment variable name, JSON pointers), and how does he see the state of the source in Maket?
 
 <!-- ptr: /lifecycle -->
-## Historique
+## History
 
-- 2026-10-14 : phase « Cadrage », décidée par l'agent
-- 2026-10-14 : phase « Exigences », décidée par le propriétaire
-- 2026-10-14 : phase « Acceptation », décidée par le propriétaire
-- 2026-10-14 : phase « Ancrage », décidée par le propriétaire
-- 2026-10-14 : phase « Vérification », décidée par le propriétaire
-- 2026-10-14 : phase « Terminé », décidée par le propriétaire
-- 2026-10-14 : phase « Vérification », décidée par le propriétaire, retour en arrière : Clôture passée à tort par l'ancienne porte : 22 tests déclarés mais manquants, le connecteur n'est pas développé.
-- 2026-10-14 : dernière réconciliation de vos modifications, 3 appliquée(s), 0 signalée(s)
+- 2026-10-14: phase Framing, decided by the agent
+- 2026-10-14: phase Requirements, decided by the owner
+- 2026-10-14: phase Acceptance, decided by the owner
+- 2026-10-14: phase Anchoring, decided by the owner
+- 2026-10-14: phase Verification, decided by the owner
+- 2026-10-14: phase Done, decided by the owner
+- 2026-10-14: phase Verification, decided by the owner, moved back: Clôture passée à tort par l'ancienne porte : 22 tests déclarés mais manquants, le connecteur n'est pas développé.
+- 2026-10-14: last reconciliation of your edits, 2 applied, 0 reported
 
-## Comment intervenir
+## How to take part
 
-Lisez les documents. Répondez dans la conversation, ou modifiez directement ces fichiers puis demandez à l'agent de vérifier vos modifications. Les commentaires `<!-- id: … -->` et `<!-- ptr: … -->` repèrent chaque bloc : laissez-les en place ; pour ajouter un bloc, recopiez la forme d'un bloc voisin. Un écran SVG se modifie dans son fichier, sous `assets/`.
+Read the documents. Answer in the conversation, or edit these files directly and ask the agent to take your edits into account. The `<!-- id: … -->` and `<!-- ptr: … -->` comments mark each block: leave them in place; to add a block, copy the shape of a neighbouring one. An SVG screen is edited in its file, under `assets/`.
 
 <!-- nav -->
 
 ---
 
-[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket
+[All features](../../README.md) › FEAT-001 · HTTP connector for Maket structured workspaces
 
-Suivant : [Cadrage](cadrage.md) →
+Next: [Framing](framing.md) →
 <!-- /nav -->

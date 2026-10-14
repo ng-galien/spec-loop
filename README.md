@@ -1,6 +1,6 @@
 # spec-loop
 
-spec-loop is for a product owner who works with a coding agent and wants to decide what gets built without writing specifications by hand. The agent keeps one JSON model per feature. A JSON Schema governs which fields each phase requires and when a phase may close. The model is rendered as French Markdown documents that the owner reads in the VS Code preview. The owner answers in the chat, or edits the documents directly and asks the agent to verify. The agent maps each edit back to the object it changes and applies it. It reports, and does not apply, any edit that widens the scope or contradicts the model. Everything goes through one MCP server, so it works the same with Gemini CLI, Claude Code and Codex. spec-loop specifies; it does not implement: the code is written at the anchors, between the anchoring and verification phases, with the agent's usual development workflow.
+spec-loop is for a product owner who works with a coding agent and wants to decide what gets built without writing specifications by hand. The agent keeps one JSON model per feature. A JSON Schema governs which fields each phase requires and when a phase may close. The model is rendered as Markdown documents that the owner reads in the VS Code preview. The owner answers in the chat, or edits the documents directly and asks the agent to take the edits into account. The agent maps each edit back to the object it changes and applies it. It reports, and does not apply, any edit that widens the scope or contradicts the model. Everything goes through one MCP server, so it works the same with Gemini CLI, Claude Code and Codex. spec-loop specifies; it does not implement: the code is written at the anchors, between the anchoring and verification phases, with the agent's usual development workflow.
 
 Project page: [site/index.html](site/index.html), with the brand in [assets/brand/](assets/brand/brand.md).
 
@@ -11,7 +11,7 @@ flowchart LR
   mcp["spec-loop MCP server"]
   schema["feature.schema.json"]
   json[("feature.json")]
-  md["rendered/*.md, in French"]
+  md["rendered/*.md"]
   owner -- "answers and decisions in the chat" --> agent
   agent -- "create, patch, phase, reconcile" --> mcp
   mcp -- "validates against" --> schema
@@ -70,7 +70,7 @@ Last, VS Code: commit `.vscode/extensions.json` from `examples/consumer/`. VS Co
 | Extension | Adds | Without it |
 | --- | --- | --- |
 | `yahyabatulu.vscode-markdown-alert` | callouts: open question `[!IMPORTANT]`, answered `[!NOTE]`, blocking state `[!WARNING]` | a blockquote whose first line names the kind |
-| `bierner.markdown-checkbox` | checkboxes in « Reste à faire » and the question list | a list line starting with `[ ]` or `[x]` |
+| `bierner.markdown-checkbox` | checkboxes in "Left to do" and the question list | a list line starting with `[ ]` or `[x]` |
 | `bierner.markdown-footnotes` | footnotes for a textual source of a requirement | a marker and a paragraph below the block |
 
 ## Tools
@@ -111,21 +111,21 @@ Each feature lives in `spec/FEAT-nnn-<name>/`. Its `feature.json` is the model a
 | File | Content |
 | --- | --- |
 | `index.md` | Phase diagram, documents, artifacts, what is left to do (task list), questions, history; warnings when the phase waits for answers or tests fail |
-| `cadrage.md` | Intent, context diagram, actors, scope, constraints, assumptions, open questions (« À trancher ») and answered ones (« Tranché »), glossary |
-| `exigences.md` | Summary table (id, title, facet, priority, EARS form, origin), then one block per requirement with its wireframes |
-| `criteres.md` | One rule per requirement, one Gherkin example per criterion (Soit, Quand, Alors) |
-| `ancrage.md` | Anchors: file, symbol, kind of change, requirements realised |
+| `framing.md` | Intent, context diagram, actors, scope, constraints, assumptions, open questions and answered questions, glossary |
+| `requirements.md` | Summary table (id, title, facet, priority, EARS form, origin), then one block per requirement with its wireframes |
+| `criteria.md` | One rule per requirement, one Gherkin example per criterion (Given, When, Then) |
+| `anchors.md` | Anchors: file, symbol, kind of change, requirements realised |
 | `verification.md` | Declared tests and the coverage table |
 | `decisions.md` | Decisions, when there are any |
 
 A document appears once its phase is reached. A document of a closed phase opens with a line pointing at the current one. Every document opens and closes with the same navigation, rendered by one partial from the schema's phase list:
 - a breadcrumb back to the feature and to all features;
 - the menu of the feature's documents in phase order;
-- « Précédent » and « Suivant » links at the bottom.
+- "Previous" and "Next" links at the bottom.
 
 The diff ignores the navigation.
 
-The built-in VS Code preview renders CommonMark, tables and Mermaid; callouts, checkboxes and footnotes need the extensions listed under « Day one », and read as plain blockquotes, list lines and paragraphs without them.
+The built-in VS Code preview renders CommonMark, tables and Mermaid; callouts, checkboxes and footnotes need the extensions listed under "Day one", and read as plain blockquotes, list lines and paragraphs without them.
 
 No meaning is carried by colour, and no inline HTML is used. The only exception is the `<!-- id: … -->` and `<!-- ptr: … -->` comments that let the diff find the object behind each block. The rules are in `method/artifacts.md`.
 

@@ -1,107 +1,107 @@
-# Sonde de rendu pour l'aperçu Markdown de VS Code
+# Rendering probe for the VS Code Markdown preview
 
-Ouvrez ce fichier en aperçu (Ctrl+Maj+V, ou Cmd+Maj+V sur Mac) et notez, pour chaque section, si elle se rend comme décrit.
+Open this file in the preview (Ctrl+Shift+V, or Cmd+Shift+V on a Mac) and note, for each section, whether it renders as described.
 
-## 1. Callouts GitHub
+## 1. GitHub callouts
 
-Extension nécessaire : `yahyabatulu.vscode-markdown-alert`. Sans elle, chaque bloc reste une citation lisible.
+Extension needed: `yahyabatulu.vscode-markdown-alert`. Without it, each block stays a readable blockquote.
 
 > [!NOTE]
-> Une note : si vous voyez un encadré avec une icône et le mot « Note », les callouts sont rendus.
+> A note: if you see a box with an icon and the word "Note", callouts are rendered.
 
 > [!WARNING]
-> Un avertissement : même test, en couleur d'alerte.
+> A warning: same test, in the warning colour.
 
 > [!IMPORTANT]
-> Un point important.
+> An important point.
 
-Sinon, les trois blocs ci-dessus apparaissent comme des citations ordinaires commençant par `[!NOTE]`.
+Otherwise the three blocks above show as ordinary blockquotes starting with `[!NOTE]`.
 
-## 2. Section repliable
+## 2. Collapsible section
 
-Aucune extension ; spec-loop n'utilise pas cette construction.
+No extension; spec-loop does not use this construct.
 
 <details>
-<summary>Cliquez pour déplier : cinq questions tranchées</summary>
+<summary>Click to expand: five answered questions</summary>
 
-Si ce texte est caché derrière un titre cliquable, les sections repliables sont rendues.
+If this text is hidden behind a clickable title, collapsible sections are rendered.
 
 </details>
 
-## 3. Cases à cocher
+## 3. Checkboxes
 
-Extension nécessaire : `bierner.markdown-checkbox`. Sans elle, `[ ]` et `[x]` restent lisibles en début de ligne.
+Extension needed: `bierner.markdown-checkbox`. Without it, `[ ]` and `[x]` stay readable at the start of the line.
 
-- [x] Question Q-01 répondue
-- [ ] Question Q-06 ouverte
+- [x] Question Q-01 answered
+- [ ] Question Q-06 open
 
-Si vous voyez des cases, cochée et vide, les listes de tâches sont rendues. Sinon vous voyez `[x]` et `[ ]` en texte.
+If you see boxes, one checked and one empty, task lists are rendered. Otherwise you see `[x]` and `[ ]` as text.
 
-## 4. Tableau
+## 4. Table
 
-Aucune extension : rendu par l'aperçu de base.
+No extension: rendered by the bare preview.
 
-| Exigence | Priorité | Forme |
+| Requirement | Priority | EARS pattern |
 | --- | --- | --- |
-| REQ-001 | MUST | permanente |
-| REQ-002 | SHOULD | sur événement |
+| REQ-001 | MUST | ubiquitous |
+| REQ-002 | SHOULD | event-driven |
 
-## 5. Texte barré, code, citation
+## 5. Strikethrough, code, blockquote
 
-Aucune extension : rendu par l'aperçu de base.
+No extension: rendered by the bare preview.
 
-Un mot ~~barré~~, un `identifiant`, et une citation :
+A ~~struck~~ word, an `identifier`, and a blockquote:
 
-> La révision connue protège contre la perte de mise à jour.
+> The known revision protects against lost updates.
 
-## 6. Note de bas de page
+## 6. Footnote
 
-Extension nécessaire : `bierner.markdown-footnotes`. Sans elle, le renvoi et la note restent lisibles en texte.
+Extension needed: `bierner.markdown-footnotes`. Without it, the marker and the note stay readable as text.
 
-Une affirmation avec sa source[^1].
+A claim with its source[^1].
 
-[^1]: Si ce renvoi est cliquable et la note apparaît en bas, les notes de bas de page sont rendues.
+[^1]: If this marker is clickable and the note appears at the bottom, footnotes are rendered.
 
-## 7. HTML en ligne
+## 7. Inline HTML
 
-Aucune extension ; spec-loop n'utilise pas de HTML en ligne.
+No extension; spec-loop uses no inline HTML.
 
-Texte <span style="color:red;font-weight:bold">rouge et gras par style HTML</span>, et un <mark>surlignage</mark>, et un <kbd>Ctrl</kbd>.
+Text <span style="color:red;font-weight:bold">red and bold by HTML style</span>, a <mark>highlight</mark>, and a <kbd>Ctrl</kbd>.
 
-Si le texte n'est ni rouge ni gras, les styles HTML sont retirés. Si le surlignage et la touche s'affichent, ces balises passent.
+If the text is neither red nor bold, HTML styles are stripped. If the highlight and the key show, those tags pass.
 
-## 8. Mermaid avec couleurs et formes
+## 8. Mermaid with colours and shapes
 
-Aucune extension : Mermaid est intégré à VS Code depuis la version 1.121 ; spec-loop n'utilise pas `classDef` dans ses diagrammes générés.
+No extension: Mermaid is built into VS Code since version 1.121; spec-loop uses no `classDef` in its generated diagrams.
 
 ```mermaid
 flowchart LR
-  a["Cadrage"] --> b[["Exigences ◀ actuelle"]] -.-> c["Acceptation"]
+  a["Framing"] --> b[["Requirements ◀ current"]] -.-> c["Acceptance"]
   classDef now fill:#2563eb,stroke:#1e40af,color:#ffffff
   class b now
 ```
 
-Trois cas possibles : le nœud « Exigences » est bleu (les couleurs classDef passent), ou il a la forme à double bord sans couleur (seule la forme passe), ou le bloc apparaît en texte (Mermaid non rendu).
+Three possible outcomes: the "Requirements" node is blue (classDef colours pass), or it has the double-border shape without colour (only the shape passes), or the block shows as text (Mermaid not rendered).
 
-## 9. Mermaid : séquence et états
+## 9. Mermaid: sequence and states
 
-Aucune extension : Mermaid est intégré à VS Code depuis la version 1.121.
+No extension: Mermaid is built into VS Code since version 1.121.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Ouverte
-  Ouverte --> Répondue : réponse du PO
-  Répondue --> [*]
+  [*] --> Open
+  Open --> Answered : owner's answer
+  Answered --> [*]
 ```
 
-## 10. Emoji et symboles
+## 10. Emoji and symbols
 
-Aucune extension ; spec-loop n'utilise que des symboles Unicode (● ○ ◐ ◀), pas de codes emoji.
+No extension; spec-loop only uses Unicode symbols (● ○ ◐ ◀), no emoji codes.
 
-Symboles Unicode : ✔ ✖ ▶ ◀ ⚠ ● ○ — et un emoji par code `:warning:` (rendu seulement si les codes emoji sont interprétés).
+Unicode symbols: ✔ ✖ ▶ ◀ ⚠ ● ○ — and an emoji by code `:warning:` (rendered only if emoji codes are interpreted).
 
-## 11. Image SVG locale
+## 11. Local SVG image
 
-![Diagramme de contexte](../spec/FEAT-001-maket-http-connector/assets/absent.svg)
+![Context diagram](../spec/FEAT-001-maket-http-connector/assets/absent.svg)
 
-Une image cassée ici est normale : le fichier n'existe pas. Ce test ne sert qu'à voir si une image locale par chemin relatif est tentée.
+A broken image here is expected: the file does not exist. This test only shows whether a local image by relative path is attempted.

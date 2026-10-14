@@ -1,19 +1,19 @@
-# Décisions : {{title}}
+# Decisions: {{title}}
 
 {{#each decisions}}
 <!-- id: {{id}} -->
-## {{id}} : {{title}}
+## {{id}}: {{title}}
 
-Statut : **{{statusLabel}}**.{{#if supersededBy}} Remplacée par {{supersededBy}}.{{/if}} Concerne : {{affectsList}}.
+Status: **{{statusLabel}}**.{{#if supersededBy}} Superseded by {{supersededBy}}.{{/if}} Affects: {{affectsList}}.
 
-Contexte : {{context}}
+Context: {{context}}
 
-Décision : {{decision}}
+Decision: {{decision}}
 
-Conséquences : {{consequences}}
+Consequences: {{consequences}}
 {{#if alternatives.length}}
 
-Alternatives écartées :
+Alternatives set aside:
 {{#each alternatives}}
 - {{this}}
 {{/each}}
