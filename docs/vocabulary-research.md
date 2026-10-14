@@ -1,5 +1,7 @@
 # spec-loop vocabulary research
 
+> **Status note (14 October 2026).** This is the research that shaped the vocabulary. Where it differs from `method/glossary.md`, the glossary prevails: it is what the skills and templates use. The research's `visual` (VIS) became `artifact` (ART), and `facet` was added.
+
 Status: research input for `schema/feature.schema.json` and the skills. Date: 2026-10-14.
 
 Goal: pick, at each level of granularity, the term an agent already knows from training with the narrowest meaning, so that a model reading the feature JSON knows exactly what kind of object it is handling, what it references, and how it is proven.
@@ -101,9 +103,9 @@ A test is identified exactly as the runner reports it.
 
 `decision` — **DEC-01**, Nygard shape: `title`, `status` (`proposed` | `accepted` | `superseded`), `context`, `decision`, `consequences`, `alternatives[]` (MADR), `affects[]` (REQ or ANC ids), `supersededBy`. Prefix `DEC`, not `ADR`, because it is a section of a feature file; a decision that outlives the feature is promoted to the repository's ADR folder and referenced by path.
 
-### 3.7 Visual artifacts (`visuals`, « Visuels »)
+### 3.7 Artifacts (`artifacts`, « Artefacts »)
 
-`visual` — **VIS-01**. `kind` (`wireframe` | `sequence` | `state` | `c4-context` | `c4-container` | `c4-component` | `flow` | `er`), `format` (`mermaid` | `svg` | `png` | `url`), `source` (inline Mermaid text, or path/URL), `illustrates[]` (REQ, AC or ANC ids). Mermaid preferred: text diff, fluent in models.
+`artifact` — **ART-01**. `kind` (`wireframe` | `sequence` | `state` | `c4-context` | `c4-container` | `c4-component` | `flow` | `er`), `format` (`mermaid` | `svg` | `png` | `url`), `source` (inline Mermaid text, or path/URL), `illustrates[]` (REQ, AC or ANC ids). Mermaid preferred: text diff, fluent in models.
 
 ### 3.8 Status and phase
 
@@ -118,7 +120,7 @@ A test is identified exactly as the runner reports it.
 | *task* / *ticket* | Units of work, not of behaviour; spec-loop has no task list in the model (the agent plans its own work). | `anchor` with `change` |
 | *scenario* | Gherkin example, use-case flow, test-plan item; and spec-kit `SC` = success criterion. | `criterion`; Gherkin rendering uses `Example:` |
 | *criteria* as singular | Plural only; models then emit lists in one object. | `criterion` / `criteria[]` |
-| *design* | Covers architecture choices, UI mock-ups and code layout at once. | `anchors`, `decisions`, `visuals` |
+| *design* | Covers architecture choices, UI mock-ups and code layout at once. | `anchors`, `decisions`, `artifacts` |
 | *component* | C4 component vs React component. | `anchor.kind` |
 | *non-functional requirement* | Models treat it as secondary. | `constraint` |
 | *should* in lowercase | Ambiguous under RFC 8174. | `priority: SHOULD` field; statements use SHALL |
@@ -134,7 +136,7 @@ requirement ◄── requirement ── criterion (AC-001.2)
 requirement ◄── realizes ── anchor (ANC-01)
 criterion   ◄── verifies ── test (file + name)
 requirement, anchor ◄── affects ── decision (DEC-01)
-requirement, criterion, anchor ◄── illustrates ── visual (VIS-01)
+requirement, criterion, anchor ◄── illustrates ── artifact (ART-01)
 ```
 
 Cross-feature references use `<feature>/<id>` (e.g. `auth-session/REQ-003`) in `source` or `affects`.
@@ -177,7 +179,7 @@ In production code, an anchor is found by `path` + `symbol`; no requirement ids 
     "anchors":      { "type": "array", "items": { "$ref": "#/$defs/anchor" } },
     "tests":        { "type": "array", "items": { "$ref": "#/$defs/test" } },
     "decisions":    { "type": "array", "items": { "$ref": "#/$defs/decision" } },
-    "visuals":      { "type": "array", "items": { "$ref": "#/$defs/visual" } }
+    "artifacts":      { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
   },
   "allOf": [
     { "if": { "properties": { "phase": { "const": "framing" } } },
@@ -197,7 +199,7 @@ In production code, an anchor is found by `path` + `symbol`; no requirement ids 
     "acId":   { "type": "string", "pattern": "^AC-\\d{3}\\.\\d+$" },
     "ancId":  { "type": "string", "pattern": "^ANC-\\d{2,3}$" },
     "decId":  { "type": "string", "pattern": "^DEC-\\d{2,3}$" },
-    "visId":  { "type": "string", "pattern": "^VIS-\\d{2,3}$" },
+    "artId":  { "type": "string", "pattern": "^ART-\\d{2,3}$" },
     "anyRef": { "type": "string",
       "pattern": "^([a-z0-9]+(-[a-z0-9]+)*/)?(REQ-\\d{3}|AC-\\d{3}\\.\\d+|ANC-\\d{2,3}|DEC-\\d{2,3}|ACT-\\d{2}|CON-\\d{2}|ASM-\\d{2}|Q-\\d{2})$" },
     "framing": {
@@ -283,10 +285,10 @@ In production code, an anchor is found by `path` + `symbol`; no requirement ids 
         "supersededBy": { "$ref": "#/$defs/decId" }
       }
     },
-    "visual": {
+    "artifact": {
       "type": "object", "required": ["id", "kind", "format", "source", "illustrates"],
       "properties": {
-        "id": { "$ref": "#/$defs/visId" },
+        "id": { "$ref": "#/$defs/artId" },
         "kind": { "enum": ["wireframe", "sequence", "state", "flow", "er", "c4-context", "c4-container", "c4-component"] },
         "format": { "enum": ["mermaid", "svg", "png", "url"] }, "source": { "type": "string" },
         "illustrates": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/anyRef" } }
@@ -326,7 +328,7 @@ Note on the current repository: `schema/feature.schema.json` uses French phase a
 | verifies | Vérifie | AC refs | Link test → criterion |
 | realizes | Réalise | REQ refs | Link anchor → requirement |
 | decision | Décision | DEC-01 | Nygard-style record bound to what it affects |
-| visual | Visuel | VIS-01 | Wireframe or diagram bound to what it illustrates |
+| artifact | Artefact | ART-01 | Diagram or screen bound to what it illustrates |
 | coverage | Couverture | — | Requirement → criterion → test completeness, never code coverage |
 
 ## Sources

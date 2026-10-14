@@ -1,8 +1,23 @@
-# spec-loop integration guide: Gemini CLI, Claude Code, Codex
+# spec-loop integration guide: Gemini CLI, Antigravity, Claude Code, Codex
 
-This guide says how to package spec-loop (a stdio MCP server plus Agent Skills) and how to wire it into three agents: Gemini CLI first, then Claude Code and Codex. Every claim names its source and the date it was read (14 October 2026). Section 8 lists what could not be verified.
+## Install guide (current)
 
-Current state of the repository: ten tools (`learn`, `features`, `status`, `create`, `validate`, `render`, `diff`, `patch`, `phase`, `verify`), each with an `outputSchema`, the read-only ones annotated `readOnlyHint: true`; skills `framing`, `acceptance`, `anchoring`, `verification`, `done` and `verify`; workspace root resolved as tool argument `root`, then `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then the server's working directory (a value still holding an unexpanded `${…}` is skipped).
+spec-loop is one stdio MCP server, the npm package `mcp-spec-loop` (not yet published), plus seven Agent Skills in `skills/`. It exposes ten tools: `learn`, `features`, `status`, `create`, `validate`, `render`, `diff`, `patch`, `phase`, `reconcile`. `learn`, `features`, `status`, `validate` and `diff` are annotated `readOnlyHint: true`; the others write. The seven skills are `framing`, `requirements`, `acceptance`, `anchoring`, `verification`, `done`, `reconcile`.
+
+1. **Server.** Register it once per project, from the project folder:
+   - Gemini CLI: `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y mcp-spec-loop@0.1.0`, or commit `examples/consumer/.gemini/settings.json` with your absolute project path in `SPEC_LOOP_ROOT`.
+   - Antigravity CLI: `agy plugin import gemini` after the Gemini setup, or commit `examples/consumer/.agents/mcp_config.json`.
+   - Claude Code: `claude mcp add --scope project spec-loop -- npx -y mcp-spec-loop@0.1.0`, or commit `examples/consumer/.mcp.json`.
+   - Codex: `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.0`, or commit `examples/consumer/.codex/config.toml`.
+
+   Until the package is published, replace `npx -y mcp-spec-loop@0.1.0` with `node /path/to/spec-loop/dist/mcp.js` after `npm install` in a clone.
+2. **Skills.** Copy `skills/*` into `.agents/skills/` (read by Gemini CLI, Antigravity and Codex); for Claude Code, link `.claude/skills` to `../.agents/skills`.
+3. **Root.** Each tool takes `root`; otherwise the server uses `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then its working directory, skipping any value that still holds an unexpanded `${…}`. The skills always pass `root`. Do not rely on `${workspacePath}`: Gemini CLI 0.1.12 did not substitute it in `env`.
+4. **Check.** `/mcp` (or `claude mcp list`, `codex mcp list`) shows `spec-loop` with ten tools; the skills list shows the seven skills; ask the agent to call `features`.
+
+## Research note (14 October 2026)
+
+What follows is the research done on 14 October 2026 to choose the packaging. It is kept as written, with the lines that the later code made wrong corrected in place. Every claim names its source and the date it was read. Section 8 lists what could not be verified.
 
 ## 0. Two facts that change the plan
 
@@ -79,7 +94,7 @@ Sources: https://learn.chatgpt.com/docs/extend/mcp?surface=cli, https://learn.ch
 | Project MCP file | `.gemini/settings.json` | `.agents/mcp_config.json` | `.mcp.json` | `.codex/config.toml` |
 | Package manifest | `gemini-extension.json` | imports Gemini | `.claude-plugin/plugin.json` | `.codex-plugin/plugin.json` |
 | Marketplace file | none (gallery crawl) | n/a | `.claude-plugin/marketplace.json` | `.agents/plugins/marketplace.json` (or the Claude file) |
-| Project root for the server | `${workspacePath}` | not documented | `CLAUDE_PROJECT_DIR` env | cwd only (not documented) |
+| Project root for the server | `${workspacePath}` (documented, not substituted in `env` by 0.1.12) | not documented | `CLAUDE_PROJECT_DIR` env | cwd only (not documented) |
 
 Conclusions:
 
@@ -94,11 +109,11 @@ The spec-loop repository is at once the npm package, the Gemini extension, the C
 
 ```text
 spec-loop/
-├── package.json                    # "mcp-spec-loop", bin {"spec-loop": "dist/mcp.js"}, files [...]
+├── package.json                    # "mcp-spec-loop", bin {"mcp-spec-loop": "dist/mcp.js"}, files [...]
 ├── src/  dist/  schema/  templates/
 ├── skills/
-│   ├── framing/SKILL.md
-│   └── verify/SKILL.md
+│   ├── framing/  requirements/  acceptance/  anchoring/
+│   └── verification/  done/  reconcile/      # one SKILL.md each
 ├── GEMINI.md                       # short: what spec-loop is, call `learn` first
 ├── gemini-extension.json
 ├── .claude-plugin/
@@ -166,12 +181,12 @@ default_tools_approval_mode = "writes"
 `.gemini/settings.json` (consumer project)
 ```json
 { "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "mcp-spec-loop@0.1.0"],
-  "includeTools": ["validate", "render", "diff", "patch", "learn", "features", "create"] } } }
+  "includeTools": ["learn", "features", "status", "create", "validate", "render", "diff", "patch", "phase", "reconcile"] } } }
 ```
 
 ## 6. Packaging plan
 
-**npm package.** In `package.json`: name `mcp-spec-loop`; no `"private": true`; `"bin": {"mcp-spec-loop": "dist/mcp.js"}` (the file already starts with `#!/usr/bin/env node`); add `"files": ["dist", "schema", "templates", "skills"]` because `packageRoot` reads `schema/` and `templates/` next to `dist/`; keep `"engines": {"node": ">=22"}`; publish with `npm publish`. `prepare` already builds.
+**npm package.** In `package.json`: name `mcp-spec-loop`; no `"private": true`; `"bin": {"mcp-spec-loop": "dist/mcp.js"}` (the file already starts with `#!/usr/bin/env node`); `"files": ["dist", "schema", "templates", "method", "skills"]` because `packageRoot` reads `schema/`, `templates/` and `method/` next to `dist/`; keep `"engines": {"node": ">=22"}`; publish with `npm publish`. `prepare` already builds.
 
 **Gemini extension.** The repository root, through `gemini-extension.json`; add the GitHub topic `gemini-cli-extension`; tag each release. No build artifact is needed in git because the extension launches the npm package.
 
@@ -197,7 +212,7 @@ default_tools_approval_mode = "writes"
 
 **Gemini CLI**
 1. `gemini extensions install https://github.com/ng-galien/spec-loop` (or, in a consumer project, the committed `.gemini/settings.json` and `.agents/skills/`); restart.
-2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows the six spec-loop skills (`framing`, `acceptance`, `anchoring`, `verification`, `done`, `verify`).
+2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows the seven spec-loop skills (`framing`, `requirements`, `acceptance`, `anchoring`, `verification`, `done`, `reconcile`).
 3. Ask "list the spec-loop features", then run the `framing` skill on a new feature. Antigravity users: `agy plugin import gemini`, then the same checks.
 
 **Claude Code**
@@ -207,12 +222,12 @@ default_tools_approval_mode = "writes"
 
 **Codex**
 1. `codex plugin marketplace add ng-galien/spec-loop`, then install from `/plugins`; or `codex mcp add spec-loop -- npx -y mcp-spec-loop@0.1.0` plus `.agents/skills/` in the project; start a new session.
-2. `codex mcp list` and `/mcp` show the server; `/skills` lists the two skills.
+2. `codex mcp list` and `/mcp` show the server; `/skills` lists the seven spec-loop skills.
 3. `$framing` on a new feature.
 
 ## 8. Pitfalls
 
-**Working directory.** None of the three documents the working directory it gives a stdio server. Claude Code exports `CLAUDE_PROJECT_DIR`; Gemini extensions can pass `${workspacePath}`; Codex has neither in its docs. Two changes for the server, in this order of resolution: tool argument `root`, `SPEC_LOOP_ROOT`, `CLAUDE_PROJECT_DIR`, then the MCP `roots/list` request if the client supports roots, then the working directory. And the skills should pass `root` explicitly. When no `spec/` exists at the resolved root, the error should print the resolved path.
+**Working directory.** None of the three documents the working directory it gives a stdio server. Claude Code exports `CLAUDE_PROJECT_DIR`; Gemini extensions document `${workspacePath}`, but Gemini CLI 0.1.12 did not substitute it in `env`; Codex has neither in its docs. Two changes for the server, in this order of resolution: tool argument `root`, `SPEC_LOOP_ROOT`, `CLAUDE_PROJECT_DIR`, then the MCP `roots/list` request if the client supports roots, then the working directory. And the skills should pass `root` explicitly. When no `spec/` exists at the resolved root, the error should print the resolved path.
 
 **First start through npx.** The first `npx -y` downloads the package; Codex's default 10-second startup timeout can expire, hence `startup_timeout_sec = 60`. Pin the version: an unpinned `npx` re-resolves `latest` and can change behaviour silently. The `-y` avoids an install prompt that would block on stdin. npm writes its notices to stderr, which is safe; nothing may be written to stdout except protocol messages.
 
@@ -226,7 +241,7 @@ default_tools_approval_mode = "writes"
 
 **structuredContent and outputSchema.** Gemini reads only `content`; Claude Code and Codex reportedly read `structuredContent` first. Keep both identical, as today. Because every tool declares an `outputSchema`, the MCP spec requires `structuredContent` to conform on success; error replies (`isError: true`) should still return a valid shape or omit `structuredContent`, since some clients validate it (a reported Gemini CLI failure, https://zenn.dev/7shi/articles/20250710-output-schema, July 2025).
 
-**Approval prompts.** Gemini: confirmation per call unless "always allow" or `trust: true` in settings (not allowed in an extension). Claude Code: one prompt for a project `.mcp.json`, then per-tool permission; a project `.claude/settings.json` can allow `mcp__spec-loop__validate` and the like. Codex: `default_tools_approval_mode = "writes"` prompts only for tools not marked read-only. spec-loop declares no annotations today: set `readOnlyHint: true` on `validate`, `diff`, `learn`, `features`, and leave `render`, `patch`, `create` as writing tools.
+**Approval prompts.** Gemini: confirmation per call unless "always allow" or `trust: true` in settings (not allowed in an extension). Claude Code: one prompt for a project `.mcp.json`, then per-tool permission; a project `.claude/settings.json` can allow `mcp__spec-loop__validate` and the like. Codex: `default_tools_approval_mode = "writes"` prompts only for tools not marked read-only. spec-loop declares `readOnlyHint: true` on `learn`, `features`, `status`, `validate` and `diff`; `create`, `render`, `patch`, `phase` and `reconcile` are writing tools.
 
 ### Not verified
 

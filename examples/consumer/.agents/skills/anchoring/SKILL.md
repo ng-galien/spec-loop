@@ -5,30 +5,36 @@ description: Anchor the requirements of a spec-loop feature in the code of the t
 
 # Anchoring requirements in the code
 
-You find, in the repository that will carry the feature, the places that will realise each requirement. You never write or change code in this skill. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
+You find, in the repository that will carry the feature, the places that will realise each requirement. You never write or change code in this skill: spec-loop specifies, it does not implement. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
 
-Pass `root`, the absolute path of the project that holds `spec/`, on every spec-loop call. The code to read is the `repository` the owner names; when he names none, it is `root` itself. Anchor paths are relative to that repository.
+Pass `root`, the absolute path of the project, on every spec-loop call. The code to read is the `repository` the owner names; when he names none, it is `root` itself. Anchor paths are relative to that repository.
 
 ## Before starting
 
-1. Call `learn` with topic `fields` (the anchor fields) and topic `glossary`, unless you read them earlier in this session.
-2. Call `status`. If alterations are pending, run the `verify` skill first. Your agenda is `completeness.missing`: every MUST requirement without an anchor is listed there.
+1. Call `learn` with topics `fields` and `glossary`, unless you read them earlier in this session.
+2. Call `status`. If alterations are pending, run the `reconcile` skill first. Your agenda is `completeness.missing`: every MUST requirement without an anchor is listed there.
+
+## Working with the model
+
+The model is the feature's `feature.json`, at the path `status` returns as `file`. Read it there; never write it with a file tool. Change it with `patch`, for example:
+
+```json
+[{"op": "add", "path": "/anchors/-", "value": {"id": "ANC-01", "kind": "symbol", "path": "src/connectors/http.ts", "symbol": "HttpConnector.list", "change": "add", "realizes": ["REQ-004", "REQ-005"], "note": "New ItemSource implementation over REST."}}]
+```
+
+If a tool refuses, apply the refusal rule of `learn` topic `loop`.
 
 ## Exploring
 
 For each requirement, read the code before deciding:
 
-- Search the repository for the concepts of the requirement and its glossary terms; follow the interfaces it names (for example the interface it must implement) to their declarations and existing implementations.
-- Choose the file and, when there is one, the symbol (a class, a function, a method, a route, a schema, a configuration key). Set `kind` to what the anchor points at and `change` to `add`, `modify` or `remove`.
+- Search the repository for the concepts of the requirement and its glossary terms; follow the interfaces it names to their declarations and existing implementations.
+- Choose the file and, when there is one, the symbol. Set `kind` to what the anchor points at and `change` to `add`, `modify` or `remove`.
 - A file that does not exist yet is anchored with `change: add` at the path where it belongs by the repository's conventions.
-- One anchor may realise several requirements: list them all in `realizes` rather than repeating the anchor.
-- Write in `note`, in French, what the change is about at that place, in one or two sentences.
+- One anchor may realise several requirements: list them all in `realizes`.
+- Write in `note` what the change is about at that place, in one or two sentences.
 
-Write the anchors with `patch`, a few requirements at a time, then read `validation`.
-
-## Module diagram
-
-When the anchors span more than one module (directory or package), add a `module` artifact in mermaid that shows the modules touched and their dependencies, illustrating the requirements involved.
+When the anchors span more than one module, add a `module` artifact in mermaid that shows the modules touched and their dependencies.
 
 ## Asking the owner
 
@@ -36,4 +42,4 @@ Ask only when two places are equally plausible for the same requirement: name bo
 
 ## Ending
 
-Stop when `status` reports the phase complete. Tell the owner what is anchored where (`rendered/ancrage.md`), then ask whether to move on; on a yes, call `phase` with `by: "owner"`.
+Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Tell the owner what is anchored where, then ask whether to move on; on a yes, call `phase` with `by: "owner"`. The implementation at the anchors happens next, outside spec-loop, with the usual development workflow.

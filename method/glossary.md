@@ -29,6 +29,17 @@ These 24 terms are the only words to use for the objects of a feature, in the JS
 | artifact | Artefact | ART-01 | Diagram or screen bound to the requirements or criteria it illustrates |
 | coverage | Couverture | — | Requirement → criterion → test completeness, never code coverage |
 
+Terms of the loop itself (how the model and the documents interact, not objects of a feature):
+
+| Term | Meaning |
+| --- | --- |
+| projection | The rendered Markdown documents of a feature, generated from `feature.json` by the templates; never the source of truth |
+| alteration | Any difference between the disk and what the MCP last wrote: a rendered file changed, missing or added, an svg changed, `feature.json` edited by hand |
+| owner edit | An alteration made by the owner on purpose, usually in a rendered document, to be reconciled |
+| hunk | One contiguous changed region of a rendered file, as `diff` reports it, mapped to an id and a JSON pointer |
+| pending item | An alteration or hunk not yet accounted for by `reconcile`; while one exists, writes and phase moves are refused |
+| reconcile | The tool and skill that bring owner edits back into the model: apply the coherent ones, report the others as open questions |
+
 Words to avoid, with the term to use instead:
 
 | Avoid | Use |

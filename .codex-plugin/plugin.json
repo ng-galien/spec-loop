@@ -1,6 +1,6 @@
 {
   "name": "spec-loop",
   "version": "0.1.0",
-  "description": "Feature model loop: MCP tools and five skills from framing to done, plus verify for the owner's edits.",
+  "description": "Feature model loop: MCP tools and six phase skills from framing to done, plus reconcile for the owner's edits.",
   "skills": "./skills/"
 }

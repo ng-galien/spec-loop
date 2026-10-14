@@ -24,7 +24,7 @@ Criteria refer to the wireframe by its id when they describe what the screen sho
 
 `illustrates` lists the requirement or criterion ids the artifact shows. The projection places the artifact right after the first of them; an artifact with no id renders in the framing document after the intent. The index lists every artifact with the document that holds it.
 
-Owner edits: an edited mermaid or ascii source is a text hunk mapped to its ART id, reconciled like any other edit. An edited svg is reported as "artifact changed, review visually": look at it, then account for it in `verify` (applied if you accept the new drawing as it is, reported otherwise).
+Owner edits: an edited mermaid or ascii source is a text hunk mapped to its ART id, reconciled like any other edit. An edited svg is reported as "artifact changed, review visually": look at it, then account for it in `reconcile` (applied if you accept the new drawing as it is, reported otherwise).
 
 ## Writing for the VS Code preview
 
