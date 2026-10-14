@@ -3,7 +3,7 @@
   "id": "FEAT-001",
   "name": "maket-http-connector",
   "title": "Connecteur HTTP pour les espaces structurés de Maket",
-  "phase": "requirements",
+  "phase": "verification",
   "framing": {
     "intent": "Maket est un outil de documents visuels pour agents IA. Ses espaces de travail structurés listent des éléments venus d'une source de données, derrière l'interface ItemSource : liste par curseur, recherche, lecture, création, écriture, suppression, identité déclarée dans le schéma, révision pour détecter les conflits. Aujourd'hui, brancher une API REST demande du code propre à cette API. Le résultat voulu : un connecteur HTTP qui implémente ItemSource au-dessus d'une API REST décrite par configuration, pour qu'un espace de travail lise et écrive les éléments de cette API.",
     "actors": [
@@ -193,6 +193,35 @@
       "illustrates": [
         "REQ-019"
       ]
+    },
+    {
+      "id": "ART-05",
+      "kind": "module",
+      "format": "mermaid",
+      "title": "Modules touchés par le connecteur HTTP",
+      "source": "flowchart LR\n  subgraph shared[\"packages/shared\"]\n    def[\"structured-workspace.ts<br/>source, sourceStatus, contrôle\"]\n    ws[\"ws.ts<br/>test_connector\"]\n  end\n  subgraph server[\"packages/server\"]\n    tool[\"tools/structured-workspaces.ts<br/>définition et erreurs\"]\n    svc[\"services/structured-workspaces.ts<br/>updateItem, deleteItem, vues\"]\n    reg[\"item-sources.ts<br/>registre\"]\n    http[\"http-item-source.ts<br/>ItemSource HTTP\"]\n    pag[\"http-pagination.ts\"]\n    req[\"http-request.ts<br/>secret, délai, erreurs\"]\n    poll[\"http-polling.ts\"]\n    hook[\"routes/connector-webhook.routes.ts\"]\n    wsh[\"ws-handler<br/>handleTestConnector\"]\n    bus((\"bus<br/>source-changed\"))\n  end\n  subgraph client[\"packages/client\"]\n    lib[\"LibraryPanel.tsx\"]\n    con[\"ConnectorsTab.tsx\"]\n    ind[\"StructuredCollectionWorkspace.tsx<br/>indicateur\"]\n    store[\"store/ws.ts\"]\n  end\n  api[[\"API REST externe\"]]\n  tool --> def\n  tool --> svc\n  svc --> reg\n  reg --> http\n  http --> pag\n  http --> req\n  http --> poll\n  req --> api\n  poll --> bus\n  hook --> bus\n  api -. webhook .-> hook\n  wsh --> reg\n  svc --> def\n  lib --> con\n  con --> store\n  store -- test_connector --> wsh\n  ind --> store\n  ws --- wsh\n  ws --- store",
+      "illustrates": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-006",
+        "REQ-007",
+        "REQ-008",
+        "REQ-009",
+        "REQ-010",
+        "REQ-011",
+        "REQ-012",
+        "REQ-013",
+        "REQ-014",
+        "REQ-015",
+        "REQ-016",
+        "REQ-017",
+        "REQ-018",
+        "REQ-019",
+        "REQ-020"
+      ]
     }
   ],
   "lifecycle": {
@@ -207,6 +236,32 @@
         "phase": "requirements",
         "date": "2026-10-14T11:42:42.891Z",
         "by": "owner"
+      },
+      {
+        "phase": "acceptance",
+        "date": "2026-10-14T12:24:07.264Z",
+        "by": "owner"
+      },
+      {
+        "phase": "anchoring",
+        "date": "2026-10-14T12:25:36.756Z",
+        "by": "owner"
+      },
+      {
+        "phase": "verification",
+        "date": "2026-10-14T12:30:01.595Z",
+        "by": "owner"
+      },
+      {
+        "phase": "done",
+        "date": "2026-10-14T12:30:01.704Z",
+        "by": "owner"
+      },
+      {
+        "phase": "verification",
+        "date": "2026-10-14T12:33:42.417Z",
+        "by": "owner",
+        "reason": "Clôture passée à tort par l'ancienne porte : 22 tests déclarés mais manquants, le connecteur n'est pas développé."
       }
     ],
     "lastVerify": {
@@ -465,6 +520,853 @@
         "Q-06"
       ],
       "facet": "security"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-001.1",
+      "requirement": "REQ-001",
+      "title": "Un espace branché sur une API de test",
+      "given": [
+        "Une API REST de test avec 3 clients sous /items"
+      ],
+      "when": "l'agent crée un espace structuré dont la source est le connecteur HTTP de cette API",
+      "then": [
+        "les 3 clients apparaissent dans l'index de l'espace,",
+        "la vue MCP de l'espace renvoie un lot de 3 éléments avec leur identité et leur révision"
+      ]
+    },
+    {
+      "id": "AC-002.1",
+      "requirement": "REQ-002",
+      "title": "Lecture de la configuration",
+      "given": [
+        "Une définition d'espace avec baseUrl https://api.exemple.fr/v1, secretEnv CRM_TOKEN, les pointeurs /data pour la liste, /next pour le curseur, /id pour l'identité, /etag pour la révision"
+      ],
+      "when": "le connecteur démarre",
+      "then": [
+        "il lit ces cinq valeurs sans en inventer d'autre",
+        "une définition sans le pointeur d'identité est refusée par la vérification de l'espace avec le nom du champ manquant"
+      ]
+    },
+    {
+      "id": "AC-003.1",
+      "requirement": "REQ-003",
+      "title": "Le secret part, jamais écrit",
+      "given": [
+        "La variable d'environnement CRM_TOKEN vaut s3cret et la définition ne contient que son nom"
+      ],
+      "when": "le connecteur appelle l'API",
+      "then": [
+        "chaque requête porte l'en-tête Authorization avec s3cret",
+        "ni la définition, ni l'espace, ni les journaux ne contiennent la chaîne s3cret"
+      ]
+    },
+    {
+      "id": "AC-004.1",
+      "requirement": "REQ-004",
+      "title": "Un lot avec curseur et total",
+      "given": [
+        "Une API qui pagine par curseur avec 120 éléments et un total"
+      ],
+      "when": "l'espace demande un premier lot de 50",
+      "then": [
+        "le connecteur renvoie 50 éléments, un curseur suivant opaque et le total 120",
+        "un lot demandé avec ce curseur renvoie les 50 suivants sans doublon"
+      ]
+    },
+    {
+      "id": "AC-004.2",
+      "requirement": "REQ-004",
+      "title": "Le lot est borné",
+      "given": [
+        "Une API qui accepte une taille de lot de 1000"
+      ],
+      "when": "l'espace demande un lot de 1000",
+      "then": [
+        "le connecteur demande au plus 500 à l'API et renvoie au plus 500"
+      ]
+    },
+    {
+      "id": "AC-005.1",
+      "requirement": "REQ-005",
+      "title": "Pagination par en-tête Link",
+      "given": [
+        "Une API qui pagine par en-tête Link rel=next"
+      ],
+      "when": "l'espace demande le lot suivant avec le curseur reçu",
+      "then": [
+        "le connecteur suit l'URL de l'en-tête Link",
+        "l'espace ne voit jamais l'URL, seulement un curseur opaque"
+      ]
+    },
+    {
+      "id": "AC-006.1",
+      "requirement": "REQ-006",
+      "title": "Lecture par identité",
+      "given": [
+        "Un élément d'identité 42 avec l'ETag W/\"7\""
+      ],
+      "when": "l'espace demande l'élément 42",
+      "then": [
+        "le connecteur renvoie la donnée de l'élément et la révision W/\"7\""
+      ]
+    },
+    {
+      "id": "AC-007.1",
+      "requirement": "REQ-007",
+      "title": "Écriture avec la révision connue",
+      "given": [
+        "L'élément 42 lu avec la révision W/\"7\""
+      ],
+      "when": "l'espace écrit l'élément 42 avec cette révision",
+      "then": [
+        "la requête PUT /items/42 porte If-Match: W/\"7\"",
+        "l'API répond 200 et le connecteur renvoie la nouvelle révision"
+      ]
+    },
+    {
+      "id": "AC-008.1",
+      "requirement": "REQ-008",
+      "title": "Conflit de révision",
+      "given": [
+        "L'élément 42 modifié dans l'API depuis sa lecture, révision passée de W/\"7\" à W/\"8\""
+      ],
+      "when": "l'espace écrit l'élément 42 avec la révision W/\"7\"",
+      "then": [
+        "l'API répond 412",
+        "le connecteur refuse avec la raison stale_revision et renvoie la donnée courante avec W/\"8\"",
+        "le formulaire de Maket se recharge avec cette donnée"
+      ]
+    },
+    {
+      "id": "AC-009.1",
+      "requirement": "REQ-009",
+      "title": "Source sans révision",
+      "given": [
+        "Une API qui ne renvoie ni ETag ni champ de révision déclaré"
+      ],
+      "when": "l'espace tente d'écrire un élément",
+      "then": [
+        "le connecteur refuse avec la raison read_only",
+        "l'espace est marqué en lecture seule dans son index"
+      ]
+    },
+    {
+      "id": "AC-010.1",
+      "requirement": "REQ-010",
+      "title": "Création d'un élément",
+      "given": [
+        "Une API qui accepte POST /items et renvoie l'identité 43 et l'ETag W/\"1\""
+      ],
+      "when": "l'espace crée un élément",
+      "then": [
+        "le connecteur renvoie l'identité 43 et la révision W/\"1\"",
+        "l'élément 43 apparaît au lot suivant"
+      ]
+    },
+    {
+      "id": "AC-011.1",
+      "requirement": "REQ-011",
+      "title": "Suppression avec révision",
+      "given": [
+        "L'élément 43 lu avec la révision W/\"1\""
+      ],
+      "when": "l'espace supprime l'élément 43 avec cette révision",
+      "then": [
+        "la requête DELETE /items/43 porte If-Match: W/\"1\"",
+        "une réponse 412 est rendue comme stale_revision"
+      ]
+    },
+    {
+      "id": "AC-012.1",
+      "requirement": "REQ-012",
+      "title": "Interrogation périodique",
+      "given": [
+        "Un intervalle de 60 secondes configuré, et un élément modifié dans l'API après la dernière lecture"
+      ],
+      "when": "l'intervalle expire",
+      "then": [
+        "le connecteur relit la liste et émet un signal source-changed",
+        "l'index de l'espace montre la nouvelle révision de l'élément"
+      ]
+    },
+    {
+      "id": "AC-013.1",
+      "requirement": "REQ-013",
+      "title": "Webhook",
+      "given": [
+        "Une API qui appelle le webhook déclaré quand un élément change"
+      ],
+      "when": "l'API appelle le webhook pour l'élément 42",
+      "then": [
+        "le connecteur émet le même signal source-changed que l'interrogation périodique"
+      ]
+    },
+    {
+      "id": "AC-014.1",
+      "requirement": "REQ-014",
+      "title": "API injoignable",
+      "given": [
+        "Une API qui répond 503 avec Retry-After: 30"
+      ],
+      "when": "l'espace demande un lot",
+      "then": [
+        "le connecteur rapporte source_unreachable avec un délai de 30 secondes",
+        "aucune nouvelle requête n'est envoyée avant ce délai",
+        "l'index garde sa dernière fenêtre, datée"
+      ]
+    },
+    {
+      "id": "AC-015.1",
+      "requirement": "REQ-015",
+      "title": "Délai dépassé",
+      "given": [
+        "Un délai de 5 secondes configuré et une API qui ne répond pas"
+      ],
+      "when": "l'espace demande un lot",
+      "then": [
+        "la requête est abandonnée après 5 secondes",
+        "le connecteur rapporte source_unreachable avec 5 secondes comme délai de nouvel essai"
+      ]
+    },
+    {
+      "id": "AC-016.1",
+      "requirement": "REQ-016",
+      "title": "Configuration vérifiée avec la définition",
+      "given": [
+        "Une définition d'espace dont le connecteur a un intervalle d'interrogation de -1"
+      ],
+      "when": "l'agent vérifie l'espace",
+      "then": [
+        "la vérification signale l'intervalle invalide avec son pointeur et une correction"
+      ]
+    },
+    {
+      "id": "AC-017.1",
+      "requirement": "REQ-017",
+      "title": "Écran Connecteurs",
+      "given": [
+        "Trois espaces branchés sur trois API, dont une injoignable depuis 9 h 15 avec une erreur 503"
+      ],
+      "when": "le propriétaire ouvre l'écran Connecteurs",
+      "then": [
+        "il voit trois lignes avec le type, l'espace, l'URL, le nom de la variable, joignable ou non, lecture seule ou non, le dernier rafraîchissement et la dernière erreur",
+        "la ligne injoignable indique « non, depuis 09:15 » et « 503 »"
+      ]
+    },
+    {
+      "id": "AC-018.1",
+      "requirement": "REQ-018",
+      "title": "Test de connexion",
+      "given": [
+        "Un connecteur configuré vers une API qui répond 200 à la liste"
+      ],
+      "when": "le propriétaire clique sur Tester",
+      "then": [
+        "l'écran affiche « joignable » avec la date",
+        "aucun élément n'est créé, modifié ni supprimé dans l'API"
+      ]
+    },
+    {
+      "id": "AC-018.2",
+      "requirement": "REQ-018",
+      "title": "Test de connexion en échec",
+      "given": [
+        "Un connecteur configuré vers une API qui répond 401"
+      ],
+      "when": "le propriétaire clique sur Tester",
+      "then": [
+        "l'écran affiche l'erreur 401 et la variable d'environnement à vérifier"
+      ]
+    },
+    {
+      "id": "AC-019.1",
+      "requirement": "REQ-019",
+      "title": "Indicateur dans l'espace",
+      "given": [
+        "Un espace dont la source est injoignable depuis 9 h 15"
+      ],
+      "when": "le propriétaire ouvre l'espace",
+      "then": [
+        "l'index montre l'indicateur « source injoignable depuis 09:15 » sans ouvrir l'écran Connecteurs",
+        "l'indicateur mène à l'écran Connecteurs"
+      ]
+    },
+    {
+      "id": "AC-020.1",
+      "requirement": "REQ-020",
+      "title": "Secret refusé",
+      "given": [
+        "Un agent qui passe la valeur s3cret dans la définition du connecteur"
+      ],
+      "when": "l'agent vérifie ou enregistre la définition",
+      "then": [
+        "Maket refuse et demande le nom d'une variable d'environnement à la place",
+        "la valeur s3cret n'est écrite nulle part"
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "id": "ANC-01",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-item-source.ts",
+      "symbol": "createHttpItemSource",
+      "change": "add",
+      "realizes": [
+        "REQ-001",
+        "REQ-009"
+      ],
+      "note": "Nouvelle fabrique à côté de createLocalItemSource : elle implémente ItemSource sans la modifier. capabilities() rend readOnly vrai, sans create, put ni delete, quand la configuration ne déclare ni ETag ni champ de révision ; l'écriture est alors refusée en read_only par sourceWrite."
+    },
+    {
+      "id": "ANC-02",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-item-source.ts",
+      "symbol": "HttpItemSource.refresh",
+      "change": "add",
+      "realizes": [
+        "REQ-004",
+        "REQ-006"
+      ],
+      "note": "list et get sont synchrones dans ItemSource : refresh appelle l'API (liste par curseur et recherche, au plus 500 éléments par lot, total si l'API le donne ; élément seul avec sa révision) et remplit la mémoire que list et get servent ensuite."
+    },
+    {
+      "id": "ANC-03",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-item-source.ts",
+      "symbol": "HttpItemSource.put",
+      "change": "add",
+      "realizes": [
+        "REQ-007",
+        "REQ-008"
+      ],
+      "note": "Envoie PUT avec If-Match portant la révision attendue ; sur 412, relit l'élément et lève stale_revision avec currentRevision et les données courantes."
+    },
+    {
+      "id": "ANC-04",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-item-source.ts",
+      "symbol": "HttpItemSource.create",
+      "change": "add",
+      "realizes": [
+        "REQ-010"
+      ],
+      "note": "Envoie POST et rend l'identité et la révision attribuées par l'API, lues aux pointeurs JSON déclarés."
+    },
+    {
+      "id": "ANC-05",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-item-source.ts",
+      "symbol": "HttpItemSource.delete",
+      "change": "add",
+      "realizes": [
+        "REQ-011"
+      ],
+      "note": "Envoie DELETE avec If-Match portant la révision attendue ; une réponse 412 devient stale_revision."
+    },
+    {
+      "id": "ANC-06",
+      "kind": "module",
+      "path": "packages/server/src/services/item-sources/http-pagination.ts",
+      "symbol": "httpPageCursor",
+      "change": "add",
+      "realizes": [
+        "REQ-005"
+      ],
+      "note": "Convertit la pagination de l'API (numéro de page, en-tête Link ou pointeur du curseur suivant) en curseur opaque de l'espace, encodé comme celui de la source locale."
+    },
+    {
+      "id": "ANC-07",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-request.ts",
+      "symbol": "requestApi",
+      "change": "add",
+      "realizes": [
+        "REQ-003",
+        "REQ-014",
+        "REQ-015"
+      ],
+      "note": "Seul point d'appel réseau : lit le secret dans process.env sous le nom configuré et l'envoie à chaque requête sans jamais l'écrire ; coupe la requête au délai configuré par AbortSignal ; rend source_unreachable avec retryAfter sur erreur réseau, 5xx ou délai dépassé, sans nouvel essai."
+    },
+    {
+      "id": "ANC-08",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/http-polling.ts",
+      "symbol": "startHttpPolling",
+      "change": "add",
+      "realizes": [
+        "REQ-012"
+      ],
+      "note": "Relit la liste à l'intervalle configuré, compare les révisions à la dernière lecture et émet structured-workspace:source-changed sur le bus quand l'une diffère ; arrêté par close()."
+    },
+    {
+      "id": "ANC-09",
+      "kind": "route",
+      "path": "packages/server/src/routes/connector-webhook.routes.ts",
+      "symbol": "createConnectorWebhookRouter",
+      "change": "add",
+      "realizes": [
+        "REQ-013"
+      ],
+      "note": "Route optionnelle qui reçoit les appels du webhook de l'API et émet le même structured-workspace:source-changed que l'interrogation ; montée par ROUTER_NAMES dans packages/server/src/routes/index.ts et enregistrée dans bootstrap.ts."
+    },
+    {
+      "id": "ANC-10",
+      "kind": "symbol",
+      "path": "packages/server/src/services/item-sources/item-sources.ts",
+      "symbol": "createItemSources",
+      "change": "modify",
+      "realizes": [
+        "REQ-001",
+        "REQ-017",
+        "REQ-018"
+      ],
+      "note": "Le registre ouvre createHttpItemSource quand la définition déclare une source HTTP, createLocalItemSource sinon ; il gagne l'état de chaque connecteur (joignable, lecture seule, dernier rafraîchissement, dernière erreur) et un test de connexion qui fait une seule lecture de liste sans écrire."
+    },
+    {
+      "id": "ANC-11",
+      "kind": "schema",
+      "path": "packages/shared/src/structured-workspace.ts",
+      "symbol": "StructuredWorkspaceRepresentationSchema",
+      "change": "modify",
+      "realizes": [
+        "REQ-002",
+        "REQ-016"
+      ],
+      "note": "Ajoute source, de type StructuredWorkspaceHttpSource : URL de base, nom de la variable d'environnement du secret, pointeurs JSON de liste, curseur suivant, identité et révision (ETag ou champ), intervalle d'interrogation, délai. Elle est stockée avec la définition, sans changement de dépôt."
+    },
+    {
+      "id": "ANC-12",
+      "kind": "symbol",
+      "path": "packages/shared/src/structured-workspace.ts",
+      "symbol": "diagnoseStructuredWorkspaceDefinition",
+      "change": "modify",
+      "realizes": [
+        "REQ-016",
+        "REQ-020",
+        "REQ-003"
+      ],
+      "note": "Ajoute la vérification de la source au même contrôle que le reste de la définition ; une valeur de secret (clé secret, token, password ou valeur d'en-tête) est refusée avec une correction qui renvoie au nom de la variable d'environnement."
+    },
+    {
+      "id": "ANC-13",
+      "kind": "schema",
+      "path": "packages/server/src/tools/structured-workspaces.ts",
+      "symbol": "RepresentationSchema",
+      "change": "modify",
+      "realizes": [
+        "REQ-016",
+        "REQ-020"
+      ],
+      "note": "Le schéma zod de representation_schema accepte source, écrite par create et update_definition ; la description de l'outil dit qu'on n'y donne que le nom de la variable du secret."
+    },
+    {
+      "id": "ANC-14",
+      "kind": "symbol",
+      "path": "packages/server/src/tools/structured-workspaces.ts",
+      "symbol": "failureAnswer",
+      "change": "modify",
+      "realizes": [
+        "REQ-008",
+        "REQ-009",
+        "REQ-014",
+        "REQ-015"
+      ],
+      "note": "Rend à l'agent stale_revision avec la révision et les données courantes, read_only avec sa raison, source_unreachable avec le statut, le message de l'API et le délai avant nouvel essai ; aujourd'hui seuls les refus de requête sont traduits."
+    },
+    {
+      "id": "ANC-15",
+      "kind": "symbol",
+      "path": "packages/server/src/tools/structured-workspaces.ts",
+      "symbol": "runDeleteItem",
+      "change": "modify",
+      "realizes": [
+        "REQ-011"
+      ],
+      "note": "Transmet expected_revision à deleteItem ; expected_revision accepte aussi une révision texte (ETag) pour update_item et delete_item."
+    },
+    {
+      "id": "ANC-16",
+      "kind": "symbol",
+      "path": "packages/server/src/services/structured-workspaces.ts",
+      "symbol": "updateItem",
+      "change": "modify",
+      "realizes": [
+        "REQ-007",
+        "REQ-008"
+      ],
+      "note": "Passe la révision de la source telle quelle au put ; staleItemRevision ne convertit plus currentRevision en nombre et joint les données relues après un 412."
+    },
+    {
+      "id": "ANC-17",
+      "kind": "symbol",
+      "path": "packages/server/src/services/structured-workspaces.ts",
+      "symbol": "deleteItem",
+      "change": "modify",
+      "realizes": [
+        "REQ-011"
+      ],
+      "note": "Reçoit la révision attendue et la passe à delete de la source, qui l'envoie en If-Match."
+    },
+    {
+      "id": "ANC-18",
+      "kind": "symbol",
+      "path": "packages/server/src/services/structured-workspaces.ts",
+      "symbol": "materializeRepresentation",
+      "change": "modify",
+      "realizes": [
+        "REQ-016"
+      ],
+      "note": "Conserve source de la représentation saisie dans la définition matérialisée, pour create comme pour update_definition."
+    },
+    {
+      "id": "ANC-19",
+      "kind": "symbol",
+      "path": "packages/server/src/services/structured-workspaces.ts",
+      "symbol": "workspaceView",
+      "change": "modify",
+      "realizes": [
+        "REQ-017",
+        "REQ-019"
+      ],
+      "note": "Joint à chaque vue l'état du connecteur lu dans ItemSources, diffusé par structured_workspaces_changed à chaque changement d'état."
+    },
+    {
+      "id": "ANC-20",
+      "kind": "schema",
+      "path": "packages/shared/src/structured-workspace.ts",
+      "symbol": "StructuredWorkspaceView",
+      "change": "modify",
+      "realizes": [
+        "REQ-017",
+        "REQ-019"
+      ],
+      "note": "Ajoute sourceStatus : type, URL de base, nom de la variable, joignable ou injoignable depuis une date, lecture seule, dernier rafraîchissement, dernière erreur ; jamais la valeur du secret."
+    },
+    {
+      "id": "ANC-21",
+      "kind": "schema",
+      "path": "packages/shared/src/ws.ts",
+      "symbol": "TestConnectorCommand",
+      "change": "add",
+      "realizes": [
+        "REQ-018"
+      ],
+      "note": "Nouvelle commande test_connector et son signal de résultat connector_test_result (joignable, ou statut, message et délai conseillé), ajoutés aux unions WorkspaceCommand et WorkspaceSignal."
+    },
+    {
+      "id": "ANC-22",
+      "kind": "symbol",
+      "path": "packages/server/src/services/ws-handler/structured-workspace-commands.ts",
+      "symbol": "handleTestConnector",
+      "change": "add",
+      "realizes": [
+        "REQ-018"
+      ],
+      "note": "Traite test_connector : appelle le test de connexion du registre et répond au client ; branché dans le switch de createWsHandler."
+    },
+    {
+      "id": "ANC-23",
+      "kind": "module",
+      "path": "packages/client/src/components/ConnectorsTab.tsx",
+      "symbol": "ConnectorsTab",
+      "change": "add",
+      "realizes": [
+        "REQ-017",
+        "REQ-018",
+        "REQ-020"
+      ],
+      "note": "Écran Connecteurs de la maquette ART-03 : une ligne par source avec type, espace, URL de base, nom de la variable, joignable, lecture seule, dernier rafraîchissement, dernière erreur et un bouton Tester ; aucun champ de saisie de secret."
+    },
+    {
+      "id": "ANC-24",
+      "kind": "symbol",
+      "path": "packages/client/src/components/LibraryPanel.tsx",
+      "symbol": "LibraryView",
+      "change": "modify",
+      "realizes": [
+        "REQ-017"
+      ],
+      "note": "Ajoute la vue connectors à la barre de la bibliothèque, à côté de structured-workspaces, qui affiche ConnectorsTab."
+    },
+    {
+      "id": "ANC-25",
+      "kind": "symbol",
+      "path": "packages/client/src/store/ws.ts",
+      "symbol": "sendTestConnector",
+      "change": "add",
+      "realizes": [
+        "REQ-018"
+      ],
+      "note": "Envoie test_connector pour un espace et range le résultat reçu pour l'écran Connecteurs."
+    },
+    {
+      "id": "ANC-26",
+      "kind": "symbol",
+      "path": "packages/client/src/components/StructuredCollectionWorkspace.tsx",
+      "symbol": "ConnectorStatusIndicator",
+      "change": "add",
+      "realizes": [
+        "REQ-019"
+      ],
+      "note": "Indicateur de la maquette ART-04 placé dans CollectionDocument au-dessus de la recherche de l'index : joignable avec la date de rafraîchissement, injoignable depuis une date avec la dernière erreur, ou lecture seule, avec un lien vers l'écran Connecteurs."
+    },
+    {
+      "id": "ANC-27",
+      "kind": "config",
+      "path": "packages/client/src/i18n/fr.json",
+      "change": "modify",
+      "realizes": [
+        "REQ-017",
+        "REQ-019"
+      ],
+      "note": "Libellés français de l'écran Connecteurs et de l'indicateur ; les mêmes clés en anglais dans packages/client/src/i18n/en.json."
+    }
+  ],
+  "tests": [
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-001.1 Un espace branché sur une API de test",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-001.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/tools/structured-workspaces.test.ts",
+      "name": "AC-002.1 Lecture de la configuration",
+      "framework": "vitest",
+      "level": "integration",
+      "method": "test",
+      "verifies": [
+        "AC-002.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-003.1 Le secret part, jamais écrit",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-003.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-004.1 Un lot avec curseur et total",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-004.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-004.2 Le lot est borné",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-004.2"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-005.1 Pagination par en-tête Link",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-005.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-006.1 Lecture par identité",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-006.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-007.1 Écriture avec la révision connue",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-007.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-008.1 Conflit de révision",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-008.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-009.1 Source sans révision",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-009.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-010.1 Création d'un élément",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-010.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-011.1 Suppression avec révision",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-011.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-012.1 Interrogation périodique",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-012.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-013.1 Webhook",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-013.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-014.1 API injoignable",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-014.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/services/item-sources/http-item-source.test.ts",
+      "name": "AC-015.1 Délai dépassé",
+      "framework": "vitest",
+      "level": "unit",
+      "method": "test",
+      "verifies": [
+        "AC-015.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/tools/structured-workspaces.test.ts",
+      "name": "AC-016.1 Configuration vérifiée avec la définition",
+      "framework": "vitest",
+      "level": "integration",
+      "method": "test",
+      "verifies": [
+        "AC-016.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/client/e2e/connectors.spec.ts",
+      "name": "AC-017.1 Écran Connecteurs",
+      "framework": "playwright",
+      "level": "e2e",
+      "method": "test",
+      "verifies": [
+        "AC-017.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/client/e2e/connectors.spec.ts",
+      "name": "AC-018.1 Test de connexion",
+      "framework": "playwright",
+      "level": "e2e",
+      "method": "test",
+      "verifies": [
+        "AC-018.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/client/e2e/connectors.spec.ts",
+      "name": "AC-018.2 Test de connexion en échec",
+      "framework": "playwright",
+      "level": "e2e",
+      "method": "test",
+      "verifies": [
+        "AC-018.2"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/client/e2e/connectors.spec.ts",
+      "name": "AC-019.1 Indicateur dans l'espace",
+      "framework": "playwright",
+      "level": "e2e",
+      "method": "test",
+      "verifies": [
+        "AC-019.1"
+      ],
+      "status": "missing"
+    },
+    {
+      "file": "packages/server/src/tools/structured-workspaces.test.ts",
+      "name": "AC-020.1 Secret refusé",
+      "framework": "vitest",
+      "level": "integration",
+      "method": "test",
+      "verifies": [
+        "AC-020.1"
+      ],
+      "status": "missing"
     }
   ]
 }

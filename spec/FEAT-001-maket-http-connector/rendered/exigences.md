@@ -3,10 +3,12 @@
 <!-- nav -->
 [Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Exigences
 
-[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation · Ancrage · Vérification · Décisions
+[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · [Acceptation](criteres.md) · [Ancrage](ancrage.md) · [Vérification](verification.md) · Décisions
 
 ---
 <!-- /nav -->
+
+_Document de la phase Exigences, close ; la phase actuelle est Vérification : [verification.md](verification.md)._
 
 # Exigences : Connecteur HTTP pour les espaces structurés de Maket
 
@@ -46,6 +48,55 @@ Facette : **intégration**. Forme EARS : **permanente**. Priorité : **MUST**.
 Justification : Le connecteur remplace du code propre à chaque API par une configuration ; l'espace de travail ne voit que l'interface de source d'éléments existante.
 
 Origine : ACT-02, CON-01
+
+<!-- id: ART-05 -->
+**Modules touchés par le connecteur HTTP** (`ART-05`, modules)
+
+```mermaid
+flowchart LR
+  subgraph shared["packages/shared"]
+    def["structured-workspace.ts<br/>source, sourceStatus, contrôle"]
+    ws["ws.ts<br/>test_connector"]
+  end
+  subgraph server["packages/server"]
+    tool["tools/structured-workspaces.ts<br/>définition et erreurs"]
+    svc["services/structured-workspaces.ts<br/>updateItem, deleteItem, vues"]
+    reg["item-sources.ts<br/>registre"]
+    http["http-item-source.ts<br/>ItemSource HTTP"]
+    pag["http-pagination.ts"]
+    req["http-request.ts<br/>secret, délai, erreurs"]
+    poll["http-polling.ts"]
+    hook["routes/connector-webhook.routes.ts"]
+    wsh["ws-handler<br/>handleTestConnector"]
+    bus(("bus<br/>source-changed"))
+  end
+  subgraph client["packages/client"]
+    lib["LibraryPanel.tsx"]
+    con["ConnectorsTab.tsx"]
+    ind["StructuredCollectionWorkspace.tsx<br/>indicateur"]
+    store["store/ws.ts"]
+  end
+  api[["API REST externe"]]
+  tool --> def
+  tool --> svc
+  svc --> reg
+  reg --> http
+  http --> pag
+  http --> req
+  http --> poll
+  req --> api
+  poll --> bus
+  hook --> bus
+  api -. webhook .-> hook
+  wsh --> reg
+  svc --> def
+  lib --> con
+  con --> store
+  store -- test_connector --> wsh
+  ind --> store
+  ws --- wsh
+  ws --- store
+```
 
 <!-- id: REQ-002 -->
 ## REQ-002 · Configuration de l’espace
@@ -272,7 +323,7 @@ Origine : CON-02, Q-06
 
 [Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Exigences
 
-[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation · Ancrage · Vérification · Décisions
+[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · [Acceptation](criteres.md) · [Ancrage](ancrage.md) · [Vérification](verification.md) · Décisions
 
-← Précédent : [Cadrage](cadrage.md)
+← Précédent : [Cadrage](cadrage.md) · Suivant : [Acceptation](criteres.md) →
 <!-- /nav -->

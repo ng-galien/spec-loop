@@ -3,12 +3,12 @@
 <!-- nav -->
 [Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage
 
-[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions
+[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · [Acceptation](criteres.md) · [Ancrage](ancrage.md) · [Vérification](verification.md) · Décisions
 
 ---
 <!-- /nav -->
 
-_Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._
+_Document de la phase Cadrage, close ; la phase actuelle est Vérification : [verification.md](verification.md)._
 
 # Cadrage : Connecteur HTTP pour les espaces structurés de Maket
 
@@ -208,7 +208,7 @@ _Aucune question à trancher._
 
 [Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage
 
-[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions
+[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · [Acceptation](criteres.md) · [Ancrage](ancrage.md) · [Vérification](verification.md) · Décisions
 
 ← Précédent : [Index](index.md) · Suivant : [Exigences](exigences.md) →
 <!-- /nav -->
