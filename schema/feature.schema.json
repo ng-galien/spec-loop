@@ -199,7 +199,7 @@
     },
     "lifecycle": {
       "$ref": "#/$defs/lifecycle",
-      "description": "Creation date, phase history and last verification, written only by the create, phase and verify tools."
+      "description": "Creation date, phase history and last reconciliation, written only by the create, phase and reconcile tools."
     }
   },
   "allOf": [
@@ -1283,6 +1283,34 @@
                   }
                 }
               }
+            }
+          }
+        },
+        "openedWhileUnfinished": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "features",
+            "reason",
+            "date"
+          ],
+          "description": "Set when the owner opened this feature while other features were not done yet: which ones, and the owner's reason.",
+          "properties": {
+            "features": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/featureId"
+              },
+              "description": "Ids of the features that were not done."
+            },
+            "reason": {
+              "$ref": "#/$defs/text",
+              "description": "Why the owner opened this feature anyway."
+            },
+            "date": {
+              "$ref": "#/$defs/date",
+              "description": "When the feature was opened."
             }
           }
         },

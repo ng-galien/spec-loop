@@ -154,7 +154,7 @@ describe("render", () => {
     await render(FEATURE, { root });
     const path = inFolder(root, "rendered", "framing.md");
     await writeFile(path, (await readFile(path, "utf8")).replace("without changing it", "without touching it"));
-    await create("other", "Other", { root });
+    await create("other", "Other", { root, by: "owner", reason: "Second feature for the index." });
     const index = await readFile(join(root, "spec", "README.md"), "utf8");
     expect(index).toContain("> [!WARNING]\n> FEAT-001: 1 edit(s) made outside the agent, to reconcile before anything else.");
   });
@@ -184,7 +184,7 @@ describe("render", () => {
   it("spec index lists the features by phase", async () => {
     const root = await workspace();
     await render(FEATURE, { root });
-    await create("other", "Other", { root });
+    await create("other", "Other", { root, by: "owner", reason: "Second feature for the index." });
     const index = await readFile(join(root, "spec", "README.md"), "utf8");
     expect(index).toContain(
       "<!-- nav -->\n**Framing**: [FEAT-001 · HTTP connector for Maket structured workspaces](FEAT-001-maket-http-connector/rendered/index.md) · [FEAT-002 · Other](FEAT-002-other/rendered/index.md)\n\n**Requirements**: —",

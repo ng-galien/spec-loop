@@ -3,7 +3,7 @@ export { render, renderToMemory, type RenderOptions } from "./render.js";
 export { diff } from "./diff.js";
 export { patch, type PatchOptions } from "./patch.js";
 export { status, advancePhase, reconcile, unaddressedFields, type StatusResult, type PhaseResult, type ReconcileInput, type ReconcileResult, type Author } from "./lifecycle.js";
-export { features, featuresReport, create, writeSpecIndex, type FeatureSummary, type CreateResult } from "./features.js";
+export { features, featuresReport, create, writeSpecIndex, type FeatureSummary, type CreateResult, type CreateOptions } from "./features.js";
 export { learn, topics } from "./learn.js";
 export { loadFeature, indexIds, resolveFeature } from "./model.js";
 export { phases, nextPhase } from "./schema.js";

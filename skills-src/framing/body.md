@@ -5,7 +5,7 @@ You fill the first phase of a spec-loop feature by interviewing the owner until 
 ## Before the first question
 
 1. Call `learn` with topics `questioning`, `phases`, `fields` and `glossary`, unless you read them earlier in this session.
-2. Call `features`. If the feature does not exist, call `create` with a kebab-case name and a title. Otherwise call `status` on it.
+2. Call `features`. If the feature does not exist, call `create` with a kebab-case name and a title. Otherwise call `status` on it. If `create` refuses because another feature is not done, tell the owner which one, in which phase, and stop: finishing it comes first. Pass `by: "owner"` with the owner's reason only when the owner explicitly asks to open the new feature anyway.
 
 {{> model}}
 

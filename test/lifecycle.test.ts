@@ -19,10 +19,10 @@ async function answered(root: string) {
 describe("lifecycle", () => {
   it("creates the next numbered feature in the first phase and renders it", async () => {
     const root = await workspace();
-    const result = await create("export-csv", "Export CSV", { root, now: NOW });
+    const result = await create("export-csv", "Export CSV", { root, now: NOW, by: "owner", reason: "Needed for the demo." });
     expect(result).toMatchObject({ ok: true, id: "FEAT-002", feature: "FEAT-002-export-csv" });
     const json = JSON.parse(await readFile(join(root, "spec", "FEAT-002-export-csv", "feature.json"), "utf8"));
-    expect(json).toMatchObject({ id: "FEAT-002", name: "export-csv", phase: "framing", lifecycle: { created: NOW, phaseHistory: [{ phase: "framing", date: NOW, by: "agent" }] } });
+    expect(json).toMatchObject({ id: "FEAT-002", name: "export-csv", phase: "framing", lifecycle: { created: NOW, phaseHistory: [{ phase: "framing", date: NOW, by: "owner" }] } });
     expect((await features({ root })).map((f) => f.id)).toEqual(["FEAT-001", "FEAT-002"]);
     expect(await readFile(join(root, "spec", "README.md"), "utf8")).toContain("| FEAT-002 | Export CSV | Framing |");
     expect((await create("export-csv", "Doublon", { root })).ok).toBe(false);
@@ -37,7 +37,7 @@ describe("lifecycle", () => {
 
   it("status lists the fields of the phase never set, optional ones included; an empty array counts as addressed", async () => {
     const root = await workspace();
-    await create("export-csv", "Export CSV", { root, now: NOW });
+    await create("export-csv", "Export CSV", { root, now: NOW, by: "owner", reason: "Needed for the demo." });
     const s = await status("FEAT-002", { root });
     expect(s.root).toBe(root);
     expect(s.spec).toBe(join(root, "spec"));

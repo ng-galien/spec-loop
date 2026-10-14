@@ -141,7 +141,7 @@ Commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then propose
 | `status` | no | Reports one feature: file path, completeness, unaddressed fields, pending edits, last reconciliation, phase history, last backward move. |
 | `validate` | no | Checks a feature or a candidate object against the schema and the coverage rules; every error has a JSON pointer. |
 | `diff` | no | Compares the regenerated projection with the files on disk; maps each hunk to an id and a pointer; classifies alterations. |
-| `create` | yes | Writes the skeleton of a new feature (next FEAT number) and renders it; needs an absolute `root`. |
+| `create` | yes | Writes the skeleton of a new feature (next FEAT number) and renders it; needs an absolute `root`. One feature at a time: refuses while another feature is not done, unless the owner asks for it (`by: "owner"` and a `reason`, recorded in the new feature). |
 | `render` | yes | Renders the feature deterministically; refuses while owner edits are unverified. |
 | `patch` | yes | Applies an RFC 6902 JSON Patch, validates, writes, re-renders; `id`, `name`, `phase` and `lifecycle` are protected. |
 | `phase` | yes | Advances to the next phase when the current one is complete; moves back to an earlier one on the owner's decision with a reason. |

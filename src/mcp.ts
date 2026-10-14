@@ -197,18 +197,21 @@ server.registerTool(
   "create",
   {
     title: "Create a spec-loop feature",
-    description: "Write the skeleton of a new spec-loop feature (next FEAT number, first phase), render it and refresh spec/README.md.",
+    description:
+      "Write the skeleton of a new spec-loop feature (next FEAT number, first phase), render it and refresh spec/README.md. One feature at a time: refuses while another feature is not done, naming it, unless the owner asked for it explicitly (by owner with a reason, recorded in the new feature's lifecycle).",
     inputSchema: {
       name: z.string().describe("Kebab-case name, e.g. maket-http-connector"),
-      title: z.string().min(1).describe("Title for the owner, in French"),
+      title: z.string().min(1).describe("Title for the owner"),
+      by: z.enum(["agent", "owner"]).optional().describe("Who decided the creation; defaults to agent. Pass owner only when the owner explicitly asked to open this feature while another one is not done"),
+      reason: z.string().optional().describe("The owner's reason for opening a feature while another one is not done; required with by owner in that case"),
       root: z.string().describe("Absolute path of the project that holds or will hold spec/; required"),
     },
     outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable() },
     annotations: writes,
   },
-  async ({ name, title, root }) =>
+  async ({ name, title, by, reason, root }) =>
     run(async () => {
-      const value = await lib.create(name, title, { root });
+      const value = await lib.create(name, title, { root, by, reason });
       return { value, isError: !value.ok };
     }),
 );

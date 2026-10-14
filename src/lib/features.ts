@@ -6,7 +6,7 @@ import { diffFolder } from "./diff.js";
 import { featureFolders, serializeFeature } from "./model.js";
 import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templatesDir, workspaceRoot, type Location } from "./paths.js";
 import { phaseTitle, render } from "./render.js";
-import { firstPhase, nextPhase, phases } from "./schema.js";
+import { firstPhase, lastPhase, nextPhase, phases } from "./schema.js";
 import type { Feature, RenderResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -93,12 +93,31 @@ export interface CreateResult {
   render: RenderResult | null;
 }
 
-export async function create(name: string, title: string, options: Location & { now?: string } = {}): Promise<CreateResult> {
-  const fail = (message: string): CreateResult => ({ ok: false, feature: null, id: null, errors: [{ pointer: "", message, kind: "invalid" }], render: null });
+export interface CreateOptions extends Location {
+  now?: string;
+  by?: "agent" | "owner";
+  reason?: string;
+}
+
+export async function create(name: string, title: string, options: CreateOptions = {}): Promise<CreateResult> {
+  const fail = (...messages: string[]): CreateResult => ({ ok: false, feature: null, id: null, errors: messages.map((message) => ({ pointer: "", message, kind: "invalid" as const })), render: null });
   if (!options.root || !isAbsolute(options.root)) return fail("create needs root: the absolute path of the project that holds or will hold spec/");
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return fail(`invalid name "${name}": use lowercase words separated by dashes`);
   const existing = await featureFolders(options);
   if (existing.some((f) => f.name === name)) return fail(`a feature named "${name}" already exists`);
+  const by = options.by ?? "agent";
+  const reason = options.reason?.trim() ?? "";
+  const unfinished = (await features(options)).filter((f) => f.phase !== lastPhase());
+  if (unfinished.length > 0 && (by !== "owner" || reason === "")) {
+    return fail(
+      ...unfinished.map((f) =>
+        f.corrupted
+          ? `${f.folder} is unfinished: its feature.json cannot be read`
+          : `${f.folder} is unfinished: phase "${f.phase}", ${f.missingCount} item(s) missing`,
+      ),
+      `one feature at a time: finish ${unfinished.map((f) => f.id).join(", ")} first; only the owner may open another one now, with by "owner" and a reason`,
+    );
+  }
   const number = Math.max(0, ...existing.map((f) => Number(f.id.slice(5)))) + 1;
   const id = `FEAT-${String(number).padStart(3, "0")}`;
   const folder = `${id}-${name}`;
@@ -111,7 +130,11 @@ export async function create(name: string, title: string, options: Location & { 
     title,
     phase,
     framing: { intent: "", actors: [], scope: { in: [], out: [] } },
-    lifecycle: { created: now, phaseHistory: [{ phase, date: now, by: "agent" }] },
+    lifecycle: {
+      created: now,
+      phaseHistory: [{ phase, date: now, by }],
+      ...(unfinished.length > 0 ? { openedWhileUnfinished: { features: unfinished.map((f) => f.id), reason, date: now } } : {}),
+    },
   };
   await mkdir(featureDir(folder, options), { recursive: true });
   try {

@@ -31,6 +31,7 @@ export const checkDescriptions: Record<string, string> = Object.fromEntries(Obje
 
 export const phaseNames = (): string[] => phases.map((p) => p.name);
 export const firstPhase = (): string => phases[0]!.name;
+export const lastPhase = (): string => phases[phases.length - 1]!.name;
 export const phaseIndex = (name: string | null | undefined): number => phases.findIndex((p) => p.name === name);
 export const phaseInfo = (name: string | null | undefined): PhaseInfo | null => phases.find((p) => p.name === name) ?? null;
 export const nextPhase = (name: string | null | undefined): string | null => {
