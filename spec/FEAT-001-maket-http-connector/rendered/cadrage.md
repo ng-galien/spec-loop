@@ -1,5 +1,7 @@
 <!-- source: "/framing" template: "templates/framing.hbs" -->
 
+_Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._
+
 # Cadrage : Connecteur HTTP pour les espaces structurés de Maket
 
 <!-- ptr: /framing/intent -->
@@ -18,6 +20,34 @@ flowchart LR
   config --> connector
   connector -- "GET liste et lecture, PUT avec If-Match" --> api["L'API externe (ACT-03)"]
   api -- "JSON, ETag, 412" --> connector
+```
+
+<!-- id: ART-02 -->
+**Écriture d'un élément : révision, conflit et lecture seule** (`ART-02`, séquence)
+
+```mermaid
+sequenceDiagram
+  participant A as L'agent (ACT-02)
+  participant M as Maket : espace structuré
+  participant C as Connecteur HTTP
+  participant API as L'API externe (ACT-03)
+  A->>M: modifier l'élément X
+  M->>C: put(X, révision connue)
+  alt L'API donne une révision (ETag ou champ déclaré)
+    C->>API: PUT /items/X, If-Match: révision
+    alt Révision inchangée
+      API-->>C: 200, nouvelle révision
+      C-->>M: élément mis à jour
+      M-->>A: ok, révision N+1
+    else Révision périmée
+      API-->>C: 412 Precondition Failed
+      C-->>M: refus « révision périmée », donnée courante relue
+      M-->>A: refus, formulaire rechargé
+    end
+  else L'API ne donne aucune révision (Q-05)
+    C-->>M: refus « source en lecture seule »
+    M-->>A: refus, espace en lecture seule
+  end
 ```
 
 <!-- ptr: /framing/actors -->
@@ -74,42 +104,53 @@ Service REST tiers qui détient les éléments. Elle fait foi sur leur contenu e
 - <!-- id: ASM-02 --> **ASM-02** : L'interface ItemSource de Maket couvre déjà curseur, recherche et révision, de sorte que le connecteur n'a rien à lui ajouter.
 
 <!-- ptr: /framing/questions -->
-## Questions ouvertes
+## À trancher
+
+_Aucune question à trancher._
+
+<!-- ptr: /framing/questions -->
+## Tranché
 
 <!-- id: Q-01 -->
 ### Q-01 : La création (POST) et la suppression (DELETE) font-elles partie de la première version ?
 
-Statut : **ouverte**. Concerne : CON-01.
+Réponse : Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation.
 
-Recommandation : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.
+Concerne : CON-01.
+
+Recommandation proposée : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.
 
 <!-- id: Q-02 -->
 ### Q-02 : Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
 
-Statut : **ouverte**.
+Réponse : Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation.
 
-Recommandation : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.
+Recommandation proposée : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.
 
 <!-- id: Q-03 -->
 ### Q-03 : Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
 
-Statut : **ouverte**.
+Réponse : L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite.
 
-Recommandation : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.
+Recommandation proposée : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.
 
 <!-- id: Q-04 -->
 ### Q-04 : Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
 
-Statut : **ouverte**. Concerne : ASM-02.
+Réponse : Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur.
 
-Recommandation : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.
+Concerne : ASM-02.
+
+Recommandation proposée : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.
 
 <!-- id: Q-05 -->
 ### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
 
-Statut : **ouverte**. Concerne : CON-03.
+Réponse : Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu.
 
-Recommandation : Non : l'espace passe en lecture seule.
+Concerne : CON-03.
+
+Recommandation proposée : Non : l'espace passe en lecture seule.
 
 <!-- ptr: /framing/glossary -->
 ## Glossaire

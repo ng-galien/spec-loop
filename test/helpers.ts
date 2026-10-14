@@ -5,19 +5,23 @@ import type { Feature } from "../src/lib/index.js";
 
 export const FEATURE = "FEAT-001";
 export const FOLDER = "FEAT-001-maket-http-connector";
-const source = resolve(import.meta.dirname, "..", "spec", FOLDER, "feature.json");
+const fixture = (name: string) => resolve(import.meta.dirname, "fixtures", `${name}.json`);
 
-export async function workspace(): Promise<string> {
+export async function workspace(name: "framing" | "requirements" = "framing"): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "spec-loop-test-"));
   await mkdir(join(root, "spec", FOLDER), { recursive: true });
-  await copyFile(source, join(root, "spec", FOLDER, "feature.json"));
+  await copyFile(fixture(name), join(root, "spec", FOLDER, "feature.json"));
   return root;
 }
 
 export const inFolder = (root: string, ...parts: string[]) => join(root, "spec", FOLDER, ...parts);
 
 export async function guineaPig(): Promise<Feature> {
-  return JSON.parse(await readFile(source, "utf8")) as Feature;
+  return JSON.parse(await readFile(fixture("framing"), "utf8")) as Feature;
+}
+
+export async function requirementsFixture(): Promise<Feature> {
+  return JSON.parse(await readFile(fixture("requirements"), "utf8")) as Feature;
 }
 
 export function inRequirements(feature: Feature): Feature {
@@ -47,7 +51,6 @@ export function inRequirements(feature: Feature): Feature {
   ];
   return copy;
 }
-
 export function inAcceptance(feature: Feature): Feature {
   const copy = inRequirements(feature);
   copy.phase = "acceptance";

@@ -1,3 +1,7 @@
+{{#if pastNotice}}
+{{pastNotice}}
+
+{{/if}}
 # Cadrage : {{title}}
 
 <!-- ptr: /framing/intent -->
@@ -62,24 +66,43 @@ _Aucune hypothèse pour l'instant._
 {{/each}}
 
 <!-- ptr: /framing/questions -->
-## Questions ouvertes
+## À trancher
 
-{{#each framing.questions}}
+{{#each framing.openQuestions}}
 <!-- id: {{id}} -->
 ### {{id}} : {{question}}
 
-Statut : **{{statusLabel}}**.{{#if aboutList}} Concerne : {{aboutList}}.{{/if}}
+{{#if aboutList}}
+Concerne : {{aboutList}}.
 
+{{/if}}
 {{#if recommendation}}
 Recommandation : {{recommendation}}
 
 {{/if}}
-{{#if answer}}
-Réponse : {{answer}}
+{{else}}
+_Aucune question à trancher._
+{{/each}}
+
+<!-- ptr: /framing/questions -->
+## Tranché
+
+{{#each framing.answeredQuestions}}
+<!-- id: {{id}} -->
+### {{id}} : {{question}}
+
+Réponse : {{#if answer}}{{answer}}{{else}}_non consignée._{{/if}}
+
+{{#if aboutList}}
+Concerne : {{aboutList}}.
+
+{{/if}}
+{{#if recommendation}}
+Recommandation proposée : {{recommendation}}
 
 {{/if}}
 {{else}}
-_Aucune question pour l'instant._
+_Aucune question tranchée pour l'instant._
 {{/each}}
 
 <!-- ptr: /framing/glossary -->

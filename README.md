@@ -105,6 +105,10 @@ The skills always pass `root`.
 - `.spec-loop/` is local state and is ignored by git; on a fresh checkout, a hand-edited `feature.json` can only be accepted.
 - Every alteration (rendered file, svg, `feature.json`, missing or extra file) counts as pending until a `verify` accounts for it, so `phase` cannot advance over an unread change.
 - Artifacts render once, right after the first requirement or criterion they illustrate. An artifact with no id renders in the framing document after the intent.
+- `artifacts[].illustrates` takes any feature id (`anyRef`: requirement, criterion, anchor, decision, artifact, actor, constraint, assumption, question, with an optional `FEAT-nnn/` prefix), not only requirements and criteria. The widening was made during the owner's first run, so that a diagram can illustrate a constraint or an actor. Placement is unchanged: next to the first requirement or criterion listed, otherwise in the framing document.
+- In the framing document, questions are split: « À trancher » (open, with the recommendation) first, then « Tranché » (answered, with the answer). The index's « Reste à faire » list is unchanged.
+- A document of a phase earlier than the current one opens, after its source comment, with one line naming its closed phase and linking to the current phase document; the current phase document carries no such line.
+- Tests never read the live `spec/` folder: they copy `test/fixtures/framing.json` (the guinea pig before the owner's answers) or `test/fixtures/requirements.json` into a temporary project.
 - Rendered file names are French (`cadrage.md`, `exigences.md`, `criteres.md`, `ancrage.md`, `verification.md`, `decisions.md`), as they are owner-facing. Criteria use the French Gherkin keywords (Règle, Exemple, Soit, Et, Quand, Alors).
 - `learn` returns its text as JSON in both `content` and `structuredContent`, for the identical-result rule.
 - Dependencies: handlebars, ajv, ajv-formats, fast-json-patch, diff, @modelcontextprotocol/sdk, and zod, which the SDK requires for tool schemas. TypeScript 5.9 and vitest 5 for development.

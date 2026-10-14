@@ -6,4 +6,4 @@ Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonc
 
 | Id | Fonctionnalité | Phase | Complétude | Modifications | Documents |
 | --- | --- | --- | --- | --- | --- |
-| FEAT-001 | Connecteur HTTP pour les espaces structurés de Maket | Cadrage | 5 manque(s) | aucune | [ouvrir](FEAT-001-maket-http-connector/rendered/index.md) |
+| FEAT-001 | Connecteur HTTP pour les espaces structurés de Maket | Exigences | complète | aucune | [ouvrir](FEAT-001-maket-http-connector/rendered/index.md) |

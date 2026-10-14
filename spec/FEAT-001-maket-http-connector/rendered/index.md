@@ -3,13 +3,13 @@
 <!-- ptr: /title -->
 # Connecteur HTTP pour les espaces structurés de Maket
 
-Fonctionnalité `FEAT-001`. Phase actuelle : **Cadrage**.
+Fonctionnalité `FEAT-001`. Phase actuelle : **Exigences**.
 
 <!-- ptr: /phase -->
 ```mermaid
 flowchart LR
-  framing["Cadrage"]:::now
-  requirements["Exigences"]:::next
+  framing["Cadrage"]:::past
+  requirements["Exigences"]:::now
   acceptance["Acceptation"]:::next
   anchoring["Ancrage"]:::next
   verification["Vérification"]:::next
@@ -23,23 +23,23 @@ flowchart LR
 ## Documents
 
 - [Cadrage](cadrage.md) : intention, acteurs, périmètre, contraintes, hypothèses, questions, glossaire
+- [Exigences](exigences.md) : une phrase EARS par exigence, avec sa priorité
 
 ## Artefacts
 
 - ART-01 : Contexte du connecteur HTTP (contexte, mermaid), dans [cadrage.md](cadrage.md)
+- ART-02 : Écriture d'un élément : révision, conflit et lecture seule (séquence, mermaid), dans [cadrage.md](cadrage.md)
 
-## Reste à faire pour la phase « Cadrage »
+## Reste à faire pour la phase « Exigences »
 
-- Question Q-01 à répondre : `/framing/questions/0/status`
-- Question Q-02 à répondre : `/framing/questions/1/status`
-- Question Q-03 à répondre : `/framing/questions/2/status`
-- Question Q-04 à répondre : `/framing/questions/3/status`
-- Question Q-05 à répondre : `/framing/questions/4/status`
+Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
 
 <!-- ptr: /lifecycle -->
 ## Historique
 
 - 2026-10-14 : phase « Cadrage », décidée par l'agent
+- 2026-10-14 : phase « Exigences », décidée par le propriétaire
+- 2026-10-14 : dernière vérification de vos modifications, 3 appliquée(s), 0 signalée(s)
 
 ## Comment intervenir
 

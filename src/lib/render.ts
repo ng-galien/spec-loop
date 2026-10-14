@@ -28,7 +28,6 @@ export const FILE_SPECS: readonly FileSpec[] = [
 ];
 
 const LABELS: Record<string, Record<string, string>> = {
-  questionStatus: { open: "ouverte", answered: "répondue" },
   pattern: { ubiquitous: "permanente", event: "sur événement", state: "sur état", unwanted: "comportement indésirable", optional: "option", complex: "complexe" },
   change: { add: "ajout", modify: "modification", remove: "suppression" },
   testStatus: { missing: "à écrire", failing: "en échec", passing: "réussi" },
@@ -144,7 +143,12 @@ function view(feature: Feature, validation: ValidationResult): Rec {
     framing: {
       ...framing,
       artifacts: artifacts.get("framing") ?? [],
-      questions: list(framing.questions).map((q) => ({ ...q, statusLabel: label("questionStatus", q.status), aboutList: joined(q.about) })),
+      openQuestions: list(framing.questions)
+        .filter((q) => q.status !== "answered")
+        .map((q) => ({ ...q, aboutList: joined(q.about) })),
+      answeredQuestions: list(framing.questions)
+        .filter((q) => q.status === "answered")
+        .map((q) => ({ ...q, aboutList: joined(q.about) })),
       glossary: list(framing.glossary).map((g) => ({ ...g, avoidList: joined(g.avoid) })),
     },
     requirements,
@@ -179,14 +183,23 @@ export function parseHeader(line: string): { source: string; template: string } 
   return match ? { source: JSON.parse(match[1]!) as string, template: JSON.parse(match[2]!) as string } : null;
 }
 
+function pastNotice(spec: FileSpec, phase: string): string | null {
+  const producer = spec.section ? phaseProducing(spec.section) : null;
+  if (!producer || phaseIndex(producer.name) >= phaseIndex(phase)) return null;
+  const current = phaseInfo(phase);
+  const currentFile = FILE_SPECS.find((f) => f.section !== null && current?.produces.includes(f.section))?.path ?? "index.md";
+  return `_Document de la phase ${producer.title}, close ; la phase actuelle est ${current?.title ?? phase} : [${currentFile}](${currentFile})._`;
+}
+
 export function renderToMemory(feature: Feature): RenderedFile[] {
   const validation = validate(feature);
   const data = view(feature, validation);
-  return filesFor(feature, validation.phase ?? phases[0]!.name).map((spec) => ({
+  const phase = validation.phase ?? phases[0]!.name;
+  return filesFor(feature, phase).map((spec) => ({
     path: spec.path,
     source: spec.source,
     template: `templates/${spec.template}`,
-    content: normalize(`${header(spec)}\n\n${template(spec.template)(data)}`),
+    content: normalize(`${header(spec)}\n\n${template(spec.template)({ ...data, pastNotice: pastNotice(spec, phase) })}`),
   }));
 }
 

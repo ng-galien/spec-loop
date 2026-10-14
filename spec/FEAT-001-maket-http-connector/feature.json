@@ -3,7 +3,7 @@
   "id": "FEAT-001",
   "name": "maket-http-connector",
   "title": "Connecteur HTTP pour les espaces structurés de Maket",
-  "phase": "framing",
+  "phase": "requirements",
   "framing": {
     "intent": "Maket est un outil de documents visuels pour agents IA. Ses espaces de travail structurés listent des éléments venus d'une source de données, derrière l'interface ItemSource : liste par curseur, recherche, lecture, création, écriture, suppression, identité déclarée dans le schéma, révision pour détecter les conflits. Aujourd'hui, brancher une API REST demande du code propre à cette API. Le résultat voulu : un connecteur HTTP qui implémente ItemSource au-dessus d'une API REST décrite par configuration, pour qu'un espace de travail lise et écrive les éléments de cette API.",
     "actors": [
@@ -73,40 +73,45 @@
         "id": "Q-01",
         "question": "La création (POST) et la suppression (DELETE) font-elles partie de la première version ?",
         "recommendation": "Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place.",
-        "status": "open",
+        "status": "answered",
         "about": [
           "CON-01"
-        ]
+        ],
+        "answer": "Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation."
       },
       {
         "id": "Q-02",
         "question": "Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?",
         "recommendation": "Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation.",
-        "status": "open"
+        "status": "answered",
+        "answer": "Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation."
       },
       {
         "id": "Q-03",
         "question": "Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?",
         "recommendation": "L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite.",
-        "status": "open"
+        "status": "answered",
+        "answer": "L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite."
       },
       {
         "id": "Q-04",
         "question": "Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?",
         "recommendation": "Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur.",
-        "status": "open",
+        "status": "answered",
         "about": [
           "ASM-02"
-        ]
+        ],
+        "answer": "Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur."
       },
       {
         "id": "Q-05",
         "question": "Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?",
         "recommendation": "Non : l'espace passe en lecture seule.",
-        "status": "open",
+        "status": "answered",
         "about": [
           "CON-03"
-        ]
+        ],
+        "answer": "Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu."
       }
     ],
     "glossary": [
@@ -143,6 +148,18 @@
       "title": "Contexte du connecteur HTTP",
       "source": "flowchart LR\n  owner[\"Le propriétaire (ACT-01)\"] -- configure --> config[\"Configuration de l'espace : URL, variable d'environnement, mappage\"]\n  agent[\"L'agent (ACT-02)\"] -- outils MCP --> maket[\"Maket : espace de travail structuré\"]\n  maket -- ItemSource --> connector[\"Connecteur HTTP\"]\n  config --> connector\n  connector -- \"GET liste et lecture, PUT avec If-Match\" --> api[\"L'API externe (ACT-03)\"]\n  api -- \"JSON, ETag, 412\" --> connector",
       "illustrates": []
+    },
+    {
+      "id": "ART-02",
+      "kind": "sequence",
+      "format": "mermaid",
+      "title": "Écriture d'un élément : révision, conflit et lecture seule",
+      "source": "sequenceDiagram\n  participant A as L'agent (ACT-02)\n  participant M as Maket : espace structuré\n  participant C as Connecteur HTTP\n  participant API as L'API externe (ACT-03)\n  A->>M: modifier l'élément X\n  M->>C: put(X, révision connue)\n  alt L'API donne une révision (ETag ou champ déclaré)\n    C->>API: PUT /items/X, If-Match: révision\n    alt Révision inchangée\n      API-->>C: 200, nouvelle révision\n      C-->>M: élément mis à jour\n      M-->>A: ok, révision N+1\n    else Révision périmée\n      API-->>C: 412 Precondition Failed\n      C-->>M: refus « révision périmée », donnée courante relue\n      M-->>A: refus, formulaire rechargé\n    end\n  else L'API ne donne aucune révision (Q-05)\n    C-->>M: refus « source en lecture seule »\n    M-->>A: refus, espace en lecture seule\n  end",
+      "illustrates": [
+        "CON-03",
+        "Q-01",
+        "Q-05"
+      ]
     }
   ],
   "lifecycle": {
@@ -152,7 +169,174 @@
         "phase": "framing",
         "date": "2026-10-14T10:00:00.000Z",
         "by": "agent"
+      },
+      {
+        "phase": "requirements",
+        "date": "2026-10-14T11:42:42.891Z",
+        "by": "owner"
       }
-    ]
-  }
+    ],
+    "lastVerify": {
+      "date": "2026-10-14T11:50:31.437Z",
+      "applied": 3,
+      "reported": []
+    }
+  },
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "pattern": "ubiquitous",
+      "statement": "The connector SHALL implement the ItemSource interface of Maket (list, get, create, put, delete, refresh) over a REST API described by the workspace configuration.",
+      "priority": "MUST",
+      "rationale": "Le connecteur remplace du code propre à chaque API par une configuration ; l'espace de travail ne voit que l'interface de source d'éléments existante.",
+      "source": [
+        "ACT-02",
+        "CON-01"
+      ]
+    },
+    {
+      "id": "REQ-002",
+      "pattern": "ubiquitous",
+      "statement": "The connector SHALL read the base URL, the environment variable name holding the secret, and the JSON Pointer mapping (list path, next cursor path, identity path, revision path) from the workspace configuration.",
+      "priority": "MUST",
+      "rationale": "La réponse Q-02 fixe le passage de l'API aux champs de l'élément par des pointeurs JSON, sans langage de transformation.",
+      "source": [
+        "Q-02",
+        "ACT-01"
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "pattern": "ubiquitous",
+      "statement": "The connector SHALL send the secret read from the configured environment variable in every request, and SHALL never write the secret into the configuration or the workspace.",
+      "priority": "MUST",
+      "rationale": "Aucun secret n'est écrit dans la configuration (CON-02) ; seul le nom de la variable y figure.",
+      "source": [
+        "CON-02"
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "pattern": "event",
+      "statement": "When the workspace asks for a batch of items, the connector SHALL call the list endpoint with the cursor and search parameters of the API and SHALL return items, the next opaque cursor and the total when the API gives one; a batch never exceeds 500 items.",
+      "priority": "MUST",
+      "rationale": "La liste par curseur est le contrat de l'espace de travail ; le connecteur traduit ce contrat vers l'API.",
+      "source": [
+        "ACT-02"
+      ]
+    },
+    {
+      "id": "REQ-005",
+      "pattern": "event",
+      "statement": "When the API paginates by page number or by a Link header, the connector SHALL convert that pagination into the opaque cursor of the workspace.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-04 : l'espace ne voit qu'un seul contrat, celui du curseur.",
+      "source": [
+        "Q-04"
+      ]
+    },
+    {
+      "id": "REQ-006",
+      "pattern": "event",
+      "statement": "When the workspace asks for one item by its identity, the connector SHALL call the get endpoint and SHALL return the item data with its revision.",
+      "priority": "MUST",
+      "rationale": "La lecture par identité et la révision sont nécessaires à l'ouverture et à l'écriture.",
+      "source": [
+        "ACT-02"
+      ]
+    },
+    {
+      "id": "REQ-007",
+      "pattern": "event",
+      "statement": "When the workspace writes an item with a known revision, the connector SHALL send PUT with the If-Match header carrying that revision.",
+      "priority": "MUST",
+      "rationale": "Aucune écriture sans révision (CON-03) : la révision connue protège contre la perte de mise à jour.",
+      "source": [
+        "CON-03",
+        "Q-05"
+      ]
+    },
+    {
+      "id": "REQ-008",
+      "pattern": "unwanted",
+      "statement": "If the API answers 412 Precondition Failed to a write, then the connector SHALL refuse the write as a stale revision and SHALL return the current item data read again from the API.",
+      "priority": "MUST",
+      "rationale": "Un conflit est signalé à l'agent avec la donnée courante, jamais résolu à sa place.",
+      "source": [
+        "CON-03"
+      ]
+    },
+    {
+      "id": "REQ-009",
+      "pattern": "state",
+      "statement": "While the API gives neither an ETag nor a declared revision field, the connector SHALL declare the source read-only and SHALL refuse every write with the reason read_only.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-05 : sans révision, l'écriture est refusée plutôt qu'approximative.",
+      "source": [
+        "Q-05",
+        "CON-03"
+      ]
+    },
+    {
+      "id": "REQ-010",
+      "pattern": "event",
+      "statement": "When the workspace creates an item, the connector SHALL send POST and SHALL return the identity and revision assigned by the API.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-01 : la création fait partie de la première version.",
+      "source": [
+        "Q-01"
+      ]
+    },
+    {
+      "id": "REQ-011",
+      "pattern": "event",
+      "statement": "When the workspace deletes an item with a known revision, the connector SHALL send DELETE with the If-Match header and SHALL report 412 as a stale revision.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-01 : la suppression fait partie de la première version, protégée comme l'écriture.",
+      "source": [
+        "Q-01",
+        "CON-03"
+      ]
+    },
+    {
+      "id": "REQ-012",
+      "pattern": "state",
+      "statement": "While a polling interval is configured, the connector SHALL re-read the list at that interval and SHALL emit a source-changed signal when any item revision differs from the last read.",
+      "priority": "MUST",
+      "rationale": "Réponse Q-03 : l'interrogation périodique vient avant le webhook, parce qu'elle n'exige pas que Maket soit joignable.",
+      "source": [
+        "Q-03"
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "pattern": "optional",
+      "statement": "Where the API offers a webhook, the connector MAY accept its calls and SHALL emit the same source-changed signal as polling.",
+      "priority": "MAY",
+      "rationale": "Réponse Q-03 : le webhook vient ensuite, pour les API qui le proposent.",
+      "source": [
+        "Q-03"
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "pattern": "unwanted",
+      "statement": "If the API is unreachable or answers with a server error, then the connector SHALL report source_unreachable with the retry delay and SHALL NOT retry silently.",
+      "priority": "MUST",
+      "rationale": "Aucun réessai silencieux (CON-04) : l'espace garde sa dernière fenêtre datée et l'agent sait pourquoi.",
+      "source": [
+        "CON-04"
+      ]
+    },
+    {
+      "id": "REQ-015",
+      "pattern": "event",
+      "statement": "When a request to the API exceeds the configured timeout, the connector SHALL abort it and SHALL report source_unreachable with the timeout as retry delay.",
+      "priority": "MUST",
+      "rationale": "Une API lente ne doit pas figer l'espace de travail ; le délai est une configuration, pas une constante.",
+      "source": [
+        "CON-04"
+      ]
+    }
+  ]
 }

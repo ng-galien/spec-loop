@@ -1,12 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { diff, render } from "../src/lib/index.js";
-import { serializeFeature } from "../src/lib/model.js";
-import { FEATURE, guineaPig, inFolder, inRequirements, workspace } from "./helpers.js";
+import { FEATURE, inFolder, workspace } from "./helpers.js";
 
 async function prepared() {
-  const root = await workspace();
-  await writeFile(inFolder(root, "feature.json"), serializeFeature(inRequirements(await guineaPig())));
+  const root = await workspace("requirements");
   await render(FEATURE, { root });
   return { root, file: (name: string) => inFolder(root, "rendered", name) };
 }

@@ -1068,10 +1068,9 @@
         "illustrates": {
           "type": "array",
           "items": {
-            "type": "string",
-            "pattern": "^(REQ-\\d{3}|AC-\\d{3}\\.\\d+)$"
+            "$ref": "#/$defs/anyRef"
           },
-          "description": "Requirements or criteria it illustrates; empty for a framing artifact, which renders in the framing document."
+          "description": "Ids of the objects the artifact illustrates: requirements, criteria, constraints, actors, questions or decisions."
         }
       }
     },
