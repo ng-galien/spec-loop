@@ -1,0 +1,35 @@
+# Critères d'acceptation : {{title}}
+
+Chaque exigence devient une règle ; chaque critère est un exemple de cette règle.
+
+{{#each groups}}
+<!-- id: {{requirement.id}} -->
+## Règle {{requirement.id}}
+
+_{{requirement.statement}}_
+
+{{#each criteria}}
+<!-- id: {{id}} -->
+### Exemple {{id}} : {{title}}
+
+{{#each steps}}
+- **{{keyword}}** {{text}}
+{{/each}}
+{{#if table}}
+
+|{{#each table.header}} {{this}} |{{/each}}
+|{{#each table.header}} --- |{{/each}}
+{{#each table.rows}}
+|{{#each this}} {{this}} |{{/each}}
+{{/each}}
+{{/if}}
+
+{{#each artifacts}}
+{{> artifact}}
+
+{{/each}}
+{{else}}
+_Aucun critère pour cette exigence._
+
+{{/each}}
+{{/each}}

@@ -1,0 +1,17 @@
+{
+  "feature": {
+    "hash": "536793072f1ac3595e204a44b0163695cc5a655e0d1872fb50a2bca6e1f9147c",
+    "renderedAt": "2026-10-14T10:55:52.024Z"
+  },
+  "files": {
+    "index.md": {
+      "hash": "0dca89e04fdfcd0ea02bbffcf5c67d277bce9ffaa5a5634d7612840dd2a440e9",
+      "renderedAt": "2026-10-14T10:59:21.412Z"
+    },
+    "cadrage.md": {
+      "hash": "cc241a78d3765d1936a4b4f37659022f8fc59ff9b2ab7459dba4c7f22ee6b4ad",
+      "renderedAt": "2026-10-14T10:55:52.024Z"
+    }
+  },
+  "assets": {}
+}

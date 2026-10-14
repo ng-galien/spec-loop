@@ -1,0 +1,80 @@
+import { describe, expect, it } from "vitest";
+import { validate, type Feature } from "../src/lib/index.js";
+import { guineaPig, inAcceptance, inRequirements } from "./helpers.js";
+
+const pointers = (feature: unknown, kind?: string) =>
+  validate(feature).errors.filter((e) => !kind || e.kind === kind).map((e) => e.pointer);
+
+describe("validate", () => {
+  it("framing: reports missing fields with their pointers", async () => {
+    const feature = (await guineaPig()) as Feature & { framing: Record<string, unknown> };
+    delete feature.framing.actors;
+    delete feature.framing.intent;
+    const result = validate(feature);
+    expect(result.valid).toBe(true);
+    expect(result.complete).toBe(false);
+    expect(pointers(feature, "incomplete")).toEqual(expect.arrayContaining(["/framing/actors", "/framing/intent"]));
+  });
+
+  it("framing: open questions keep the phase incomplete", async () => {
+    expect(pointers(await guineaPig())).toEqual([0, 1, 2, 3, 4].map((i) => `/framing/questions/${i}/status`));
+  });
+
+  it("framing: a section of a later phase is invalid", async () => {
+    const result = validate({ ...(await guineaPig()), requirements: [] });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(expect.objectContaining({ pointer: "/requirements", kind: "invalid" }));
+  });
+
+  it("requirements: changing the phase lists what is missing", async () => {
+    const feature = { ...(await guineaPig()), phase: "requirements" };
+    expect(pointers(feature, "incomplete")).toEqual(expect.arrayContaining(["/requirements", "/framing/questions/0/status"]));
+    expect(validate(inRequirements(await guineaPig())).complete).toBe(true);
+  });
+
+  it("requirements: the statement follows the EARS form of its pattern", async () => {
+    const feature = inRequirements(await guineaPig());
+    (feature.requirements as { pattern: string }[])[0]!.pattern = "state";
+    expect(validate(feature).errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/0/statement", kind: "invalid" }));
+    (feature.requirements as { statement: string }[])[1]!.statement = "If the API answers 412, then the connector reports it.";
+    expect(validate(feature).errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/1/statement", kind: "invalid" }));
+  });
+
+  it("acceptance: each requirement needs a criterion whose id carries its number", async () => {
+    const feature = inRequirements(await guineaPig());
+    feature.phase = "acceptance";
+    expect(pointers(feature, "incomplete")).toEqual(["/criteria", "/requirements/0", "/requirements/1"]);
+    const accepted = inAcceptance(await guineaPig());
+    expect(validate(accepted).complete).toBe(true);
+    (accepted.criteria as unknown[]).pop();
+    expect(pointers(accepted, "incomplete")).toEqual(["/requirements/1"]);
+    (accepted.criteria as { id: string }[])[0]!.id = "AC-002.1";
+    expect(validate(accepted).errors).toContainEqual(expect.objectContaining({ pointer: "/criteria/0/id", kind: "invalid" }));
+  });
+
+  it("anchoring and verification: coverage rules report their pointers", async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "anchoring";
+    expect(pointers(feature, "incomplete")).toEqual(["/anchors", "/requirements/0", "/requirements/1"]);
+    feature.anchors = [{ id: "ANC-01", kind: "symbol", path: "src/http/connector.ts", symbol: "HttpConnector.list", change: "add", realizes: ["REQ-001"] }];
+    expect(pointers(feature, "incomplete")).toEqual(["/requirements/1"]);
+    feature.phase = "verification";
+    feature.tests = [{ file: "test/connector.test.ts", name: "AC-001.1 lists two pages", framework: "vitest", verifies: ["AC-001.1", "AC-002.1"] }];
+    expect(validate(feature).errors).toContainEqual(expect.objectContaining({ pointer: "/tests/0/name", kind: "invalid" }));
+  });
+
+  it("artifacts: mermaid takes source, svg takes a path under assets/", async () => {
+    const feature = await guineaPig();
+    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Écran", source: "<svg/>", illustrates: [] });
+    expect(validate(feature).errors).toContainEqual(expect.objectContaining({ pointer: "/artifacts/1", kind: "invalid" }));
+  });
+
+  it("rejects duplicate ids and dangling references", async () => {
+    const feature = inRequirements(await guineaPig());
+    (feature.requirements as { id: string }[])[1]!.id = "REQ-001";
+    (feature.requirements as { source: string[] }[])[0]!.source = ["CON-09"];
+    const errors = validate(feature).errors;
+    expect(errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/1/id", kind: "invalid" }));
+    expect(errors).toContainEqual(expect.objectContaining({ pointer: "/requirements/0/source/0", kind: "invalid" }));
+  });
+});

@@ -1,0 +1,18 @@
+# Vérification : {{title}}
+
+<!-- ptr: /tests -->
+## Tests
+
+{{#each tests}}
+- <!-- ptr: /tests/{{@index}} --> `{{file}}` : « {{name}} » ({{framework}}{{#if level}}, {{level}}{{/if}}{{#if method}}, {{method}}{{/if}}). Vérifie {{verifiesList}}.{{#if statusLabel}} Statut : **{{statusLabel}}**.{{/if}}
+{{else}}
+_Aucun test pour l'instant._
+{{/each}}
+
+## Couverture
+
+| Critère | Tests |
+| --- | --- |
+{{#each coverage}}
+| {{id}} | {{tests}} |
+{{/each}}

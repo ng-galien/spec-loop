@@ -1,0 +1,5 @@
+{
+  "name": "spec-loop",
+  "owner": { "name": "Alexandre Boyer" },
+  "plugins": [{ "name": "spec-loop", "source": "./", "description": "Feature model loop: MCP tools and the framing and verify skills." }]
+}

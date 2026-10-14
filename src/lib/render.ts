@@ -1,0 +1,335 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import Handlebars from "handlebars";
+import { indexIds, loadFeature, resolveFeature } from "./model.js";
+import { featureDir, featureFile, renderedDir, stateDir, templatesDir, type Location } from "./paths.js";
+import { phaseIndex, phaseInfo, phaseProducing, phases } from "./schema.js";
+import type { Feature, RenderedFile, RenderResult, ValidationResult } from "./types.js";
+import { validate } from "./validate.js";
+
+interface FileSpec {
+  path: string;
+  source: string;
+  template: string;
+  section: string | null;
+  title: string;
+}
+
+export const FILE_SPECS: readonly FileSpec[] = [
+  { path: "index.md", source: "", template: "index.hbs", section: null, title: "Vue d'ensemble" },
+  { path: "cadrage.md", source: "/framing", template: "framing.hbs", section: "framing", title: "" },
+  { path: "exigences.md", source: "/requirements", template: "requirements.hbs", section: "requirements", title: "" },
+  { path: "criteres.md", source: "/criteria", template: "criteria.hbs", section: "criteria", title: "" },
+  { path: "ancrage.md", source: "/anchors", template: "anchors.hbs", section: "anchors", title: "" },
+  { path: "verification.md", source: "/tests", template: "tests.hbs", section: "tests", title: "" },
+  { path: "decisions.md", source: "/decisions", template: "decisions.hbs", section: "decisions", title: "Décisions" },
+];
+
+const LABELS: Record<string, Record<string, string>> = {
+  questionStatus: { open: "ouverte", answered: "répondue" },
+  pattern: { ubiquitous: "permanente", event: "sur événement", state: "sur état", unwanted: "comportement indésirable", optional: "option", complex: "complexe" },
+  change: { add: "ajout", modify: "modification", remove: "suppression" },
+  testStatus: { missing: "à écrire", failing: "en échec", passing: "réussi" },
+  decisionStatus: { proposed: "proposée", accepted: "acceptée", superseded: "remplacée" },
+  artifactKind: { context: "contexte", flow: "flux", sequence: "séquence", state: "états", screen: "écran", module: "modules" },
+  by: { agent: "l'agent", owner: "le propriétaire" },
+};
+const label = (table: string, value: unknown) => LABELS[table]![String(value)] ?? "à préciser";
+export const phaseTitle = (name: string | null | undefined) => phaseInfo(name)?.title ?? "inconnue";
+
+const handlebars = Handlebars.create();
+handlebars.registerPartial("artifact", readFileSync(join(templatesDir, "artifact.hbs"), "utf8"));
+const compiled = new Map<string, Handlebars.TemplateDelegate>();
+function template(name: string): Handlebars.TemplateDelegate {
+  let fn = compiled.get(name);
+  if (!fn) {
+    fn = handlebars.compile(readFileSync(join(templatesDir, name), "utf8"), { noEscape: true, strict: false });
+    compiled.set(name, fn);
+  }
+  return fn;
+}
+
+type Rec = Record<string, unknown>;
+const list = (value: unknown): Rec[] => (Array.isArray(value) ? (value as Rec[]) : []);
+const joined = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(", ") : "");
+
+function steps(criterion: Rec): { keyword: string; text: string }[] {
+  const out: { keyword: string; text: string }[] = [];
+  (Array.isArray(criterion.given) ? criterion.given : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Soit" : "Et", text: String(text) }));
+  if (criterion.when !== undefined) out.push({ keyword: "Quand", text: String(criterion.when) });
+  (Array.isArray(criterion.then) ? criterion.then : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Alors" : "Et", text: String(text) }));
+  return out;
+}
+
+function table(rows: Rec[]): { header: string[]; rows: string[][] } | null {
+  if (rows.length === 0) return null;
+  const header = Object.keys(rows[0]!);
+  return { header, rows: rows.map((row) => header.map((key) => String(row[key] ?? ""))) };
+}
+
+export function missingLines(feature: Feature, validation: ValidationResult): { pointer: string; text: string }[] {
+  const owners = [...indexIds(feature)].map(([id, pointers]) => ({ id, pointer: pointers[0]! }));
+  const ownerOf = (pointer: string) =>
+    owners.filter((o) => pointer === o.pointer || pointer.startsWith(`${o.pointer}/`)).sort((a, b) => b.pointer.length - a.pointer.length)[0]?.id ?? null;
+  return validation.errors.map((e) => {
+    const owner = ownerOf(e.pointer);
+    const state = e.kind === "incomplete" ? "à compléter" : "incohérent";
+    return {
+      pointer: e.pointer || "/",
+      text: / is still open$/.test(e.message) ? `Question ${owner ?? ""} à répondre` : owner ? `${owner} ${state}` : `${state[0]!.toUpperCase()}${state.slice(1)}`,
+    };
+  });
+}
+
+function filesFor(feature: Feature, phase: string): FileSpec[] {
+  const at = phaseIndex(phase);
+  return FILE_SPECS.filter((spec) => {
+    if (spec.section === null) return true;
+    const producer = phaseProducing(spec.section);
+    return producer ? phaseIndex(producer.name) <= at : list(feature[spec.section]).length > 0;
+  });
+}
+
+function fileTitle(spec: FileSpec): string {
+  return spec.section && phaseProducing(spec.section) ? phaseProducing(spec.section)!.title : spec.title;
+}
+
+function placeArtifacts(feature: Feature): Map<string, Rec[]> {
+  const requirementIds = new Set(list(feature.requirements).map((r) => String(r.id)));
+  const criterionIds = new Set(list(feature.criteria).map((c) => String(c.id)));
+  const placed = new Map<string, Rec[]>();
+  for (const artifact of list(feature.artifacts)) {
+    const host = (Array.isArray(artifact.illustrates) ? artifact.illustrates.map(String) : []).find((id) => requirementIds.has(id) || criterionIds.has(id)) ?? "framing";
+    const view = {
+      ...artifact,
+      kindLabel: label("artifactKind", artifact.kind),
+      isMermaid: artifact.format === "mermaid",
+      isSvg: artifact.format === "svg",
+      isAscii: artifact.format === "ascii",
+      host,
+    };
+    placed.set(host, [...(placed.get(host) ?? []), view]);
+  }
+  return placed;
+}
+
+function view(feature: Feature, validation: ValidationResult): Rec {
+  const phase = validation.phase ?? phases[0]!.name;
+  const at = phaseIndex(phase);
+  const framing = (feature.framing ?? {}) as Rec;
+  const artifacts = placeArtifacts(feature);
+  const hostFile = (host: string) => (host === "framing" ? "cadrage.md" : host.startsWith("REQ-") ? "exigences.md" : "criteres.md");
+  const requirements = list(feature.requirements).map(
+    (req): Rec => ({ ...req, patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
+  );
+  const criteria = list(feature.criteria).map((c): Rec => ({ ...c, steps: steps(c), table: table(list(c.examples)), artifacts: artifacts.get(String(c.id)) ?? [] }));
+  const lifecycle = (feature.lifecycle ?? {}) as Rec;
+  const lastVerify = lifecycle.lastVerify as Rec | undefined;
+  return {
+    ...feature,
+    phaseLabel: phaseTitle(phase),
+    phases: phases.map((p, i) => ({ key: p.name, label: p.title, state: i < at ? "past" : i === at ? "now" : "next" })),
+    chain: phases.map((p) => p.name).join(" --> "),
+    documents: filesFor(feature, phase)
+      .filter((f) => f.section !== null)
+      .map((f) => ({ path: f.path, label: fileTitle(f), description: phaseProducing(f.section!)?.summary ?? "décisions et leurs conséquences" })),
+    missing: missingLines(feature, validation),
+    history: list(lifecycle.phaseHistory).map((h) => ({ date: String(h.date).slice(0, 10), label: phaseTitle(String(h.phase)), by: label("by", h.by) })),
+    lastVerify: lastVerify
+      ? { date: String(lastVerify.date).slice(0, 10), applied: lastVerify.applied, reported: list(lastVerify.reported).length }
+      : null,
+    artifactIndex: [...artifacts.values()].flat().sort((a, b) => (String(a.id) < String(b.id) ? -1 : 1)).map((a) => ({ ...a, file: hostFile(String(a.host)) })),
+    framing: {
+      ...framing,
+      artifacts: artifacts.get("framing") ?? [],
+      questions: list(framing.questions).map((q) => ({ ...q, statusLabel: label("questionStatus", q.status), aboutList: joined(q.about) })),
+      glossary: list(framing.glossary).map((g) => ({ ...g, avoidList: joined(g.avoid) })),
+    },
+    requirements,
+    groups: requirements.map((requirement) => ({ requirement, criteria: criteria.filter((c) => c.requirement === requirement.id) })),
+    anchors: list(feature.anchors).map((a) => ({ ...a, changeLabel: label("change", a.change), realizesList: joined(a.realizes) })),
+    tests: list(feature.tests).map((t) => ({ ...t, statusLabel: t.status ? label("testStatus", t.status) : null, verifiesList: joined(t.verifies) })),
+    coverage: list(feature.criteria).map((c) => ({
+      id: c.id,
+      tests: list(feature.tests).filter((t) => Array.isArray(t.verifies) && t.verifies.includes(c.id)).length,
+    })),
+    decisions: list(feature.decisions).map((d) => ({ ...d, statusLabel: label("decisionStatus", d.status), affectsList: joined(d.affects) })),
+  };
+}
+
+function normalize(text: string): string {
+  const lines = text.split(/\r?\n/).map((line) => line.trimEnd());
+  const out: string[] = [];
+  for (const line of lines) {
+    if (line === "" && (out.length === 0 || out[out.length - 1] === "")) continue;
+    out.push(line);
+  }
+  while (out.length > 0 && out[out.length - 1] === "") out.pop();
+  return `${out.join("\n")}\n`;
+}
+
+export function header(spec: { source: string; template: string }): string {
+  return `<!-- source: ${JSON.stringify(spec.source)} template: ${JSON.stringify(`templates/${spec.template}`)} -->`;
+}
+
+export function parseHeader(line: string): { source: string; template: string } | null {
+  const match = /^<!-- source: ("(?:[^"\\]|\\.)*") template: ("(?:[^"\\]|\\.)*") -->$/.exec(line);
+  return match ? { source: JSON.parse(match[1]!) as string, template: JSON.parse(match[2]!) as string } : null;
+}
+
+export function renderToMemory(feature: Feature): RenderedFile[] {
+  const validation = validate(feature);
+  const data = view(feature, validation);
+  return filesFor(feature, validation.phase ?? phases[0]!.name).map((spec) => ({
+    path: spec.path,
+    source: spec.source,
+    template: `templates/${spec.template}`,
+    content: normalize(`${header(spec)}\n\n${template(spec.template)(data)}`),
+  }));
+}
+
+export const sha256 = (text: string | Buffer): string => createHash("sha256").update(text).digest("hex");
+
+export interface ManifestEntry {
+  hash: string;
+  renderedAt: string;
+}
+
+export interface Manifest {
+  feature: ManifestEntry | null;
+  files: Record<string, ManifestEntry>;
+  assets: Record<string, ManifestEntry>;
+}
+
+const manifestPath = (folder: string, options: Location) => join(featureDir(folder, options), ".manifest.json");
+
+export async function readManifest(folder: string, options: Location = {}): Promise<Manifest | null> {
+  try {
+    const raw = JSON.parse(await readFile(manifestPath(folder, options), "utf8")) as Partial<Manifest>;
+    return { feature: raw.feature ?? null, files: raw.files ?? {}, assets: raw.assets ?? {} };
+  } catch {
+    return null;
+  }
+}
+
+function entry(previous: ManifestEntry | undefined | null, hash: string, now: string): ManifestEntry {
+  return previous && previous.hash === hash ? previous : { hash, renderedAt: now };
+}
+
+async function readOptional(path: string): Promise<string | null> {
+  try {
+    return await readFile(path, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+export async function svgPaths(feature: Feature): Promise<string[]> {
+  return list(feature.artifacts)
+    .filter((a) => a.format === "svg" && typeof a.path === "string")
+    .map((a) => String(a.path))
+    .sort();
+}
+
+export async function assetHashes(folder: string, feature: Feature, options: Location = {}): Promise<Record<string, string | null>> {
+  const out: Record<string, string | null> = {};
+  for (const path of await svgPaths(feature)) {
+    try {
+      out[path] = sha256(await readFile(join(featureDir(folder, options), path)));
+    } catch {
+      out[path] = null;
+    }
+  }
+  return out;
+}
+
+export async function listRenderedOnDisk(folder: string, options: Location = {}): Promise<string[]> {
+  const out: string[] = [];
+  const walk = async (dir: string, prefix: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) await walk(join(dir, entry.name), rel);
+      else if (entry.name.endsWith(".md")) out.push(rel);
+    }
+  };
+  await walk(renderedDir(folder, options), "");
+  return out.sort();
+}
+
+export async function ownerEditedFiles(folder: string, next: RenderedFile[], feature: Feature, options: Location = {}): Promise<string[]> {
+  const manifest = await readManifest(folder, options);
+  const nextByPath = new Map(next.map((f) => [f.path, f.content]));
+  const paths = new Set([...(await listRenderedOnDisk(folder, options)), ...Object.keys(manifest?.files ?? {})]);
+  const edited: string[] = [];
+  for (const path of [...paths].sort()) {
+    const disk = await readOptional(join(renderedDir(folder, options), path));
+    if (disk === null || disk === nextByPath.get(path)) continue;
+    if (manifest?.files[path]?.hash !== sha256(disk)) edited.push(path);
+  }
+  const assets = await assetHashes(folder, feature, options);
+  for (const [path, hash] of Object.entries(assets)) {
+    const known = manifest?.assets[path]?.hash;
+    if (known !== undefined && hash !== null && known !== hash) edited.push(path);
+  }
+  return edited;
+}
+
+export interface RenderOptions extends Location {
+  force?: boolean;
+  now?: string;
+}
+
+export async function render(ref: string, options: RenderOptions = {}): Promise<RenderResult> {
+  const folder = await resolveFeature(ref, options);
+  const json = await loadFeature(folder, options);
+  const validation = validate(json);
+  const files = renderToMemory(json);
+  const edited = await ownerEditedFiles(folder, files, json, options);
+  const result: RenderResult = { ok: true, feature: folder, files: [], removed: [], backedUp: [], refused: [], validation };
+  if (edited.length > 0 && !options.force) return { ...result, ok: false, refused: edited };
+  const base = renderedDir(folder, options);
+  for (const path of edited.filter((p) => p.endsWith(".md"))) {
+    const disk = await readOptional(join(base, path));
+    if (disk === null) continue;
+    const backup = join(stateDir(folder, options), "overwritten", path);
+    await mkdir(dirname(backup), { recursive: true });
+    await writeFile(backup, disk);
+    result.backedUp.push(`.spec-loop/overwritten/${path}`);
+  }
+  const produced = new Set(files.map((f) => f.path));
+  const manifest = await readManifest(folder, options);
+  for (const path of Object.keys(manifest?.files ?? {}).sort()) {
+    if (produced.has(path)) continue;
+    await rm(join(base, path), { force: true });
+    result.removed.push(path);
+  }
+  for (const file of files) {
+    const target = join(base, file.path);
+    const changed = (await readOptional(target)) !== file.content;
+    if (changed) {
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, file.content);
+    }
+    result.files.push({ path: file.path, source: file.source, template: file.template, changed });
+  }
+  const now = options.now ?? new Date().toISOString();
+  const assets = Object.entries(await assetHashes(folder, json, options)).filter((e): e is [string, string] => e[1] !== null);
+  const featureHash = sha256(await readFile(featureFile(folder, options)));
+  const nextManifest: Manifest = {
+    feature: entry(manifest?.feature, featureHash, now),
+    files: Object.fromEntries(files.map((f) => [f.path, entry(manifest?.files[f.path], sha256(f.content), now)])),
+    assets: Object.fromEntries(assets.map(([path, hash]) => [path, entry(manifest?.assets[path], hash, now)])),
+  };
+  await writeFile(manifestPath(folder, options), `${JSON.stringify(nextManifest, null, 2)}\n`);
+  const { writeSpecIndex } = await import("./features.js");
+  await writeSpecIndex(options);
+  return result;
+}

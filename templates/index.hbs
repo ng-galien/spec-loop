@@ -1,0 +1,54 @@
+<!-- ptr: /title -->
+# {{title}}
+
+Fonctionnalité `{{id}}`. Phase actuelle : **{{phaseLabel}}**.
+
+<!-- ptr: /phase -->
+```mermaid
+flowchart LR
+{{#each phases}}
+  {{key}}["{{label}}"]:::{{state}}
+{{/each}}
+  {{chain}}
+  classDef past fill:#e2e8f0,stroke:#475569,color:#0f172a
+  classDef now fill:#2563eb,stroke:#1e40af,color:#ffffff
+  classDef next fill:#ffffff,stroke:#94a3b8,color:#64748b,stroke-dasharray:4 3
+```
+
+## Documents
+
+{{#each documents}}
+- [{{label}}]({{path}}) : {{description}}
+{{/each}}
+
+{{#if artifactIndex.length}}
+## Artefacts
+
+{{#each artifactIndex}}
+- {{id}} : {{title}} ({{kindLabel}}, {{format}}), dans [{{file}}]({{file}})
+{{/each}}
+
+{{/if}}
+## Reste à faire pour la phase « {{phaseLabel}} »
+
+{{#if missing.length}}
+{{#each missing}}
+- {{text}} : `{{pointer}}`
+{{/each}}
+{{else}}
+Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
+{{/if}}
+
+<!-- ptr: /lifecycle -->
+## Historique
+
+{{#each history}}
+- {{date}} : phase « {{label}} », décidée par {{by}}
+{{/each}}
+{{#if lastVerify}}
+- {{lastVerify.date}} : dernière vérification de vos modifications, {{lastVerify.applied}} appliquée(s), {{lastVerify.reported}} signalée(s)
+{{/if}}
+
+## Comment intervenir
+
+Lisez les documents. Répondez dans la conversation, ou modifiez directement ces fichiers puis demandez à l'agent de vérifier vos modifications. Les commentaires `<!-- id: … -->` et `<!-- ptr: … -->` repèrent chaque bloc ; un schéma SVG se modifie dans son fichier sous `assets/` : laissez-les en place ; pour ajouter un bloc, recopiez la forme d'un bloc voisin.

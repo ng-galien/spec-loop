@@ -1,0 +1,9 @@
+# Ancrage : {{title}}
+
+Chaque ancre désigne l'endroit du code qui réalise une ou plusieurs exigences.
+
+{{#each anchors}}
+- <!-- id: {{id}} --> **{{id}}** : `{{path}}`{{#if symbol}}, symbole `{{symbol}}`{{/if}} ({{kind}}, {{changeLabel}}). Réalise {{realizesList}}.{{#if note}} {{note}}{{/if}}
+{{else}}
+_Aucune ancre pour l'instant._
+{{/each}}

@@ -1,0 +1,18 @@
+<!-- id: {{id}} -->
+**{{title}}** (`{{id}}`, {{kindLabel}})
+
+{{#if isMermaid}}
+```mermaid
+{{source}}
+```
+{{/if}}
+{{#if isSvg}}
+![{{title}}](../{{path}})
+{{/if}}
+{{#if isAscii}}
+_Brouillon en ASCII, à remplacer par un artefact final._
+
+```text
+{{source}}
+```
+{{/if}}

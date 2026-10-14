@@ -1,0 +1,92 @@
+# Cadrage : {{title}}
+
+<!-- ptr: /framing/intent -->
+## Intention
+
+{{#if framing.intent}}{{framing.intent}}{{else}}_À compléter._{{/if}}
+
+{{#each framing.artifacts}}
+{{> artifact}}
+
+{{/each}}
+
+<!-- ptr: /framing/actors -->
+## Acteurs
+
+{{#each framing.actors}}
+<!-- id: {{id}} -->
+### {{name}} (`{{id}}`)
+
+{{description}}
+
+{{else}}
+_Aucun acteur pour l'instant._
+{{/each}}
+
+## Périmètre
+
+<!-- ptr: /framing/scope/in -->
+### Dans le périmètre
+
+{{#each framing.scope.in}}
+- <!-- ptr: /framing/scope/in/{{@index}} --> {{this}}
+{{else}}
+_À compléter._
+{{/each}}
+
+<!-- ptr: /framing/scope/out -->
+### Hors périmètre
+
+{{#each framing.scope.out}}
+- <!-- ptr: /framing/scope/out/{{@index}} --> {{this}}
+{{else}}
+_À compléter._
+{{/each}}
+
+<!-- ptr: /framing/constraints -->
+## Contraintes
+
+{{#each framing.constraints}}
+- <!-- id: {{id}} --> **{{id}}** : {{statement}}
+{{else}}
+_Aucune contrainte pour l'instant._
+{{/each}}
+
+<!-- ptr: /framing/assumptions -->
+## Hypothèses
+
+{{#each framing.assumptions}}
+- <!-- id: {{id}} --> **{{id}}** : {{statement}}
+{{else}}
+_Aucune hypothèse pour l'instant._
+{{/each}}
+
+<!-- ptr: /framing/questions -->
+## Questions ouvertes
+
+{{#each framing.questions}}
+<!-- id: {{id}} -->
+### {{id}} : {{question}}
+
+Statut : **{{statusLabel}}**.{{#if aboutList}} Concerne : {{aboutList}}.{{/if}}
+
+{{#if recommendation}}
+Recommandation : {{recommendation}}
+
+{{/if}}
+{{#if answer}}
+Réponse : {{answer}}
+
+{{/if}}
+{{else}}
+_Aucune question pour l'instant._
+{{/each}}
+
+<!-- ptr: /framing/glossary -->
+## Glossaire
+
+{{#each framing.glossary}}
+- <!-- ptr: /framing/glossary/{{@index}} --> **{{term}}** : {{definition}}{{#if avoidList}} À éviter : {{avoidList}}.{{/if}}
+{{else}}
+_Aucun terme pour l'instant._
+{{/each}}

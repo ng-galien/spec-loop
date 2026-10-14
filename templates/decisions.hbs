@@ -1,0 +1,22 @@
+# Décisions : {{title}}
+
+{{#each decisions}}
+<!-- id: {{id}} -->
+## {{id}} : {{title}}
+
+Statut : **{{statusLabel}}**.{{#if supersededBy}} Remplacée par {{supersededBy}}.{{/if}} Concerne : {{affectsList}}.
+
+Contexte : {{context}}
+
+Décision : {{decision}}
+
+Conséquences : {{consequences}}
+{{#if alternatives.length}}
+
+Alternatives écartées :
+{{#each alternatives}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{/each}}

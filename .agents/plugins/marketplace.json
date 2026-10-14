@@ -1,0 +1,6 @@
+{
+  "name": "spec-loop",
+  "plugins": [
+    { "name": "spec-loop", "source": { "source": "local", "path": "./" }, "policy": { "installation": "AVAILABLE" }, "category": "Productivity" }
+  ]
+}

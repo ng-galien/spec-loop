@@ -1,0 +1,26 @@
+# Exigences : {{title}}
+
+Chaque exigence est une phrase EARS qui décrit une réponse observable du système. Son identifiant reste stable.
+
+{{#each requirements}}
+<!-- id: {{id}} -->
+## {{id}}
+
+{{statement}}
+
+Forme EARS : **{{patternLabel}}**. Priorité : **{{priority}}**.{{#if invariant}} Invariant : vrai dans tout état.{{/if}}
+
+Justification : {{rationale}}
+{{#if sourceList}}
+
+Origine : {{sourceList}}
+{{/if}}
+
+{{#each artifacts}}
+{{> artifact}}
+
+{{/each}}
+
+{{else}}
+_Aucune exigence pour l'instant._
+{{/each}}

@@ -1,0 +1,6 @@
+{
+  "name": "spec-loop",
+  "version": "0.1.0",
+  "description": "Feature model loop: MCP tools and the framing and verify skills.",
+  "skills": "./skills/"
+}

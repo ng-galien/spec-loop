@@ -1,0 +1,13 @@
+{
+  "name": "spec-loop",
+  "version": "0.1.0",
+  "description": "Maintain a JSON feature model projected into French Markdown, with the owner's feedback loop.",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "spec-loop": {
+      "command": "npx",
+      "args": ["-y", "@ng-galien/spec-loop@0.1.0"],
+      "env": { "SPEC_LOOP_ROOT": "${workspacePath}" }
+    }
+  }
+}

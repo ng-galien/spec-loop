@@ -1,0 +1,88 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { advancePhase, create, features, patch, render, status, verify } from "../src/lib/index.js";
+import { FEATURE, inFolder, workspace } from "./helpers.js";
+
+const NOW = "2026-10-14T12:00:00.000Z";
+
+async function answered(root: string) {
+  await render(FEATURE, { root });
+  const ops = [0, 1, 2, 3, 4].flatMap((i) => [
+    { op: "replace" as const, path: `/framing/questions/${i}/status`, value: "answered" },
+    { op: "add" as const, path: `/framing/questions/${i}/answer`, value: "Recommandation retenue." },
+  ]);
+  expect((await patch(FEATURE, ops, { root })).ok).toBe(true);
+}
+
+describe("lifecycle", () => {
+  it("creates the next numbered feature in the first phase and renders it", async () => {
+    const root = await workspace();
+    const result = await create("export-csv", "Export CSV", { root, now: NOW });
+    expect(result).toMatchObject({ ok: true, id: "FEAT-002", feature: "FEAT-002-export-csv" });
+    const json = JSON.parse(await readFile(join(root, "spec", "FEAT-002-export-csv", "feature.json"), "utf8"));
+    expect(json).toMatchObject({ id: "FEAT-002", name: "export-csv", phase: "framing", lifecycle: { created: NOW, phaseHistory: [{ phase: "framing", date: NOW, by: "agent" }] } });
+    expect((await features({ root })).map((f) => f.id)).toEqual(["FEAT-001", "FEAT-002"]);
+    expect(await readFile(join(root, "spec", "README.md"), "utf8")).toContain("| FEAT-002 | Export CSV | Cadrage |");
+    expect((await create("export-csv", "Doublon", { root })).ok).toBe(false);
+  });
+
+  it("refuses to advance an incomplete phase, and says why", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const result = await advancePhase(FEATURE, { root });
+    expect(result.ok).toBe(false);
+    expect(result.reasons[0]).toContain('phase "framing" is incomplete: 5 item(s) missing');
+  });
+
+  it("refuses to advance while owner edits are pending", async () => {
+    const root = await workspace();
+    await answered(root);
+    const path = inFolder(root, "rendered", "cadrage.md");
+    await writeFile(path, (await readFile(path, "utf8")).replace("sans la modifier", "sans la modifier ni l'étendre"));
+    const result = await advancePhase(FEATURE, { root });
+    expect(result.ok).toBe(false);
+    expect(result.reasons).toEqual(["1 owner edit(s) or alteration(s) pending: run the verify skill first"]);
+  });
+
+  it("advances a complete phase and records who decided", async () => {
+    const root = await workspace();
+    await answered(root);
+    const result = await advancePhase(FEATURE, { root, by: "owner", now: NOW });
+    expect(result).toMatchObject({ ok: true, from: "framing", to: "requirements" });
+    const s = await status(FEATURE, { root });
+    expect(s.phase).toBe("requirements");
+    expect(s.phaseHistory.at(-1)).toEqual({ phase: "requirements", date: NOW, by: "owner" });
+    expect(s.completeness.missing).toContainEqual(expect.objectContaining({ pointer: "/requirements" }));
+    expect(await readFile(inFolder(root, "rendered", "exigences.md"), "utf8")).toContain("# Exigences");
+  });
+
+  it("verify requires every pending item to be accounted for, then reconciles and records lastVerify", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const path = inFolder(root, "rendered", "cadrage.md");
+    const edited = (await readFile(path, "utf8"))
+      .replace("Lire un élément par son identité.", "Lire un élément par son identité ou par son URL.")
+      .replace("API qui ne sont pas REST", "API qui ne sont pas REST, ni SSE");
+    await writeFile(path, edited);
+    expect((await status(FEATURE, { root })).ownerEdits).toMatchObject({ state: "pending", hunks: 2 });
+    const short = await verify(FEATURE, { ops: [], applied: 1, reported: [] }, { root });
+    expect(short.ok).toBe(false);
+    const done = await verify(
+      FEATURE,
+      {
+        ops: [{ op: "replace", path: "/framing/scope/in/1", value: "Lire un élément par son identité ou par son URL." }],
+        applied: 1,
+        reported: [{ file: "rendered/cadrage.md", pointer: "/framing/scope/out/1", reason: "Exclure SSE élargit le hors-périmètre ; à confirmer." }],
+      },
+      { root, now: NOW },
+    );
+    expect(done.ok).toBe(true);
+    expect(done.patch?.render?.backedUp).toEqual([".spec-loop/overwritten/cadrage.md"]);
+    const s = await status(FEATURE, { root });
+    expect(s.ownerEdits.state).toBe("none");
+    expect(s.lastVerify).toMatchObject({ date: NOW, applied: 1, reported: [{ pointer: "/framing/scope/out/1" }] });
+    expect(await readFile(path, "utf8")).toContain("Lire un élément par son identité ou par son URL.");
+    expect(await readFile(path, "utf8")).not.toContain("ni SSE");
+  });
+});
