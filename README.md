@@ -24,7 +24,7 @@ You need a project folder, Node 22 or later, VS Code, and one agent.
 
    Gemini CLI was replaced by Antigravity CLI (`agy`) for free and Google One accounts in June 2026. `agy plugin import gemini` converts the Gemini MCP servers, extensions and skills.
 
-3. Skills: copy `skills/framing` and `skills/verify` into the project's `.agents/skills/` (read by Gemini CLI, Antigravity and Codex). Then link `.claude/skills` to `../.agents/skills` for Claude Code. `examples/consumer/` holds every file a project commits for the three agents.
+3. Skills: copy the six folders of `skills/` (`framing`, `acceptance`, `anchoring`, `verification`, `done`, and `verify` for the owner's edits) into the project's `.agents/skills/` (read by Gemini CLI, Antigravity and Codex). Then link `.claude/skills` to `../.agents/skills` for Claude Code. `examples/consumer/` holds every file a project commits for the three agents.
 
 Until the package is published on npm, replace `npx -y @ng-galien/spec-loop@0.1.0` with `npx -y /path/to/spec-loop` (after `npm install` in this repository) or with `node /path/to/spec-loop/dist/mcp.js`.
 
@@ -43,6 +43,10 @@ schema/feature.schema.json      progressive schema: x-phases, x-checks, if/then 
 templates/*.hbs                 one template per rendered file (French), plus artifact.hbs and spec-index.hbs
 method/*.md                     hand-written method served by `learn` (phases and fields are generated from the schema)
 skills/framing/SKILL.md         framing interview
+skills/acceptance/SKILL.md      criteria drafted per requirement, owner asked for business values only
+skills/anchoring/SKILL.md       anchors read from the target repository, no code written
+skills/verification/SKILL.md    tests declared per criterion, status from one run of the named files
+skills/done/SKILL.md            closing gate and the owner's decision
 skills/verify/SKILL.md          reconciliation of the owner's edits
 src/lib/                        library: validate, render, diff, patch, lifecycle, features, learn
 src/mcp.ts                      stdio MCP server (bin `spec-loop`)
@@ -89,7 +93,7 @@ The skills always pass `root`.
   - unique ids and resolved references;
   - the statement starts with the keyword of its EARS pattern;
   - an AC id carries its requirement number;
-  - the coverage checks that `x-phases` switches on from their phase onward (`requirementHasCriterion`, `mustRequirementHasAnchor`, `criterionHasTest`, `testNameCarriesCriterion`, `mustTestsPassing`, `noOpenQuestion`).
+  - the coverage checks that `x-phases` switches on from their phase onward (`requirementHasCriterion`, `mustRequirementHasAnchor`, `criterionHasTest`, `testNameCarriesCriterion`, `testsPassingOrJustified`, `noOpenQuestion`), plus the declared rule `interfaceHasScreen`.
 - **render(feature)**: builds a view model from the JSON and runs one Handlebars template per file. It normalizes whitespace and writes only the files of the phases reached. Each file starts with its source pointer and template; each block starts with `<!-- id: … -->` or `<!-- ptr: … -->`. Same input, same bytes. It then refreshes `.manifest.json` (an entry's timestamp moves only when its hash changes) and `spec/README.md`.
 - **diff(feature)**: renders in memory, then runs a zero-context line diff against each file on disk. Each hunk is mapped to the nearest marker above its first changed line, which gives the block id and its JSON pointer through an id index of the JSON. The hunk also lists the markers it touches and the ids the owner added. The manifest separates owner edits from a projection that is only stale, and classifies alterations: `rendered-changed`, `asset-changed`, `feature-changed`, `rendered-missing`, `rendered-extra`.
 - **patch(feature, ops)**: applies the RFC 6902 ops with fast-json-patch on a copy and validates the result. It writes only if no `invalid` error remains, then re-renders. It refuses while the owner has unverified edits; `verify` is the path that may overwrite them, after keeping a copy.
@@ -110,6 +114,7 @@ The skills always pass `root`.
 - Every alteration (rendered file, svg, `feature.json`, missing or extra file) counts as pending until a `verify` accounts for it, so `phase` cannot advance over an unread change.
 - Artifacts render once, right after the first requirement or criterion they illustrate. An artifact with no id renders in the framing document after the intent.
 - `artifacts[].illustrates` takes any feature id (`anyRef`: requirement, criterion, anchor, decision, artifact, actor, constraint, assumption, question, with an optional `FEAT-nnn/` prefix), not only requirements and criteria. The widening was made during the owner's first run, so that a diagram can illustrate a constraint or an actor. Placement is unchanged: next to the first requirement or criterion listed, otherwise in the framing document.
+- The closing gate is declared in the schema: a test name starts with a criterion id it verifies and contains each of them (`testNameCarriesCriterion`, from verification); every test is passing or uses a method other than `test` with a `reason`, which the schema requires for such methods (`testsPassingOrJustified`, in `done`). Six skills cover the loop; `method/index.md` maps each phase to its skill.
 - Every rendered document opens and closes with the same navigation: a breadcrumb (all features › the feature › the document), the menu of the feature's documents in phase order (current one in bold, documents of phases not reached as plain text), a rule, and at the bottom « Précédent » / « Suivant » links. The feature index carries the breadcrumb only; `spec/README.md` adds a menu of features by phase. One partial, `templates/nav.hbs`, renders it from `x-phases`; it sits between `<!-- nav -->` and `<!-- /nav -->`, before the first marker and after the last, and the diff attributes its lines to no id and no pointer.
 - The built-in preview stays CommonMark by VS Code policy (microsoft/vscode#245064). Three small extensions are accepted for callouts, task lists and footnotes, on one condition: without them a callout reads as a blockquote, a checkbox as a list line, a footnote as a marker and a paragraph. The index raises a `[!WARNING]` when the phase waits for the owner's answers or when tests fail or are missing; `spec/README.md` raises one per feature with pending owner edits (a feature's own index cannot, since rendering is refused while edits are pending).
 - Templates target the VS Code preview (CommonMark plus tables, sanitised HTML, Mermaid following the editor theme): no inline HTML, id and ptr comments alone on their line above the block or list item they mark, no meaning carried by colour; the index diagram marks the current phase by its label « ◀ actuelle », a stadium shape and dashed links to the next phases. Rules in `method/artifacts.md`.

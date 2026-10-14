@@ -115,7 +115,7 @@ function warnings(feature: Feature, phase: string): string[] {
   }
   const producer = phaseProducing("tests");
   if (producer && phaseIndex(phase) >= phaseIndex(producer.name)) {
-    const stale = list(feature.tests).filter((t) => t.status !== "passing");
+    const stale = list(feature.tests).filter((t) => (t.method ?? "test") === "test" && t.status !== "passing");
     if (stale.length > 0) out.push(`Vérification à refaire : ${stale.length} test(s) en échec ou pas encore écrit(s).`);
   }
   return out;

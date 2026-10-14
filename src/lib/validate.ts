@@ -155,18 +155,21 @@ function coherence(json: Rec, phase: Phase | null): ValidationError[] {
   if (checks.has("testNameCarriesCriterion")) {
     tests.forEach((test, i) => {
       const name = String(test.name ?? "");
-      for (const ac of strings(test.verifies)) {
-        const snake = `ac_${ac.slice(3).replace(".", "_")}`;
-        if (!name.includes(ac) && !name.toLowerCase().includes(snake)) invalid(`/tests/${i}/name`, `test name must contain ${ac}, which it verifies`);
+      const verifies = strings(test.verifies);
+      const snake = (ac: string) => `ac_${ac.slice(3).replace(".", "_")}`;
+      const carries = (ac: string) => name.includes(ac) || name.toLowerCase().includes(snake(ac));
+      for (const ac of verifies) if (!carries(ac)) invalid(`/tests/${i}/name`, `test name must contain ${ac}, which it verifies`);
+      const lower = name.toLowerCase().replace(/^test_/, "");
+      if (verifies.length > 0 && !verifies.some((ac) => name.startsWith(ac) || lower.startsWith(snake(ac)))) {
+        invalid(`/tests/${i}/name`, `test name must start with the id of a criterion it verifies (${verifies[0]})`);
       }
     });
   }
-  if (checks.has("mustTestsPassing")) {
-    const must = new Set(requirements.filter((r) => r.priority === "MUST").map((r) => String(r.id)));
-    const mustCriteria = new Set(criteria.filter((c) => must.has(String(c.requirement))).map((c) => String(c.id)));
+  if (checks.has("testsPassingOrJustified")) {
     tests.forEach((test, i) => {
-      if (strings(test.verifies).some((ac) => mustCriteria.has(ac)) && test.status !== "passing") {
-        incomplete(`/tests/${i}/status`, `missing: a test verifying a criterion of a MUST requirement must be passing`);
+      const method = typeof test.method === "string" ? test.method : "test";
+      if (method === "test" && test.status !== "passing") {
+        incomplete(`/tests/${i}/status`, `missing: test "${String(test.name ?? "")}" is not passing`);
       }
     });
   }

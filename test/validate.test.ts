@@ -100,4 +100,52 @@ describe("validate", () => {
     const feature = await guineaPig();
     expect(validate(feature).errors.every((e) => !e.message.includes("maquette"))).toBe(true);
   });
+
+  const verified = async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.anchors = [{ id: "ANC-01", kind: "module", path: "src/http.ts", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = [
+      { file: "test/http.test.ts", name: "AC-001.1 lists two pages", framework: "vitest", verifies: ["AC-001.1"], status: "passing" },
+      { file: "test/http.test.ts", name: "AC-002.1 reports a stale revision", framework: "vitest", verifies: ["AC-002.1"], status: "passing" },
+    ];
+    return feature;
+  };
+
+  it("acceptance: a requirement without criterion is reported with its pointer", async () => {
+    const feature = inAcceptance(await guineaPig());
+    (feature.criteria as unknown[]).shift();
+    expect(validate(feature).errors).toEqual([{ pointer: "/requirements/0", message: "missing: requirement REQ-001 has no criterion", kind: "incomplete" }]);
+  });
+
+  it("verification: every criterion has a test, and a test name starts with the id of a criterion it verifies", async () => {
+    const feature = await verified();
+    expect(validate(feature).complete).toBe(true);
+    (feature.tests as unknown[]).pop();
+    expect(validate(feature).errors).toEqual([{ pointer: "/criteria/1", message: "missing: criterion AC-002.1 is verified by no test", kind: "incomplete" }]);
+    (feature.tests as { name: string; verifies: string[] }[])[0]!.name = "lists two pages AC-001.1";
+    expect(validate(feature).errors).toContainEqual({ pointer: "/tests/0/name", message: "test name must start with the id of a criterion it verifies (AC-001.1)", kind: "invalid" });
+    (feature.tests as { name: string }[])[0]!.name = "test_ac_001_1_lists_two_pages";
+    expect(validate(feature).errors.filter((e) => e.pointer.startsWith("/tests"))).toEqual([]);
+  });
+
+  it("done: every test passes, or uses another method with its reason", async () => {
+    const feature = await verified();
+    feature.phase = "done";
+    expect(validate(feature).complete).toBe(true);
+    const tests = feature.tests as Record<string, unknown>[];
+    tests[0]!.status = "failing";
+    expect(validate(feature).errors).toEqual([{ pointer: "/tests/0/status", message: 'missing: test "AC-001.1 lists two pages" is not passing', kind: "incomplete" }]);
+    tests[0]!.method = "inspection";
+    delete tests[0]!.status;
+    expect(validate(feature).errors).toEqual([expect.objectContaining({ pointer: "/tests/0/reason", kind: "incomplete" })]);
+    tests[0]!.reason = "Le rendu de l'écran se vérifie à l'œil sur la maquette.";
+    expect(validate(feature).complete).toBe(true);
+  });
+
+  it("verification phase: a failing test is not yet a gap, only the done gate requires passing", async () => {
+    const feature = await verified();
+    (feature.tests as Record<string, unknown>[])[0]!.status = "failing";
+    expect(validate(feature).complete).toBe(true);
+  });
 });

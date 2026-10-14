@@ -2,7 +2,7 @@
 
 This guide says how to package spec-loop (a stdio MCP server plus Agent Skills) and how to wire it into three agents: Gemini CLI first, then Claude Code and Codex. Every claim names its source and the date it was read (14 October 2026). Section 8 lists what could not be verified.
 
-Current state of the repository: ten tools (`learn`, `features`, `status`, `create`, `validate`, `render`, `diff`, `patch`, `phase`, `verify`), each with an `outputSchema`, the read-only ones annotated `readOnlyHint: true`; skills `framing` and `verify`; workspace root resolved as tool argument `root`, then `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then the server's working directory (a value still holding an unexpanded `${…}` is skipped).
+Current state of the repository: ten tools (`learn`, `features`, `status`, `create`, `validate`, `render`, `diff`, `patch`, `phase`, `verify`), each with an `outputSchema`, the read-only ones annotated `readOnlyHint: true`; skills `framing`, `acceptance`, `anchoring`, `verification`, `done` and `verify`; workspace root resolved as tool argument `root`, then `SPEC_LOOP_ROOT`, then `CLAUDE_PROJECT_DIR`, then the server's working directory (a value still holding an unexpanded `${…}` is skipped).
 
 ## 0. Two facts that change the plan
 
@@ -197,7 +197,7 @@ default_tools_approval_mode = "writes"
 
 **Gemini CLI**
 1. `gemini extensions install https://github.com/OWNER/spec-loop` (or, in a consumer project, the committed `.gemini/settings.json` and `.agents/skills/`); restart.
-2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows `framing` and `verify`.
+2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows the six spec-loop skills (`framing`, `acceptance`, `anchoring`, `verification`, `done`, `verify`).
 3. Ask "list the spec-loop features", then run the `framing` skill on a new feature. Antigravity users: `agy plugin import gemini`, then the same checks.
 
 **Claude Code**
