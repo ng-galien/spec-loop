@@ -235,7 +235,7 @@
     },
     "lifecycle": {
       "$ref": "#/$defs/lifecycle",
-      "description": "Creation date, phase history and last reconciliation, written only by the create, phase and reconcile tools."
+      "description": "Creation date, phase history, last reconciliation and project hook runs, written only by the create, phase and reconcile tools."
     }
   },
   "allOf": [
@@ -1368,6 +1368,65 @@
               "reason": {
                 "$ref": "#/$defs/text",
                 "description": "Why it was accepted, in English."
+              }
+            }
+          }
+        },
+        "hookRuns": {
+          "type": "array",
+          "description": "Every run of a project hook declared in spec/spec-loop.json, oldest first, kept as evidence.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "phase",
+              "on",
+              "title",
+              "run",
+              "date",
+              "exitCode",
+              "durationMs",
+              "output"
+            ],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "description": "Phase the hook belongs to."
+              },
+              "on": {
+                "enum": [
+                  "beforeLeave",
+                  "onEnter"
+                ],
+                "description": "beforeLeave: run before a forward move out of the phase; onEnter: run right after the phase was entered."
+              },
+              "title": {
+                "$ref": "#/$defs/text",
+                "description": "Name of the hook."
+              },
+              "run": {
+                "$ref": "#/$defs/text",
+                "description": "Shell command run from the project root."
+              },
+              "date": {
+                "$ref": "#/$defs/date",
+                "description": "When it ran."
+              },
+              "exitCode": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Exit code of the command; null when it was stopped by its timeout or could not start."
+              },
+              "durationMs": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How long it ran, in milliseconds."
+              },
+              "output": {
+                "type": "string",
+                "description": "stdout and stderr, interleaved, cut to their last 4000 characters."
               }
             }
           }

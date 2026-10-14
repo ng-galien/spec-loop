@@ -103,7 +103,30 @@ codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.
 codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- node /path/to/spec-loop/dist/mcp.js
 ```
 
-### Skills
+### Enrich the loop from your project
+
+A project can add to the base loop, never remove from it, with one file it owns: `spec/spec-loop.json`, validated by [`schema/project.schema.json`](schema/project.schema.json).
+
+```json
+{
+  "hooks": [
+    { "phase": "verification", "on": "beforeLeave", "run": "npm test", "timeout": 300, "title": "Unit tests" }
+  ],
+  "instructions": {
+    "requirements": { "beforeLeave": "Check every interface requirement against docs/ui.md." }
+  }
+}
+```
+
+- A `beforeLeave` hook runs before `phase` moves the feature forward out of its phase; a non-zero exit blocks the move.
+- An `onEnter` hook runs right after the phase is entered; a failure is recorded and does not undo the move.
+- The server runs each command through the shell from the project root, with a timeout (120 s by default), and keeps the last 4000 characters of its output.
+- Every run is recorded in the feature (`lifecycle.hookRuns`), shown by `status`, and listed in `rendered/verification.md`.
+- `instructions` are appended to the schema's instructions in `next.instruction`.
+
+The commands come only from this file, which belongs to the project like its `package.json` scripts; spec-loop runs nothing from a remote source. A complete example is in [`examples/consumer/spec/spec-loop.json`](examples/consumer/spec/spec-loop.json); the details are in `learn` topic `project`.
+
+## Skills
 
 Gemini CLI, Antigravity and Codex read `.agents/skills/`; Claude Code reads `.claude/skills/`, linked to the same folder:
 
@@ -144,7 +167,7 @@ Commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then propose
 | `create` | yes | Writes the skeleton of a new feature (next FEAT number) and renders it; needs an absolute `root`. One feature at a time: refuses while another feature is not done, unless the owner asks for it (`by: "owner"` and a `reason`, recorded in the new feature). |
 | `render` | yes | Renders the feature deterministically; refuses while owner edits are unverified. |
 | `patch` | yes | Applies an RFC 6902 JSON Patch, validates, writes, re-renders; `id`, `name`, `phase` and `lifecycle` are protected. |
-| `phase` | yes | Advances to the next phase when the current one is complete; moves back to an earlier one on the owner's decision with a reason. |
+| `phase` | yes | Advances to the next phase when the current one is complete and the project's `beforeLeave` hooks pass; moves back to an earlier one on the owner's decision with a reason. Runs the `onEnter` hooks of the phase entered. |
 | `reconcile` | yes | Applies the coherent owner edits, turns the others into open questions, restores the projection, records the reconciliation. |
 
 Read-only tools carry `readOnlyHint: true`. Every result carries the same JSON as text and as `structuredContent`.

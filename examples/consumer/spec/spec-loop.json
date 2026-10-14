@@ -1,0 +1,19 @@
+{
+  "$schema": "../node_modules/mcp-spec-loop/schema/project.schema.json",
+  "hooks": [
+    { "phase": "verification", "on": "onEnter", "run": "npm run build", "timeout": 180, "title": "Build" },
+    { "phase": "verification", "on": "beforeLeave", "run": "npm test", "timeout": 300, "title": "Unit tests" },
+    { "phase": "verification", "on": "beforeLeave", "run": "npm run lint", "timeout": 120, "title": "Lint" }
+  ],
+  "instructions": {
+    "requirements": {
+      "beforeLeave": "Check every interface requirement against the screen conventions in docs/ui.md before asking the owner."
+    },
+    "anchoring": {
+      "onEnter": "The code lives under packages/; anchor each requirement in the package that owns its concept."
+    },
+    "verification": {
+      "onEnter": "Tests live next to the module they cover, as <module>.test.ts, and run with Vitest."
+    }
+  }
+}

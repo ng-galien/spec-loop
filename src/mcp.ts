@@ -93,6 +93,16 @@ const nextStep = z
     todo: z.array(z.string()).describe("Each missing or invalid item as pointer: message"),
   })
   .describe("What the agent does next: every result about a feature carries it; follow it");
+const hookRun = z.object({
+  phase: z.string(),
+  on: z.enum(["beforeLeave", "onEnter"]),
+  title: z.string(),
+  run: z.string().describe("Shell command, run from the project root"),
+  date: z.string(),
+  exitCode: z.number().nullable().describe("null when stopped by its timeout or not started"),
+  durationMs: z.number(),
+  output: z.string().describe("stdout and stderr, cut to their last 4000 characters"),
+});
 const patchResult = z.object({ ok: z.boolean(), feature: z.string(), errors: z.array(validationError), validation: validation.nullable(), render: renderResult.nullable() });
 const operation = z.object({ op: z.enum(["add", "remove", "replace", "move", "copy", "test"]), path: z.string(), value: z.unknown().optional(), from: z.string().optional() });
 const reportedItem = z.object({ file: z.string(), pointer: z.string().nullable(), reason: z.string().describe("Why it is reported to the owner instead of applied, in French") });
@@ -197,6 +207,17 @@ server.registerTool(
         .object({ from: z.string(), to: z.string(), date: z.string(), by: z.enum(["agent", "owner"]), reason: z.string() })
         .nullable()
         .describe("The last move back to an earlier phase, with the owner's reason"),
+      hooks: z
+        .array(
+          z.object({
+            phase: z.string(),
+            on: z.enum(["beforeLeave", "onEnter"]),
+            title: z.string(),
+            run: z.string(),
+            lastRun: z.object({ date: z.string(), exitCode: z.number().nullable(), durationMs: z.number() }).nullable(),
+          }),
+        )
+        .describe("Project hooks declared in spec/spec-loop.json, each with its last run on this feature"),
       next: nextStep,
     },
     annotations: readOnly,
@@ -293,7 +314,7 @@ server.registerTool(
   {
     title: "Advance a spec-loop feature",
     description:
-      "Move a spec-loop feature to the next phase of the schema, only when the current phase is complete (entry rules of the next phase included) and no owner edit is pending; or, with to, back to an earlier phase on the owner's decision with a reason. Records the history entry.",
+      "Move a spec-loop feature to the next phase of the schema, only when the current phase is complete (entry rules of the next phase included), no owner edit is pending and every beforeLeave project hook of spec/spec-loop.json exits 0; or, with to, back to an earlier phase on the owner's decision with a reason. Runs the onEnter project hooks of the phase entered, records the history entry and every hook run.",
     inputSchema: {
       feature,
       by: z.enum(["agent", "owner"]).describe("Who decided the move: owner when the owner asked for it; a backward move requires owner"),
@@ -301,7 +322,7 @@ server.registerTool(
       reason: z.string().optional().describe("Why the owner moves the feature back, in French; required with to"),
       root,
     },
-    outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), patch: patchResult.nullable(), next: nextStep },
+    outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), hooks: z.array(hookRun).describe("Project hooks run by this call: beforeLeave hooks of the phase left, then onEnter hooks of the phase entered"), patch: patchResult.nullable(), next: nextStep },
     annotations: writes,
   },
   async ({ feature, by, to, reason, root }) =>

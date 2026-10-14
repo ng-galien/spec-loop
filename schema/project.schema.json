@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ng-galien/spec-loop/schema/project.schema.json",
+  "title": "spec-loop project file",
+  "description": "spec/spec-loop.json: what a project adds to the base loop of spec-loop. It can only add: commands the server runs around phase moves, and instructions appended to those of the schema. It never removes a phase, a rule or an instruction.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL of this schema, for editors."
+    },
+    "hooks": {
+      "type": "array",
+      "description": "Commands run by the spec-loop server, through the shell, with the project root as working directory.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "on",
+          "run"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A phase of the feature schema (x-phases)."
+          },
+          "on": {
+            "enum": [
+              "beforeLeave",
+              "onEnter"
+            ],
+            "description": "beforeLeave: run before a forward move out of the phase; a non-zero exit blocks the move. onEnter: run right after the phase is entered; a failure is recorded and does not undo the move."
+          },
+          "run": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Shell command, run from the project root.",
+            "examples": [
+              "npm test"
+            ]
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600,
+            "description": "Seconds before the command is stopped and counted as failed; 120 by default."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name shown in the results and the rendered evidence; the command itself by default.",
+            "examples": [
+              "Unit tests"
+            ]
+          }
+        }
+      }
+    },
+    "instructions": {
+      "type": "object",
+      "description": "Per phase, sentences appended to the schema's instructions in next.instruction.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "onEnter": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Appended right after the phase is entered."
+          },
+          "beforeLeave": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Appended once the phase is complete, before the owner is asked to move on."
+          }
+        }
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ Topics, read them with `learn`:
 - `artifacts`: diagrams and screens, and which format to use.
 - `glossary`: the 24 terms to use, and the words to avoid.
 - `use-cases`: three worked situations.
+- `project`: how a project adds hooks and instructions to the loop with `spec/spec-loop.json`.
 
 The loop end to end, one skill per stretch. spec-loop specifies; it does not implement: the code is written between anchoring and verification, outside spec-loop.
 

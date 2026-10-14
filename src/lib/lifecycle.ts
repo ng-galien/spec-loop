@@ -6,6 +6,7 @@ import { PROTECTED, patchFolder, touchesProtected } from "./patch.js";
 import { backup, lastGoodPath } from "./render.js";
 import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
+import { hooksFor, loadProject, passed, runHooks, hookTitle, type HookMoment, type HookRun } from "./project.js";
 import type { Alteration, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -50,7 +51,16 @@ export interface StatusResult {
   lastVerify: { date: string; applied: number; reported: { file: string; pointer: string | null; reason: string }[] } | null;
   phaseHistory: { phase: string; date: string; by: Author; reason?: string }[];
   lastBackwardMove: { from: string; to: string; date: string; by: Author; reason: string } | null;
+  hooks: HookStatus[];
   next: NextStep;
+}
+
+export interface HookStatus {
+  phase: string;
+  on: HookMoment;
+  title: string;
+  run: string;
+  lastRun: { date: string; exitCode: number | null; durationMs: number } | null;
 }
 
 function lastBackward(history: StatusResult["phaseHistory"]): StatusResult["lastBackwardMove"] {
@@ -68,7 +78,9 @@ export async function statusFolder(folder: string, options: Location = {}): Prom
   const json = await loadFeature(folder, options);
   const validation = validate(json);
   const d = await diffFolder(folder, options);
-  const lifecycle = (json.lifecycle ?? {}) as { lastVerify?: StatusResult["lastVerify"]; phaseHistory?: StatusResult["phaseHistory"] };
+  const lifecycle = (json.lifecycle ?? {}) as { lastVerify?: StatusResult["lastVerify"]; phaseHistory?: StatusResult["phaseHistory"]; hookRuns?: HookRun[] };
+  const project = loadProject(options);
+  const runs = Array.isArray(lifecycle.hookRuns) ? lifecycle.hookRuns : [];
   return {
     root: workspaceRoot(options),
     spec: specDir(options),
@@ -86,7 +98,11 @@ export async function statusFolder(folder: string, options: Location = {}): Prom
     lastVerify: lifecycle.lastVerify ?? null,
     phaseHistory: lifecycle.phaseHistory ?? [],
     lastBackwardMove: lastBackward(lifecycle.phaseHistory ?? []),
-    next: nextStep(validation, { pending: d.alterations.length > 0 }),
+    hooks: project.config.hooks.map((hook) => {
+      const last = runs.filter((r) => r.phase === hook.phase && r.on === hook.on && r.run === hook.run).at(-1);
+      return { phase: hook.phase, on: hook.on, title: hookTitle(hook), run: hook.run, lastRun: last ? { date: last.date, exitCode: last.exitCode, durationMs: last.durationMs } : null };
+    }),
+    next: nextStep(validation, { pending: d.alterations.length > 0, project }),
   };
 }
 
@@ -101,9 +117,21 @@ export interface PhaseResult {
   to: string | null;
   reasons: string[];
   missing: ValidationError[];
+  hooks: HookRun[];
   patch: PatchResult | null;
   next: NextStep;
 }
+
+function hookRunsOps(json: Record<string, unknown>, runs: HookRun[]): PatchOperation[] {
+  if (runs.length === 0) return [];
+  const existing = (json.lifecycle as { hookRuns?: unknown } | undefined)?.hookRuns;
+  return Array.isArray(existing) ? runs.map((value) => ({ op: "add" as const, path: "/lifecycle/hookRuns/-", value })) : [{ op: "add", path: "/lifecycle/hookRuns", value: runs }];
+}
+
+const failure = (run: HookRun) => {
+  const last = run.output.trimEnd().split("\n").at(-1) ?? "";
+  return `project hook "${run.title}" (${run.run}) ${run.exitCode === null ? "did not finish" : `exited with ${run.exitCode}`}${last ? `: ${last}` : ""}`;
+};
 
 export async function advancePhase(
   ref: string,
@@ -114,6 +142,7 @@ export async function advancePhase(
   const by = options.by ?? "agent";
   const backward = options.to !== undefined && options.to !== current.nextPhase;
   const target = options.to ?? current.nextPhase;
+  const project = loadProject(options);
   const reasons: string[] = [];
   if (backward) {
     if (phaseIndex(target) < 0) reasons.push(`unknown phase "${target}"`);
@@ -129,28 +158,52 @@ export async function advancePhase(
     }
     if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the reconcile skill first`);
   }
-  if (reasons.length > 0) {
-    return { ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, patch: null, next: current.next };
-  }
+  reasons.push(...project.errors);
+  const refuse = (hooks: HookRun[], patch: PatchResult | null, next: NextStep): PhaseResult => ({
+    ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, hooks, patch, next,
+  });
+  if (reasons.length > 0) return refuse([], null, current.next);
   const now = options.now ?? new Date().toISOString();
+  const leaving = backward ? [] : await runHooks(hooksFor(project, current.phase, "beforeLeave"), options);
+  const json = await loadFeature(folder, options);
+  if (leaving.some((run) => !passed(run))) {
+    reasons.push(...leaving.filter((run) => !passed(run)).map(failure));
+    const recorded = await patchFolder(folder, hookRunsOps(json, leaving), { ...options, allowProtected: true, now });
+    return refuse(leaving, recorded, await nextFor(folder, options));
+  }
   const entry = { phase: target, date: now, by, ...(backward ? { reason: options.reason!.trim() } : {}) };
   const result = await patchFolder(
     folder,
     [
       { op: "replace", path: "/phase", value: target },
       { op: "add", path: "/lifecycle/phaseHistory/-", value: entry },
+      ...hookRunsOps(json, leaving),
     ],
     { ...options, allowProtected: true, now },
   );
+  if (!result.ok) {
+    return {
+      ok: false, feature: folder, from: current.phase, to: target, reasons: result.errors.map((e) => e.message), missing: result.validation?.errors ?? [],
+      hooks: leaving, patch: result, next: await nextFor(folder, options),
+    };
+  }
+  const entering = await runHooks(hooksFor(project, target, "onEnter"), options);
+  const final = entering.length > 0 ? await patchFolder(folder, hookRunsOps(await loadFeature(folder, options), entering), { ...options, allowProtected: true, now }) : result;
+  const next = await nextFor(folder, options, { entered: true });
+  const failed = entering.filter((run) => !passed(run));
+  if (failed.length > 0) {
+    next.instruction = `${failed.map(failure).join("; ")} on entering "${target}"; the move stands. Show the output to the owner. ${next.instruction}`;
+  }
   return {
-    ok: result.ok,
+    ok: true,
     feature: folder,
     from: current.phase,
     to: target,
-    reasons: result.ok ? [] : result.errors.map((e) => e.message),
-    missing: result.validation?.errors ?? [],
-    patch: result,
-    next: await nextFor(folder, options, { entered: result.ok }),
+    reasons: [],
+    missing: final.validation?.errors ?? [],
+    hooks: [...leaving, ...entering],
+    patch: final,
+    next,
   };
 }
 

@@ -74,6 +74,7 @@ function sources(req: Rec): { sourceList: string; footnotes: { label: string; te
   return { sourceList: ids.length ? `${ids.join(", ")}${refs}` : refs ? `see the note${refs}` : "", footnotes };
 }
 
+const cell = (text: unknown) => String(text ?? "").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 const quoted = (text: unknown) => String(text ?? "").split("\n").join("\n> ");
 
 function steps(criterion: Rec): { keyword: string; text: string }[] {
@@ -213,6 +214,15 @@ function view(feature: Feature, validation: ValidationResult): Rec {
       label: phaseTitle(String(h.phase)),
       by: label("by", h.by),
       reason: typeof h.reason === "string" ? h.reason : null,
+    })),
+    hookRuns: list(lifecycle.hookRuns).map((r) => ({
+      date: String(r.date).replace("T", " ").slice(0, 16),
+      phaseLabel: phaseTitle(String(r.phase)),
+      moment: r.on === "onEnter" ? "on entering" : "before leaving",
+      title: cell(r.title),
+      run: cell(r.run),
+      result: r.exitCode === 0 ? "passed" : r.exitCode === null ? "**failed**, stopped" : `**failed**, exit ${String(r.exitCode)}`,
+      duration: `${(Number(r.durationMs) / 1000).toFixed(1)} s`,
     })),
     lastVerify: lastVerify
       ? { date: String(lastVerify.date).slice(0, 10), applied: lastVerify.applied, reported: list(lastVerify.reported).length }

@@ -22,3 +22,16 @@ _No test yet._
 | {{id}} | {{tests}} | {{status}} |
 {{/each}}
 | **Total** | {{coverageTotal.tests}} | {{coverageTotal.verified}} of {{coverageTotal.criteria}} criteria verified |
+{{#if hookRuns.length}}
+
+<!-- ptr: /lifecycle/hookRuns -->
+## Project hooks
+
+Commands declared in `spec/spec-loop.json` and run by the spec-loop server; the full output of each run is kept in `feature.json` under `lifecycle.hookRuns`.
+
+| Date | Phase | When | Hook | Command | Result | Duration |
+| --- | --- | --- | --- | --- | --- | --- |
+{{#each hookRuns}}
+| {{date}} | {{phaseLabel}} | {{moment}} | {{title}} | `{{run}}` | {{result}} | {{duration}} |
+{{/each}}
+{{/if}}

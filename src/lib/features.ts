@@ -8,6 +8,7 @@ import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templates
 import { phaseTitle, render } from "./render.js";
 import { firstPhase, lastPhase, nextPhase, phases } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
+import { loadProject } from "./project.js";
 import type { Feature, NextStep, RenderResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -58,7 +59,7 @@ async function summarize(folder: string, id: string, name: string, options: Loca
     ownerEdits: d.alterations.length > 0 ? "pending" : "none",
     alterations: d.alterations.length,
     modified: (await stat(file)).mtime.toISOString(),
-    next: nextStep(now, { pending: d.alterations.length > 0 }),
+    next: nextStep(now, { pending: d.alterations.length > 0, project: loadProject(options) }),
   };
 }
 
