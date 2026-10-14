@@ -73,7 +73,9 @@ function phasesDoc(): string {
   const lines = [
     "# Phases",
     "",
-    "Generated from the schema (`x-phases`, the `if/then` rules on `phase`, `x-checks`). Advance with the `phase` tool only.",
+    "Generated from the schema (`x-phases`, the `if/then` rules on `phase`, `x-checks`). Advance with the `phase` tool only, after the owner's explicit yes.",
+    "",
+    "Every tool result about a feature carries `next`: `phase`, `skill`, `instruction`, `missing` (count) and `todo` (each missing item as pointer: message). `instruction` is the phase's `onEnter` right after a phase change, `onIncomplete` while the phase is incomplete, `beforeLeave` once it is complete, or the `reconcile` skill while owner edits are pending. Follow it.",
     "",
     `Order: ${phases.map((p) => `\`${p.name}\``).join(" → ")}. Always required: ${((schema.required ?? []) as string[]).map((k) => `\`${k}\``).join(", ")}.`,
   ];
@@ -82,7 +84,8 @@ function phasesDoc(): string {
     const next = phases[i + 1];
     const exit = next ? next.checks.filter((c) => activeChecks(p.name).has(c)) : [];
     const own = inside.filter((c) => !exit.includes(c));
-    lines.push("", `## ${i + 1}. \`${p.name}\` (${p.title})`, "", p.description, "", `Produces: ${p.produces.length ? p.produces.map((s) => `\`${s}\``).join(", ") : "nothing new"}. Granularity: ${p.granularity}`);
+    lines.push("", `## ${i + 1}. \`${p.name}\` (${p.title})`, "", p.description, "", `Skill: \`${p.skill}\`. Produces: ${p.produces.length ? p.produces.map((s) => `\`${s}\``).join(", ") : "nothing new"}. Granularity: ${p.granularity}`);
+    lines.push("", "Instructions, carried by `next.instruction`:", `- on entering: ${p.instructions.onEnter}`, `- while incomplete: ${p.instructions.onIncomplete}`, `- before leaving: ${p.instructions.beforeLeave}`);
     const req = requiredBy(p.name);
     if (req.length) lines.push("", "Schema requires:", ...req.map((r) => `- ${r}`));
     if (own.length) lines.push("", "Coverage checks of this phase:", ...own.map((c) => `- ${checkDescriptions[c] ?? c}`));

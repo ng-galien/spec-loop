@@ -7,4 +7,5 @@ export { features, featuresReport, create, writeSpecIndex, type FeatureSummary, 
 export { learn, topics } from "./learn.js";
 export { loadFeature, indexIds, resolveFeature } from "./model.js";
 export { phases, nextPhase } from "./schema.js";
+export { nextStep, nextFor } from "./next.js";
 export * from "./types.js";

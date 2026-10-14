@@ -7,7 +7,8 @@ import { featureFolders, serializeFeature } from "./model.js";
 import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templatesDir, workspaceRoot, type Location } from "./paths.js";
 import { phaseTitle, render } from "./render.js";
 import { firstPhase, lastPhase, nextPhase, phases } from "./schema.js";
-import type { Feature, RenderResult, ValidationError } from "./types.js";
+import { nextFor, nextStep } from "./next.js";
+import type { Feature, NextStep, RenderResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
 export interface FeatureSummary {
@@ -24,6 +25,7 @@ export interface FeatureSummary {
   ownerEdits: "none" | "pending";
   alterations: number;
   modified: string;
+  next: NextStep;
 }
 
 async function summarize(folder: string, id: string, name: string, options: Location): Promise<FeatureSummary> {
@@ -36,6 +38,7 @@ async function summarize(folder: string, id: string, name: string, options: Loca
     return {
       id, name, folder, path: file, corrupted: (error as Error).message, title: null, phase: null, complete: false,
       missingCount: 0, missingForNext: [], ownerEdits: "pending", alterations: 1, modified,
+      next: { phase: null, skill: "reconcile", instruction: "feature.json cannot be read as JSON: run the `reconcile` skill and restore it.", missing: 1, todo: [`/: ${(error as Error).message}`] },
     };
   }
   const now = validate(json);
@@ -55,6 +58,7 @@ async function summarize(folder: string, id: string, name: string, options: Loca
     ownerEdits: d.alterations.length > 0 ? "pending" : "none",
     alterations: d.alterations.length,
     modified: (await stat(file)).mtime.toISOString(),
+    next: nextStep(now, { pending: d.alterations.length > 0 }),
   };
 }
 
@@ -91,6 +95,7 @@ export interface CreateResult {
   id: string | null;
   errors: ValidationError[];
   render: RenderResult | null;
+  next: NextStep | null;
 }
 
 export interface CreateOptions extends Location {
@@ -100,7 +105,7 @@ export interface CreateOptions extends Location {
 }
 
 export async function create(name: string, title: string, options: CreateOptions = {}): Promise<CreateResult> {
-  const fail = (...messages: string[]): CreateResult => ({ ok: false, feature: null, id: null, errors: messages.map((message) => ({ pointer: "", message, kind: "invalid" as const })), render: null });
+  const fail = (...messages: string[]): CreateResult => ({ ok: false, feature: null, id: null, errors: messages.map((message) => ({ pointer: "", message, kind: "invalid" as const })), render: null, next: null });
   if (!options.root || !isAbsolute(options.root)) return fail("create needs root: the absolute path of the project that holds or will hold spec/");
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return fail(`invalid name "${name}": use lowercase words separated by dashes`);
   const existing = await featureFolders(options);
@@ -143,5 +148,6 @@ export async function create(name: string, title: string, options: CreateOptions
   } catch {
     await writeFile(featureFile(folder, options), serializeFeature(skeleton));
   }
-  return { ok: true, feature: folder, id, errors: [], render: await render(folder, { ...options, now }) };
+  const rendered = await render(folder, { ...options, now });
+  return { ok: true, feature: folder, id, errors: [], render: rendered, next: await nextFor(folder, options, { entered: true }) };
 }

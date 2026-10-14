@@ -9,6 +9,14 @@ export interface PhaseInfo {
   produces: string[];
   granularity: string;
   checks: string[];
+  skill: string;
+  instructions: PhaseInstructions;
+}
+
+export interface PhaseInstructions {
+  onEnter: string;
+  onIncomplete: string;
+  beforeLeave: string;
 }
 
 export type JsonSchema = Record<string, unknown>;

@@ -3,7 +3,8 @@ import fastJsonPatch from "fast-json-patch";
 import { resolveFeature, serializeFeature } from "./model.js";
 import { featureFile, type Location } from "./paths.js";
 import { ownerEditedFiles, render, renderToMemory } from "./render.js";
-import type { Feature, PatchOperation, PatchResult, ValidationError } from "./types.js";
+import { nextFor } from "./next.js";
+import type { Feature, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
 const { applyPatch, deepClone } = fastJsonPatch;
@@ -51,6 +52,8 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
   return { ok: rendered.ok, feature: folder, errors: [], validation, render: rendered };
 }
 
-export async function patch(ref: string, ops: PatchOperation[], options: PatchOptions = {}): Promise<PatchResult> {
-  return patchFolder(await resolveFeature(ref, options), ops, options);
+export async function patch(ref: string, ops: PatchOperation[], options: PatchOptions = {}): Promise<PatchResult & { next: NextStep }> {
+  const folder = await resolveFeature(ref, options);
+  const result = await patchFolder(folder, ops, options);
+  return { ...result, next: await nextFor(folder, options) };
 }

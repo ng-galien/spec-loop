@@ -86,6 +86,14 @@ export interface PatchOperation {
   from?: string;
 }
 
+export interface NextStep {
+  phase: string | null;
+  skill: string | null;
+  instruction: string;
+  missing: number;
+  todo: string[];
+}
+
 export interface PatchResult {
   ok: boolean;
   feature: string;

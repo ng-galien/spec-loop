@@ -5,7 +5,8 @@ import { featureFile, specDir, workspaceRoot, type Location } from "./paths.js";
 import { PROTECTED, patchFolder, touchesProtected } from "./patch.js";
 import { backup, lastGoodPath } from "./render.js";
 import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
-import type { Alteration, PatchOperation, PatchResult, ValidationError } from "./types.js";
+import { nextFor, nextStep } from "./next.js";
+import type { Alteration, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
 export type Author = "agent" | "owner";
@@ -49,6 +50,7 @@ export interface StatusResult {
   lastVerify: { date: string; applied: number; reported: { file: string; pointer: string | null; reason: string }[] } | null;
   phaseHistory: { phase: string; date: string; by: Author; reason?: string }[];
   lastBackwardMove: { from: string; to: string; date: string; by: Author; reason: string } | null;
+  next: NextStep;
 }
 
 function lastBackward(history: StatusResult["phaseHistory"]): StatusResult["lastBackwardMove"] {
@@ -84,6 +86,7 @@ export async function statusFolder(folder: string, options: Location = {}): Prom
     lastVerify: lifecycle.lastVerify ?? null,
     phaseHistory: lifecycle.phaseHistory ?? [],
     lastBackwardMove: lastBackward(lifecycle.phaseHistory ?? []),
+    next: nextStep(validation, { pending: d.alterations.length > 0 }),
   };
 }
 
@@ -99,6 +102,7 @@ export interface PhaseResult {
   reasons: string[];
   missing: ValidationError[];
   patch: PatchResult | null;
+  next: NextStep;
 }
 
 export async function advancePhase(
@@ -126,7 +130,7 @@ export async function advancePhase(
     if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the reconcile skill first`);
   }
   if (reasons.length > 0) {
-    return { ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, patch: null };
+    return { ok: false, feature: folder, from: current.phase, to: target, reasons, missing: current.completeness.missing, patch: null, next: current.next };
   }
   const now = options.now ?? new Date().toISOString();
   const entry = { phase: target, date: now, by, ...(backward ? { reason: options.reason!.trim() } : {}) };
@@ -146,6 +150,7 @@ export async function advancePhase(
     reasons: result.ok ? [] : result.errors.map((e) => e.message),
     missing: result.validation?.errors ?? [],
     patch: result,
+    next: await nextFor(folder, options, { entered: result.ok }),
   };
 }
 
@@ -165,6 +170,7 @@ export interface ReconcileResult {
   questions: string[];
   errors: string[];
   patch: PatchResult | null;
+  next: NextStep;
 }
 
 function questionOps(json: Record<string, unknown>, reported: ReconcileInput["reported"]): { ops: PatchOperation[]; ids: string[] } {
@@ -196,11 +202,11 @@ export async function reconcile(ref: string, input: ReconcileInput, options: Loc
   const d = await diffFolder(folder, options);
   const pending = d.ownerEdits.hunks;
   const base = { feature: folder, pending, applied: input.applied, reported: input.reported.length, questions: [] as string[] };
-  const refuse = (errors: string[]): ReconcileResult => ({ ...base, ok: false, errors, patch: null });
+  const refuse = async (errors: string[]): Promise<ReconcileResult> => ({ ...base, ok: false, errors, patch: null, next: await nextFor(folder, options) });
   const blocked = input.ops.filter((op) => touchesProtected(op.path) || touchesProtected(op.from));
-  if (blocked.length > 0) return refuse(blocked.map((op) => `${op.path}: id, name, phase and lifecycle cannot be patched`));
+  if (blocked.length > 0) return await refuse(blocked.map((op) => `${op.path}: id, name, phase and lifecycle cannot be patched`));
   if (input.applied + input.reported.length !== pending) {
-    return refuse([
+    return await refuse([
       `${pending} pending hunk(s) or alteration(s), but applied (${input.applied}) + reported (${input.reported.length}) = ${input.applied + input.reported.length}; account for each one`,
     ]);
   }
@@ -209,12 +215,12 @@ export async function reconcile(ref: string, input: ReconcileInput, options: Loc
   const featureChanged = d.alterations.some((a) => a.kind === "feature-changed");
   const lifecycleOps: PatchOperation[] = [];
   if (featureChanged) {
-    if (!input.featureChange) return refuse(["feature.json was changed outside the MCP: pass featureChange with action accept or restore, and a reason"]);
+    if (!input.featureChange) return await refuse(["feature.json was changed outside the MCP: pass featureChange with action accept or restore, and a reason"]);
     let lastGood: Record<string, unknown>;
     try {
       lastGood = JSON.parse(await readFile(lastGoodPath(folder, options), "utf8")) as Record<string, unknown>;
     } catch {
-      return refuse(["no last known good copy of feature.json under .spec-loop/: the change can only be accepted after fixing it by hand"]);
+      return await refuse(["no last known good copy of feature.json under .spec-loop/: the change can only be accepted after fixing it by hand"]);
     }
     const handRaw = await readFile(file, "utf8");
     if (input.featureChange.action === "restore") {
@@ -225,10 +231,10 @@ export async function reconcile(ref: string, input: ReconcileInput, options: Loc
       try {
         hand = JSON.parse(handRaw) as Record<string, unknown>;
       } catch {
-        return refuse(["feature.json is not valid JSON: it cannot be accepted, restore it"]);
+        return await refuse(["feature.json is not valid JSON: it cannot be accepted, restore it"]);
       }
       const changed = PROTECTED.map((p) => p.slice(1)).filter((key) => JSON.stringify(hand[key]) !== JSON.stringify(lastGood[key]));
-      if (changed.length > 0) return refuse([`${changed.join(", ")} changed by hand cannot be accepted: restore feature.json and use the phase tool`]);
+      if (changed.length > 0) return await refuse([`${changed.join(", ")} changed by hand cannot be accepted: restore feature.json and use the phase tool`]);
       const accepted = (hand.lifecycle as { acceptedChanges?: unknown } | undefined)?.acceptedChanges;
       const value = { date: now, reason: input.featureChange.reason };
       lifecycleOps.push(Array.isArray(accepted) ? { op: "add", path: "/lifecycle/acceptedChanges/-", value } : { op: "add", path: "/lifecycle/acceptedChanges", value: [value] });
@@ -243,5 +249,5 @@ export async function reconcile(ref: string, input: ReconcileInput, options: Loc
       : { op: "add", path: "/lifecycle/lastVerify", value: lastVerify },
   );
   const result = await patchFolder(folder, [...input.ops, ...questions.ops, ...lifecycleOps], { ...options, force: true, allowProtected: true, now });
-  return { ...base, questions: questions.ids, ok: result.ok, errors: result.errors.map((e) => `${e.pointer}: ${e.message}`), patch: result };
+  return { ...base, questions: questions.ids, ok: result.ok, errors: result.errors.map((e) => `${e.pointer}: ${e.message}`), patch: result, next: await nextFor(folder, options) };
 }

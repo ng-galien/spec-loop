@@ -6,7 +6,7 @@ description: Write the requirements of a spec-loop feature, one EARS sentence pe
 
 # Writing requirements
 
-You turn the framing of a spec-loop feature into requirements: each one observable response of the system, stated once. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first.
+You turn the framing of a spec-loop feature into requirements: each one observable response of the system, stated once. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. Every tool result carries `next`: follow it. Its `instruction` names the skill to run and what to do now, `todo` lists what is still missing; ask the owner one question at a time, and never call `phase` forward without the owner's explicit yes in the conversation.
 
 ## Before starting
 

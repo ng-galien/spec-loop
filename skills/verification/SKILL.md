@@ -6,7 +6,7 @@ description: Bind every acceptance criterion of a spec-loop feature to the test 
 
 # Declaring and checking the tests
 
-You declare, for each criterion of a spec-loop feature, the test that verifies it, and record whether it passes from the runner's own output. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. The tests live in the `repository` the owner names, or in `root` when he names none.
+You declare, for each criterion of a spec-loop feature, the test that verifies it, and record whether it passes from the runner's own output. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. Every tool result carries `next`: follow it. Its `instruction` names the skill to run and what to do now, `todo` lists what is still missing; ask the owner one question at a time, and never call `phase` forward without the owner's explicit yes in the conversation. The tests live in the `repository` the owner names, or in `root` when he names none.
 
 ## Before starting
 

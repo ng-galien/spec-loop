@@ -84,6 +84,15 @@ const diffResult = z.object({
     }),
   ),
 });
+const nextStep = z
+  .object({
+    phase: z.string().nullable().describe("Current phase of the feature"),
+    skill: z.string().nullable().describe("The skill to run now"),
+    instruction: z.string().describe("What to do now: follow it. Taken from the schema (onEnter right after a phase change, onIncomplete while the phase is incomplete, beforeLeave once it is complete)"),
+    missing: z.number().describe("Number of items still missing or invalid in the current phase, entry rules of the next phase included"),
+    todo: z.array(z.string()).describe("Each missing or invalid item as pointer: message"),
+  })
+  .describe("What the agent does next: every result about a feature carries it; follow it");
 const patchResult = z.object({ ok: z.boolean(), feature: z.string(), errors: z.array(validationError), validation: validation.nullable(), render: renderResult.nullable() });
 const operation = z.object({ op: z.enum(["add", "remove", "replace", "move", "copy", "test"]), path: z.string(), value: z.unknown().optional(), from: z.string().optional() });
 const reportedItem = z.object({ file: z.string(), pointer: z.string().nullable(), reason: z.string().describe("Why it is reported to the owner instead of applied, in French") });
@@ -93,7 +102,7 @@ const server = new McpServer(
   { name: "spec-loop", version: pkg.version },
   {
     instructions:
-      "spec-loop keeps one JSON object per feature in spec/<FEAT-nnn-name>/feature.json and projects it into French Markdown for the owner. This server is the only writer of spec/: never edit those files with a file tool. Pass root (the absolute project path) on every call. Start with learn, then status or features.",
+      "spec-loop keeps one JSON object per feature in spec/<FEAT-nnn-name>/feature.json and projects it into French Markdown for the owner. This server is the only writer of spec/: never edit those files with a file tool. Pass root (the absolute project path) on every call. Start with learn, then status or features. Every result about a feature carries next (phase, skill, instruction, missing, todo): follow next.instruction, run the skill it names, ask the owner one question at a time, and never call phase forward without the owner's explicit yes in the conversation.",
   },
 );
 
@@ -151,6 +160,7 @@ server.registerTool(
           ownerEdits: z.enum(["none", "pending"]),
           alterations: z.number(),
           modified: z.string(),
+          next: nextStep,
         }),
       ),
     },
@@ -187,6 +197,7 @@ server.registerTool(
         .object({ from: z.string(), to: z.string(), date: z.string(), by: z.enum(["agent", "owner"]), reason: z.string() })
         .nullable()
         .describe("The last move back to an earlier phase, with the owner's reason"),
+      next: nextStep,
     },
     annotations: readOnly,
   },
@@ -206,7 +217,7 @@ server.registerTool(
       reason: z.string().optional().describe("The owner's reason for opening a feature while another one is not done; required with by owner in that case"),
       root: z.string().describe("Absolute path of the project that holds or will hold spec/; required"),
     },
-    outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable() },
+    outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable(), next: nextStep.nullable() },
     annotations: writes,
   },
   async ({ name, title, by, reason, root }) =>
@@ -267,7 +278,7 @@ server.registerTool(
     title: "Patch a spec-loop feature",
     description: "Apply an RFC 6902 JSON Patch to a spec-loop feature.json, validate, write only when no invalid error remains, then re-render. id, name, phase and lifecycle are not patchable.",
     inputSchema: { feature, ops: z.array(operation).min(1), root },
-    outputSchema: patchResult.shape,
+    outputSchema: { ...patchResult.shape, next: nextStep },
     annotations: writes,
   },
   async ({ feature, ops, root }) =>
@@ -290,7 +301,7 @@ server.registerTool(
       reason: z.string().optional().describe("Why the owner moves the feature back, in French; required with to"),
       root,
     },
-    outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), patch: patchResult.nullable() },
+    outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), patch: patchResult.nullable(), next: nextStep },
     annotations: writes,
   },
   async ({ feature, by, to, reason, root }) =>
@@ -325,6 +336,7 @@ server.registerTool(
       questions: z.array(z.string()).describe("Ids of the open questions created for the reported items"),
       errors: z.array(z.string()),
       patch: patchResult.nullable(),
+      next: nextStep,
     },
     annotations: writes,
   },

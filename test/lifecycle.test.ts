@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { advancePhase, create, features, patch, render, status, reconcile } from "../src/lib/index.js";
+import { advancePhase, create, features, learn, patch, phases, render, status, reconcile } from "../src/lib/index.js";
 import { FEATURE, guineaPig, inAcceptance, inFolder, workspace } from "./helpers.js";
 import { serializeFeature } from "../src/lib/model.js";
 
@@ -131,6 +131,36 @@ describe("lifecycle", () => {
     expect(exigences).toContain("<!-- id: ART-02 -->\n**Screen** (`ART-02`, screen)\n\n![Screen](../assets/screen.svg)");
     expect(exigences.indexOf("<!-- id: ART-02 -->")).toBeLessThan(exigences.indexOf("<!-- id: REQ-002 -->"));
     expect((await advancePhase(FEATURE, { root, now: NOW })).ok).toBe(true);
+  });
+
+  it("every result about a feature carries next: the skill and the schema instruction for the moment", async () => {
+    const framing = phases.find((p) => p.name === "framing")!;
+    const requirements = phases.find((p) => p.name === "requirements")!;
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const incomplete = (await status(FEATURE, { root })).next;
+    expect(incomplete).toMatchObject({ phase: "framing", skill: "framing", instruction: framing.instructions.onIncomplete, missing: 5 });
+    expect(incomplete.todo[0]).toBe("/framing/questions/0/status: question Q-01 is still open");
+    expect((await features({ root }))[0]!.next).toEqual(incomplete);
+    const refused = await advancePhase(FEATURE, { root, by: "owner" });
+    expect(refused.next.instruction).toBe(framing.instructions.onIncomplete);
+    await answered(root);
+    const complete = await patch(FEATURE, [{ op: "replace", path: "/framing/intent", value: "Read and write Maket items over HTTP." }], { root });
+    expect(complete.next).toEqual({ phase: "framing", skill: "framing", instruction: framing.instructions.beforeLeave, missing: 0, todo: [] });
+    const path = inFolder(root, "rendered", "framing.md");
+    await writeFile(path, `${await readFile(path, "utf8")}\nOwner note.\n`);
+    expect((await status(FEATURE, { root })).next).toMatchObject({ skill: "reconcile", instruction: expect.stringContaining("`reconcile` skill") });
+    await reconcile(FEATURE, { ops: [], applied: 1, reported: [] }, { root });
+    const moved = await advancePhase(FEATURE, { root, by: "owner" });
+    expect(moved.next).toMatchObject({ phase: "requirements", skill: "requirements", instruction: requirements.instructions.onEnter });
+    expect((await status(FEATURE, { root })).next.instruction).toBe(requirements.instructions.onIncomplete);
+    expect(learn("phases").content).toContain(`- before leaving: ${framing.instructions.beforeLeave}`);
+  });
+
+  it("create carries the onEnter instruction of the first phase", async () => {
+    const root = await workspace();
+    const created = await create("export-csv", "Export CSV", { root, by: "owner", reason: "Needed for the demo." });
+    expect(created.next).toMatchObject({ phase: "framing", skill: "framing", instruction: phases[0]!.instructions.onEnter });
   });
 
   async function inVerification(statuses: (string | undefined)[]) {

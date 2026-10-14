@@ -149,6 +149,8 @@ Commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then propose
 
 Read-only tools carry `readOnlyHint: true`. Every result carries the same JSON as text and as `structuredContent`.
 
+Every result about a feature (`create`, `status`, `patch`, `phase`, `reconcile`, and each line of `features`) carries `next`: the current `phase`, the `skill` to run, the `instruction` to follow now (from the schema: on entering the phase, while it is incomplete, before leaving it), the `missing` count and the `todo` list. The agent follows it at every turn, so the method is never more than one result away.
+
 ## Skills
 
 | Skill | When | What the agent does |
