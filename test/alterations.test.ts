@@ -7,7 +7,7 @@ async function withSvg() {
   const root = await workspace();
   await render(FEATURE, { root });
   await mkdir(inFolder(root, "assets"), { recursive: true });
-  await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>\n');
+  await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10"/></svg>\n');
   const result = await patch(
     FEATURE,
     [{ op: "add", path: "/artifacts/-", value: { id: "ART-02", kind: "screen", format: "svg", title: "Workspace screen", path: "assets/screen.svg", illustrates: [] } }],
@@ -41,7 +41,7 @@ describe("alterations", () => {
 
   it("classifies an edited svg as an asset to review visually, with its ART id", async () => {
     const root = await withSvg();
-    await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>\n');
+    await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle r="5"/></svg>\n');
     const result = await diff(FEATURE, { root });
     expect(result.alterations).toEqual([{ kind: "asset-changed", path: "assets/screen.svg", ids: ["ART-02"], message: "artifact changed, review visually" }]);
     expect(result.files.find((f) => f.path === "assets/screen.svg")).toMatchObject({ artifact: "ART-02", review: "artifact changed, review visually", hunks: [] });

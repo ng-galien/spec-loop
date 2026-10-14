@@ -120,12 +120,16 @@ describe("lifecycle", () => {
     expect((await patch(FEATURE, [{ op: "replace", path: "/requirements/0/facet", value: "interface" }], { root })).ok).toBe(true);
     const s = await status(FEATURE, { root });
     expect(s.completeness.missing).toEqual([{ pointer: "/requirements/0", message: "REQ-001 needs its screen wireframe", kind: "incomplete" }]);
+    expect(s.next).toMatchObject({ phase: "requirements", missing: 1, todo: ["/requirements/0: REQ-001 needs its screen wireframe"] });
     const refused = await advancePhase(FEATURE, { root });
     expect(refused.ok).toBe(false);
     expect(refused.reasons[0]).toContain('phase "requirements" is incomplete: 1 item(s) missing');
+    const art = { id: "ART-02", kind: "screen", format: "svg", title: "Screen", path: "assets/screen.svg", illustrates: ["REQ-001"] };
+    const undeclared = await patch(FEATURE, [{ op: "add", path: "/artifacts/-", value: art }], { root });
+    expect(undeclared.ok).toBe(false);
+    expect(undeclared.errors[0]!.message).toContain("assets/screen.svg does not exist");
     await mkdir(inFolder(root, "assets"), { recursive: true });
     await writeFile(inFolder(root, "assets", "screen.svg"), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"/>\n');
-    const art = { id: "ART-02", kind: "screen", format: "svg", title: "Screen", path: "assets/screen.svg", illustrates: ["REQ-001"] };
     expect((await patch(FEATURE, [{ op: "add", path: "/artifacts/-", value: art }], { root })).ok).toBe(true);
     const exigences = await readFile(inFolder(root, "rendered", "requirements.md"), "utf8");
     expect(exigences).toContain("<!-- id: ART-02 -->\n**Screen** (`ART-02`, screen)\n\n![Screen](../assets/screen.svg)");

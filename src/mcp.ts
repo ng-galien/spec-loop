@@ -252,7 +252,7 @@ server.registerTool(
   "validate",
   {
     title: "Validate a spec-loop feature",
-    description: "Validate a spec-loop feature.json, or a candidate object, against the schema and the coverage checks of its phase, and parse every Mermaid artifact; every error has a JSON pointer.",
+    description: "Validate a spec-loop feature.json, or a candidate object, against the schema and the coverage checks of its phase, and parse every Mermaid artifact; for a stored feature, also check that every svg artifact file exists and is a safe svg. Every error has a JSON pointer.",
     inputSchema: { feature: feature.optional(), json: z.record(z.string(), z.unknown()).optional().describe("Candidate feature object, validated instead of the stored file"), root },
     outputSchema: validation.shape,
     annotations: readOnly,

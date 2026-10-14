@@ -5,14 +5,14 @@ An artifact (ART-01) is a diagram or a screen bound to what it illustrates. Arti
 Format rule:
 
 - `mermaid` is the default for every flow, sequence, state, context or module diagram. Its text lives inline in `source`. Every Mermaid source is parsed when the feature is validated: a source that does not parse is an `invalid` error at its artifact, with the parser's message, so `patch` never writes a broken diagram. Use the kinds the preview renders: `flowchart`, `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `erDiagram`.
-- `svg` is for screens. The file lives under `spec/<feature>/assets/` and the artifact points at it with `path`. Write the file, then declare the artifact with `patch`.
+- `svg` is for screens. The file lives under `spec/<feature>/assets/` and the artifact points at it with `path`. Write the file, then declare the artifact with `patch`. Every validation of a stored feature (`validate` on a feature, `patch`, `phase`, `status`) checks each svg artifact: the file exists under the feature folder, is well-formed XML whose root is `svg` in the SVG namespace (`xmlns="http://www.w3.org/2000/svg"`), has a `viewBox` or a `width` and a `height`, and contains no `script` element and no `on*` attribute. A failure is an `invalid` error at the artifact, so `patch` refuses to declare a file that is missing or broken.
 - `ascii` is a draft only. Replace it with mermaid or svg before the phase is complete; never leave an ascii artifact as the final one.
 
 Typical moments: a `context` diagram from framing; `screen` and `flow` artifacts in requirements; `module` diagrams in anchoring.
 
 ## Screen wireframes
 
-Wireframes live with the requirements. Every requirement of facet `interface` needs one `screen` artifact in `svg`, under `assets/`, listing that requirement in `illustrates`; the schema rule `interfaceHasScreen` reports "REQ-nnn needs its screen wireframe" while it is missing, and the feature cannot leave the requirements phase without it.
+Wireframes live with the requirements. A requirement about anything the user sees or operates has facet `interface`, and every interface requirement needs one `screen` artifact in `svg`, under `assets/`, listing that requirement in `illustrates`. The schema rule `interfaceHasScreen` reports "REQ-nnn needs its screen wireframe" while it is missing, or while its file is missing or fails the svg check; it shows in `next.todo` during the requirements phase, and the feature cannot leave that phase without it.
 
 How to draw them:
 

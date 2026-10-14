@@ -29,7 +29,8 @@ If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the opera
 - One EARS sentence per answer or scope line: one observable response, with SHALL, in the form its `pattern` fixes. Split a sentence that carries two responses.
 - Set `facet` to the side of the system it fixes, `priority` to MUST, SHOULD or MAY, a short `title`, a `rationale` that says why, and `source` with the ids it comes from.
 - Never renumber an id; a removed requirement's id is never reused.
-- Every requirement of facet `interface` needs a screen wireframe: an svg under `assets/`, declared as an artifact of kind `screen` that lists the requirement in `illustrates`. Write the file, then declare it with `patch`. The phase cannot be left without it (the `interfaceHasScreen` rule, "To satisfy before leaving" in `learn` topic `phases`).
+- A requirement about anything the user sees or operates (a screen, a form, a message, a control) has facet `interface`.
+- Each interface requirement needs a screen wireframe before acceptance: an svg file under `assets/`, declared as an artifact of kind `screen` that lists the requirement in `illustrates`. Write the file first (well-formed svg in the SVG namespace, with a `viewBox`, no script, no `on*` attribute; `learn` topic `artifacts`), then declare it with `patch`, which refuses a missing or invalid file. Until then `next.todo` names the requirement ("REQ-004 needs its screen wireframe"), and the phase cannot be left (the `interfaceHasScreen` rule).
 - Show the owner what you wrote, a few requirements at a time, and where to read them.
 
 ## Asking the owner

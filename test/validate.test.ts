@@ -1,6 +1,8 @@
+import { copyFile, mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { validate, validateFeature, type Feature } from "../src/lib/index.js";
-import { guineaPig, inAcceptance, inRequirements } from "./helpers.js";
+import { FOLDER, guineaPig, inAcceptance, inFolder, inRequirements, workspace } from "./helpers.js";
 
 const pointers = (feature: unknown, kind?: string) =>
   validate(feature).errors.filter((e) => !kind || e.kind === kind).map((e) => e.pointer);
@@ -120,6 +122,44 @@ describe("validate", () => {
     expect(validate(feature).complete).toBe(false);
     (feature.artifacts as unknown[]).push({ id: "ART-03", kind: "screen", format: "svg", title: "Screen", path: "assets/screen.svg", illustrates: ["REQ-001"] });
     expect(validate(feature).complete).toBe(true);
+  });
+
+  const withScreen = async (fixture: string | null) => {
+    const root = await workspace("requirements");
+    await mkdir(inFolder(root, "assets"), { recursive: true });
+    if (fixture) await copyFile(resolve(import.meta.dirname, "fixtures", "svg", fixture), inFolder(root, "assets", "screen.svg"));
+    const feature = inRequirements(await guineaPig());
+    (feature.requirements as { facet: string }[])[0]!.facet = "interface";
+    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Screen", path: "assets/screen.svg", illustrates: ["REQ-001"] });
+    return validateFeature(feature, { folder: FOLDER, options: { root } });
+  };
+
+  it("svg: a stored feature's screen must be a well-formed svg file in the SVG namespace, sized, without script", async () => {
+    expect(await withScreen("screen.svg")).toMatchObject({ valid: true, complete: true });
+    expect(await withScreen("sized.svg")).toMatchObject({ valid: true, complete: true });
+    const cases: [string | null, string][] = [
+      [null, "ART-02: assets/screen.svg does not exist in spec/FEAT-001-maket-http-connector/; write the file before declaring it"],
+      ["malformed.svg", "ART-02: assets/screen.svg is not well-formed XML: Expected closing tag 'rect' (opened in line 1, col 64) instead of closing tag 'svg'. (line 1)"],
+      ["html.svg", "ART-02: assets/screen.svg has root element <html>, not <svg>"],
+      ["no-namespace.svg", 'ART-02: assets/screen.svg root <svg> is not in the SVG namespace (xmlns="http://www.w3.org/2000/svg")'],
+      ["no-size.svg", "ART-02: assets/screen.svg root <svg> needs a viewBox, or a width and a height"],
+      ["script.svg", "ART-02: assets/screen.svg contains a <script> element"],
+      ["onclick.svg", "ART-02: assets/screen.svg contains an event attribute onclick on <rect>"],
+    ];
+    for (const [fixture, message] of cases) {
+      const result = await withScreen(fixture);
+      expect(result.valid, String(fixture)).toBe(false);
+      expect(result.errors).toEqual([
+        { pointer: "/artifacts/1", message, kind: "invalid" },
+        { pointer: "/requirements/0", message: "REQ-001 needs its screen wireframe: ART-02 is missing or invalid", kind: "incomplete" },
+      ]);
+    }
+  });
+
+  it("svg: a bare candidate object is not checked against files", async () => {
+    const feature = inRequirements(await guineaPig());
+    (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Screen", path: "assets/none.svg", illustrates: [] });
+    expect((await validateFeature(feature)).valid).toBe(true);
   });
 
   it("framing: the screen rule is not checked yet", async () => {

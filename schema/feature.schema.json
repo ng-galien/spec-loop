@@ -124,7 +124,7 @@
     "criterionHasTest": "Every criterion is verified by at least one test.",
     "testNameCarriesCriterion": "Every test name starts with the id of a criterion it verifies and contains each criterion id it verifies.",
     "interfaceHasScreen": {
-      "description": "Every requirement of facet interface is illustrated by at least one screen artifact in svg, before the feature enters the acceptance phase.",
+      "description": "Every requirement of facet interface is illustrated by at least one screen artifact in svg whose file exists under the feature folder and passes the svg check, before the feature enters the acceptance phase.",
       "gate": "entry",
       "requirement": {
         "facet": "interface"
@@ -708,7 +708,7 @@
           ],
           "description": "What side of the system the requirement fixes, which decides how it is illustrated and verified.",
           "x-enumDescriptions": {
-            "interface": "What a person sees and does on a screen; illustrated by a screen wireframe.",
+            "interface": "Anything a person sees or operates: a screen, a form, a message, a control; illustrated by a screen wireframe in svg before acceptance.",
             "behaviour": "How the system responds to an event or a state, observable from outside.",
             "data": "What the system stores, declares or exposes as data and configuration.",
             "integration": "How the system talks to another system: protocol, request, error contract.",
@@ -1203,7 +1203,7 @@
         },
         "source": {
           "$ref": "#/$defs/text",
-          "description": "Inline Mermaid or ascii text, for formats mermaid and ascii.",
+          "description": "Inline Mermaid or ascii text, for formats mermaid and ascii. A Mermaid source must parse: flowchart, sequenceDiagram, stateDiagram-v2, classDiagram or erDiagram.",
           "examples": [
             "flowchart LR\n  agent --> maket --> api"
           ]
@@ -1211,7 +1211,7 @@
         "path": {
           "type": "string",
           "pattern": "^assets/[^/].*\\.svg$",
-          "description": "File under spec/<feature>/assets/, for format svg.",
+          "description": "File under spec/<feature>/assets/, for format svg. Write it before declaring the artifact: the stored feature checks that it exists and is a well-formed svg in the SVG namespace, with a viewBox or a width and a height, and with no script element or on* attribute.",
           "examples": [
             "assets/workspace-screen.svg"
           ]

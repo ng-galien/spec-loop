@@ -111,10 +111,13 @@ export function missingLines(feature: Feature, validation: ValidationResult): { 
     else if (/realized by no anchor/.test(e.message)) todo = "anchor to place";
     else if (/verified by no test/.test(e.message)) todo = "test to declare";
     else if (/is not passing/.test(e.message)) todo = test?.status === "failing" ? "test to make pass" : "test to write";
+    else if (/screen wireframe: /.test(e.message)) todo = "screen wireframe to fix";
     else if (/screen wireframe/.test(e.message)) todo = "screen wireframe to draw";
+    else if (/the Mermaid source does not parse/.test(e.message)) todo = "Mermaid diagram to fix";
+    else if (/^ART-[\d]+: assets\//.test(e.message)) todo = `svg file to fix: ${e.message.slice(e.message.indexOf(" ") + 1)}`;
     else if (required) todo = `${required[1]} to fill in`;
     else if (e.kind === "incomplete") todo = `${field || "field"} to complete`;
-    else todo = `inconsistent: ${e.message}`;
+    else todo = `inconsistent: ${e.message.split("\n")[0]}`;
     return { text: subject ? `${subject} · ${todo}` : `${todo[0]!.toUpperCase()}${todo.slice(1)}` };
   });
   return lines.sort((a, b) => natural(a.text, b.text));

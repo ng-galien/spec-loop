@@ -128,8 +128,10 @@ function coherence(json: Rec, phase: Phase | null, broken: Set<string> = new Set
     const artifacts = list(json.artifacts).filter((a) => matches(a, rule.artifact!));
     requirements.forEach((req, i) => {
       if (!matches(req, rule.requirement!)) return;
-      if (artifacts.some((a) => strings(a.illustrates).includes(String(req.id)))) return;
-      incomplete(`/requirements/${i}`, (rule.message ?? `{id} breaks ${name}`).replace("{id}", String(req.id)));
+      const mine = artifacts.filter((a) => strings(a.illustrates).includes(String(req.id)));
+      if (mine.some((a) => !broken.has(String(a.id)))) return;
+      const message = (rule.message ?? `{id} breaks ${name}`).replace("{id}", String(req.id));
+      incomplete(`/requirements/${i}`, mine.length ? `${message}: ${mine.map((a) => String(a.id)).join(", ")} is missing or invalid` : message);
     });
   }
   if (checks.has("noOpenQuestion")) {
