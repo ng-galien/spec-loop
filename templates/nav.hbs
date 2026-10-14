@@ -1,0 +1,21 @@
+<!-- nav -->
+{{#if bottom}}
+
+---
+
+{{/if}}
+{{#each crumbs}}{{#unless @first}} › {{/unless}}{{#if path}}[{{label}}]({{path}}){{else}}{{label}}{{/if}}{{/each}}
+{{#if menu.length}}
+
+{{#each menu}}{{#unless @first}} · {{/unless}}{{#if current}}**{{label}}**{{else}}{{#if path}}[{{label}}]({{path}}){{else}}{{label}}{{/if}}{{/if}}{{/each}}
+{{/if}}
+{{#if bottom}}
+{{#if steps}}
+
+{{#if prev}}← Précédent : [{{prev.label}}]({{prev.path}}){{/if}}{{#if both}} · {{/if}}{{#if next}}Suivant : [{{next.label}}]({{next.path}}) →{{/if}}
+{{/if}}
+{{else}}
+
+---
+{{/if}}
+<!-- /nav -->

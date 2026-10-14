@@ -71,11 +71,12 @@ describe("render", () => {
 
   it("opens a past phase document with one line pointing at the current phase document", async () => {
     const files = renderToMemory(await requirementsFixture());
-    const cadrage = files.find((f) => f.path === "cadrage.md")!.content.split("\n");
-    expect(cadrage[2]).toBe("_Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._");
-    expect(cadrage[4]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
-    expect(files.find((f) => f.path === "exigences.md")!.content.split("\n")[2]).toBe("# Exigences : Connecteur HTTP pour les espaces structurés de Maket");
-    expect(renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content.split("\n")[2]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
+    const afterNav = (content: string) => content.split("<!-- /nav -->\n\n")[1]!.split("\n");
+    const cadrage = afterNav(files.find((f) => f.path === "cadrage.md")!.content);
+    expect(cadrage[0]).toBe("_Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._");
+    expect(cadrage[2]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
+    expect(afterNav(files.find((f) => f.path === "exigences.md")!.content)[0]).toBe("# Exigences : Connecteur HTTP pour les espaces structurés de Maket");
+    expect(afterNav(renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content)[0]).toBe("# Cadrage : Connecteur HTTP pour les espaces structurés de Maket");
   });
 
   it("puts every id and ptr comment alone on its line, so the Markdown after it is parsed", async () => {
@@ -87,7 +88,7 @@ describe("render", () => {
     const files = renderToMemory(feature);
     expect(files.map((f) => f.path)).toEqual(["index.md", "cadrage.md", "exigences.md", "criteres.md", "ancrage.md", "verification.md", "decisions.md"]);
     for (const file of files) {
-      expect(file.content.replace(/`[^`]*`/g, "").replace(/<!-- (id|ptr): [^ ]+ -->/g, "").replace(/^<!-- source: .* -->$/m, ""), file.path).not.toMatch(/<[a-z!/]/i);
+      expect(file.content.replace(/`[^`]*`/g, "").replace(/<!-- (id|ptr): [^ ]+ -->/g, "").replace(/^<!-- source: .* -->$/m, "").replace(/^<!-- \/?nav -->$/gm, ""), file.path).not.toMatch(/<[a-z!/]/i);
       for (const line of file.content.split("\n").filter((l) => /<!-- (id|ptr):/.test(l.replace(/`[^`]*`/g, "")))) {
         expect(line, `${file.path}: ${line}`).toMatch(/^<!-- (id: [A-Z]+-[0-9]+(\.[0-9]+)?|ptr: \/[^ ]*) -->$/);
       }
@@ -156,5 +157,38 @@ describe("render", () => {
     await create("autre", "Autre", { root });
     const index = await readFile(join(root, "spec", "README.md"), "utf8");
     expect(index).toContain("> [!WARNING]\n> FEAT-001 : 1 modification(s) faite(s) hors de l'agent, à vérifier avant toute suite.");
+  });
+
+  it("opens every document with the breadcrumb, the menu of documents in phase order and a rule", async () => {
+    const files = renderToMemory(await requirementsFixture());
+    const cadrage = files.find((f) => f.path === "cadrage.md")!.content;
+    expect(cadrage.startsWith(
+      '<!-- source: "/framing" template: "templates/framing.hbs" -->\n\n<!-- nav -->\n' +
+        "[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage\n\n" +
+        "[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions\n\n---\n<!-- /nav -->\n\n_Document de la phase Cadrage, close",
+    )).toBe(true);
+    expect(cadrage.endsWith(
+      "<!-- nav -->\n\n---\n\n[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage\n\n" +
+        "[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions\n\n" +
+        "← Précédent : [Index](index.md) · Suivant : [Exigences](exigences.md) →\n<!-- /nav -->\n",
+    )).toBe(true);
+    const exigences = files.find((f) => f.path === "exigences.md")!.content;
+    expect(exigences).toContain("[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation");
+    expect(exigences).toContain("← Précédent : [Cadrage](cadrage.md)\n<!-- /nav -->");
+    const index = files.find((f) => f.path === "index.md")!.content;
+    expect(index).toContain("<!-- nav -->\n[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket\n\n---\n<!-- /nav -->");
+    expect(index).toContain("Suivant : [Cadrage](cadrage.md) →\n<!-- /nav -->");
+    expect(index).not.toContain("**Index**");
+  });
+
+  it("spec index lists the features by phase", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    await create("autre", "Autre", { root });
+    const index = await readFile(join(root, "spec", "README.md"), "utf8");
+    expect(index).toContain(
+      "<!-- nav -->\n**Cadrage** : [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](FEAT-001-maket-http-connector/rendered/index.md) · [FEAT-002 · Autre](FEAT-002-autre/rendered/index.md)\n\n**Exigences** : —",
+    );
+    expect(index).toContain("| Id | Fonctionnalité |");
   });
 });

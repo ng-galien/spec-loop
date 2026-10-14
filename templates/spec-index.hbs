@@ -4,6 +4,17 @@
 
 Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonctionnalité pour la lire. **À vérifier** signale des modifications faites hors de l'agent (fichiers rendus, schémas, `feature.json`) : demandez à l'agent de les vérifier.
 
+<!-- nav -->
+{{#each byPhase}}
+{{#unless @first}}
+
+{{/unless}}
+**{{label}}** : {{#if features.length}}{{#each features}}{{#unless @first}} · {{/unless}}[{{id}} · {{title}}]({{folder}}/rendered/index.md){{/each}}{{else}}—{{/if}}
+{{/each}}
+
+---
+<!-- /nav -->
+
 {{#each features}}
 {{#if pending}}
 > [!WARNING]

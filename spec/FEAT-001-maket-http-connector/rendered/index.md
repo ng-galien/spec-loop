@@ -1,5 +1,11 @@
 <!-- source: "" template: "templates/index.hbs" -->
 
+<!-- nav -->
+[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket
+
+---
+<!-- /nav -->
+
 <!-- ptr: /title -->
 # Connecteur HTTP pour les espaces structurés de Maket
 
@@ -57,3 +63,12 @@ Rien : la phase est complète. Le passage à la phase suivante se décide dans l
 ## Comment intervenir
 
 Lisez les documents. Répondez dans la conversation, ou modifiez directement ces fichiers puis demandez à l'agent de vérifier vos modifications. Les commentaires `<!-- id: … -->` et `<!-- ptr: … -->` repèrent chaque bloc : laissez-les en place ; pour ajouter un bloc, recopiez la forme d'un bloc voisin. Un écran SVG se modifie dans son fichier, sous `assets/`.
+
+<!-- nav -->
+
+---
+
+[Toutes les fonctionnalités](../../README.md) › FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket
+
+Suivant : [Cadrage](cadrage.md) →
+<!-- /nav -->

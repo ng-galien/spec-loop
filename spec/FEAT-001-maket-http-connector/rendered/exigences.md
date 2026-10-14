@@ -1,5 +1,13 @@
 <!-- source: "/requirements" template: "templates/requirements.hbs" -->
 
+<!-- nav -->
+[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Exigences
+
+[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation · Ancrage · Vérification · Décisions
+
+---
+<!-- /nav -->
+
 # Exigences : Connecteur HTTP pour les espaces structurés de Maket
 
 Chaque exigence est une phrase EARS qui décrit une réponse observable du système. Son identifiant reste stable.
@@ -257,3 +265,14 @@ Facette : **sécurité**. Forme EARS : **comportement indésirable**. Priorité 
 Justification : Le secret vit dans l'environnement de la machine ; Maket n'en connaît que le nom (CON-02).
 
 Origine : CON-02, Q-06
+
+<!-- nav -->
+
+---
+
+[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Exigences
+
+[Index](index.md) · [Cadrage](cadrage.md) · **Exigences** · Acceptation · Ancrage · Vérification · Décisions
+
+← Précédent : [Cadrage](cadrage.md)
+<!-- /nav -->

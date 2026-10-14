@@ -1,5 +1,13 @@
 <!-- source: "/framing" template: "templates/framing.hbs" -->
 
+<!-- nav -->
+[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage
+
+[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions
+
+---
+<!-- /nav -->
+
 _Document de la phase Cadrage, close ; la phase actuelle est Exigences : [exigences.md](exigences.md)._
 
 # Cadrage : Connecteur HTTP pour les espaces structurés de Maket
@@ -193,3 +201,14 @@ _Aucune question à trancher._
 - **révision** : Valeur fournie par l'API qui change à chaque modification d'un élément ; elle sert à détecter une écriture concurrente. À éviter : version.
 <!-- ptr: /framing/glossary/2 -->
 - **connecteur HTTP** : L'implémentation d'ItemSource qui parle à une API REST décrite par configuration. À éviter : plugin, adaptateur.
+
+<!-- nav -->
+
+---
+
+[Toutes les fonctionnalités](../../README.md) › [FEAT-001 · Connecteur HTTP pour les espaces structurés de Maket](index.md) › Cadrage
+
+[Index](index.md) · **Cadrage** · [Exigences](exigences.md) · Acceptation · Ancrage · Vérification · Décisions
+
+← Précédent : [Index](index.md) · Suivant : [Exigences](exigences.md) →
+<!-- /nav -->

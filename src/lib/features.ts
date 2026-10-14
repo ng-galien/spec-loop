@@ -6,7 +6,7 @@ import { diffFolder } from "./diff.js";
 import { featureFolders, serializeFeature } from "./model.js";
 import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templatesDir, workspaceRoot, type Location } from "./paths.js";
 import { phaseTitle, render } from "./render.js";
-import { firstPhase, nextPhase } from "./schema.js";
+import { firstPhase, nextPhase, phases } from "./schema.js";
 import type { Feature, RenderResult, ValidationError } from "./types.js";
 import { validate } from "./validate.js";
 
@@ -74,6 +74,10 @@ export async function writeSpecIndex(options: Location = {}): Promise<string> {
   const list = await features(options);
   const content = `${indexTemplate({
     features: list.map((f) => ({ ...f, phaseLabel: phaseTitle(f.phase), pending: f.ownerEdits === "pending" })),
+    byPhase: [
+      ...phases.map((p) => ({ label: p.title, features: list.filter((f) => f.phase === p.name).map((f) => ({ ...f, title: f.title ?? f.name })) })),
+      ...(list.some((f) => f.corrupted) ? [{ label: "Fichier corrompu", features: list.filter((f) => f.corrupted).map((f) => ({ ...f, title: f.name })) }] : []),
+    ],
   }).trim()}\n`;
   await mkdir(specDir(options), { recursive: true });
   await writeFile(join(specDir(options), "README.md"), content);

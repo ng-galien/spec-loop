@@ -61,4 +61,15 @@ describe("diff", () => {
     expect(hunk!.newIds).toEqual(["REQ-003"]);
     expect(hunk!.target).toEqual({ id: "REQ-002", pointer: "/requirements/1" });
   });
+
+  it("attributes an edit of the navigation to no id and no pointer, and still maps edits elsewhere", async () => {
+    const { root, file } = await prepared();
+    await edit(file("exigences.md"), "[Index](index.md) · [Cadrage](cadrage.md) · **Exigences**", "[Index](index.md) · [Cadrage](cadrage.md) · **Mes exigences**");
+    await edit(file("exigences.md"), "report a stale revision to the agent", "report a stale revision to the agent at once");
+    const hunks = (await diff(FEATURE, { root })).files.find((f) => f.path === "exigences.md")!.hunks;
+    expect(hunks.map((h) => h.target)).toEqual([
+      { id: null, pointer: null },
+      { id: "REQ-002", pointer: "/requirements/1" },
+    ]);
+  });
 });

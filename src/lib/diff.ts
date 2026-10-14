@@ -30,15 +30,32 @@ function enclosing(lines: string[], index: number, fallback: Target, ids: Map<st
   return fallback;
 }
 
+function navigationLines(lines: string[]): Set<number> {
+  const inside = new Set<number>();
+  let open = -1;
+  lines.forEach((line, i) => {
+    if (line === "<!-- nav -->") open = i;
+    else if (line === "<!-- /nav -->" && open >= 0) {
+      for (let k = open; k <= i; k++) inside.add(k);
+      open = -1;
+    }
+  });
+  return inside;
+}
+
 function mapHunks(expected: string, actual: string, path: string, fallback: Target, ids: Map<string, string[]>): Hunk[] {
   const lines = expected.split("\n");
+  const navigation = navigationLines(lines);
   const patch = structuredPatch(path, path, expected, actual, "", "", { context: 0 });
   return patch.hunks.map((hunk) => {
     const firstOld = hunk.oldLines === 0 ? hunk.oldStart : hunk.oldStart - 1;
-    const target = enclosing(lines, hunk.oldLines === 0 ? firstOld - 1 : firstOld, fallback, ids);
+    const anchorLine = hunk.oldLines === 0 ? firstOld - 1 : firstOld;
+    const inNavigation = navigation.has(anchorLine) || (hunk.oldLines === 0 && navigation.has(firstOld));
+    const target = inNavigation ? { id: null, pointer: null } : enclosing(lines, anchorLine, fallback, ids);
     const touches: Target[] = [];
     const seen = new Set([`${target.id}|${target.pointer}`]);
     for (let i = firstOld; i < firstOld + hunk.oldLines; i++) {
+      if (navigation.has(i)) continue;
       const t = targetOfLine(lines[i] ?? "", ids);
       if (t && !seen.has(`${t.id}|${t.pointer}`)) {
         seen.add(`${t.id}|${t.pointer}`);

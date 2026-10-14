@@ -240,16 +240,56 @@ function pastNotice(spec: FileSpec, phase: string): string | null {
   return `_Document de la phase ${producer.title}, close ; la phase actuelle est ${current?.title ?? phase} : [${currentFile}](${currentFile})._`;
 }
 
+function documentOrder(spec: FileSpec): number {
+  if (spec.section === null) return -1;
+  const producer = phaseProducing(spec.section);
+  return producer ? phaseIndex(producer.name) : phases.length;
+}
+
+function documentLabel(spec: FileSpec): string {
+  return spec.section === null ? "Index" : fileTitle(spec);
+}
+
+function navigation(feature: Feature, spec: FileSpec, produced: FileSpec[]): { top: string; bottom: string } {
+  const ordered = [...FILE_SPECS].sort((a, b) => documentOrder(a) - documentOrder(b));
+  const reached = new Set(produced.map((f) => f.path));
+  const walk = ordered.filter((f) => reached.has(f.path));
+  const at = walk.findIndex((f) => f.path === spec.path);
+  const featureLabel = `${String(feature.id ?? "")} · ${String(feature.title ?? "")}`;
+  const isIndex = spec.section === null;
+  const crumbs = [
+    { label: "Toutes les fonctionnalités", path: "../../README.md" },
+    isIndex ? { label: featureLabel, path: null } : { label: featureLabel, path: "index.md" },
+    ...(isIndex ? [] : [{ label: documentLabel(spec), path: null }]),
+  ];
+  const menu = isIndex
+    ? []
+    : ordered.map((f) => ({ label: documentLabel(f), path: reached.has(f.path) ? f.path : null, current: f.path === spec.path }));
+  const link = (f: FileSpec | undefined) => (f ? { label: documentLabel(f), path: f.path } : null);
+  const prev = link(walk[at - 1]);
+  const next = link(walk[at + 1]);
+  const nav = template("nav.hbs");
+  return {
+    top: nav({ crumbs, menu, bottom: false }),
+    bottom: nav({ crumbs, menu, bottom: true, prev, next, steps: !!(prev || next), both: !!(prev && next) }),
+  };
+}
+
 export function renderToMemory(feature: Feature): RenderedFile[] {
   const validation = validate(feature);
   const data = view(feature, validation);
   const phase = validation.phase ?? phases[0]!.name;
-  return filesFor(feature, phase).map((spec) => ({
-    path: spec.path,
-    source: spec.source,
-    template: `templates/${spec.template}`,
-    content: normalize(`${header(spec)}\n\n${template(spec.template)({ ...data, pastNotice: pastNotice(spec, phase) })}`),
-  }));
+  const produced = filesFor(feature, phase);
+  return produced.map((spec) => {
+    const nav = navigation(feature, spec, produced);
+    const body = template(spec.template)({ ...data, pastNotice: pastNotice(spec, phase) });
+    return {
+      path: spec.path,
+      source: spec.source,
+      template: `templates/${spec.template}`,
+      content: normalize(`${header(spec)}\n\n${nav.top}\n${body}\n\n${nav.bottom}`),
+    };
+  });
 }
 
 export const sha256 = (text: string | Buffer): string => createHash("sha256").update(text).digest("hex");
