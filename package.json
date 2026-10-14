@@ -1,5 +1,5 @@
 {
-  "name": "@ng-galien/spec-loop",
+  "name": "mcp-spec-loop",
   "version": "0.1.0",
   "description": "MCP server and skills for a software construction loop: a JSON feature model kept by an agent, projected into French Markdown for the owner, with a human feedback loop.",
   "type": "module",
@@ -9,7 +9,7 @@
     "node": ">=22"
   },
   "bin": {
-    "spec-loop": "dist/mcp.js"
+    "mcp-spec-loop": "dist/mcp.js"
   },
   "main": "dist/lib/index.js",
   "files": [

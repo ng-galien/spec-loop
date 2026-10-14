@@ -1,1 +1,1 @@
-{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "@ng-galien/spec-loop@0.1.0"] } } }
+{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "mcp-spec-loop@0.1.0"] } } }

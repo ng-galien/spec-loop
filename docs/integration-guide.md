@@ -6,7 +6,7 @@ Current state of the repository: ten tools (`learn`, `features`, `status`, `crea
 
 ## 0. Two facts that change the plan
 
-1. **The npm name `spec-loop` is taken.** `npm view spec-loop` returns version 1.0.1, "The Spec-Loop Method: Spec-driven planning + autonomous iteration loops", maintainer `greenteasamurai`, with its own `spec-loop` bin (modified 2026-02-05). `npx spec-loop` would run that package. Publish under a scope; this guide writes `@OWNER/spec-loop` and keeps the bin name `spec-loop`.
+1. **The npm name `spec-loop` is taken.** `npm view spec-loop` returns version 1.0.1, "The Spec-Loop Method: Spec-driven planning + autonomous iteration loops", maintainer `greenteasamurai`, with its own `spec-loop` bin (modified 2026-02-05). `npx spec-loop` would run that package. The package is therefore published unscoped as `mcp-spec-loop` (free on npm on 14 October 2026), with the bin `mcp-spec-loop`; the repository, the folder and the product keep the name spec-loop.
 2. **Gemini CLI is being replaced by Antigravity CLI (`agy`).** Every geminicli.com page read today carries a banner saying Gemini CLI was replaced by Antigravity CLI on 18 June 2026 for unpaid-tier and Google One users. Google's migration page (https://www.antigravity.google/docs/cli/gcli-migration, undated) says `agy plugin import gemini` converts extensions, skills and MCP servers, that commands become skills, that the workspace MCP file becomes `.agents/mcp_config.json` and workspace skills belong in `.agents/skills/`. The Gemini extension is still worth shipping (paid and enterprise users keep Gemini CLI, and `agy` imports it), but the repository layout below is chosen so that Antigravity finds the skills without a conversion.
 
 ## 1. Gemini CLI
@@ -32,7 +32,7 @@ Extensions receive only a safe environment (`HOME`, `PATH`, `TMPDIR`) plus decla
 
 **Custom commands.** TOML files in `~/.gemini/commands/` or `.gemini/commands/` (or an extension's `commands/`); `git/commit.toml` becomes `/git:commit`. With native skills, spec-loop does not need TOML commands; Antigravity turns commands into skills anyway.
 
-**Publishing.** Either the git repository itself (`gemini extensions install https://github.com/OWNER/spec-loop`, branches or tags as channels) or GitHub Releases (archives with `gemini-extension.json` at the archive root; optional platform names such as `darwin.arm64.spec-loop.tar.gz`; update checks follow the release marked Latest). Keep the manifest `version` equal to the release tag. Gallery: no submission; a public GitHub repository with the topic `gemini-cli-extension`, the manifest at the root and a tag is crawled daily.
+**Publishing.** Either the git repository itself (`gemini extensions install https://github.com/ng-galien/spec-loop`, branches or tags as channels) or GitHub Releases (archives with `gemini-extension.json` at the archive root; optional platform names such as `darwin.arm64.spec-loop.tar.gz`; update checks follow the release marked Latest). Keep the manifest `version` equal to the release tag. Gallery: no submission; a public GitHub repository with the topic `gemini-cli-extension`, the manifest at the root and a tag is crawled daily.
 
 **Colleague on checkout.** A committed `.gemini/settings.json` with the `mcpServers` entry, plus `.agents/skills/`, is enough. If the colleague enabled `security.folderTrust.enabled` (off by default), an untrusted folder ignores workspace settings and MCP servers until they trust it.
 
@@ -48,11 +48,11 @@ Sources: https://code.claude.com/docs/en/mcp, https://code.claude.com/docs/en/sk
 
 **Plugins.** A plugin root holds `.claude-plugin/plugin.json` (optional; only `name` required) and, at the root, `skills/`, `commands/`, `agents/`, `hooks/hooks.json`, `.mcp.json`. `mcpServers` can also be inline in `plugin.json`. `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}` resolve in stdio server `command`, `args`, `env`. Plugin names must not start with `claude-` or `anthropic-`. `claude plugin validate <dir> [--strict]` is the authoritative check.
 
-**Marketplace.** `.claude-plugin/marketplace.json` with `name`, `owner`, `plugins[]` (`name`, `source`, `description`). A source can be a relative path from the marketplace root (`"./"` for a repository that is both marketplace and plugin), `github`, `git-subdir`, `url`, `archive`, `npm`. Users run `claude plugin marketplace add OWNER/spec-loop` then `claude plugin install spec-loop@spec-loop`.
+**Marketplace.** `.claude-plugin/marketplace.json` with `name`, `owner`, `plugins[]` (`name`, `source`, `description`). A source can be a relative path from the marketplace root (`"./"` for a repository that is both marketplace and plugin), `github`, `git-subdir`, `url`, `archive`, `npm`. Users run `claude plugin marketplace add ng-galien/spec-loop` then `claude plugin install spec-loop@spec-loop`.
 
 **Colleague on checkout.** Two routes, both committed:
 - direct: `.mcp.json` plus `.claude/skills/`; the colleague answers the one-time `.mcp.json` prompt;
-- plugin: `.claude/settings.json` with `extraKnownMarketplaces` (source `github`, repo `OWNER/spec-loop`) and `enabledPlugins: {"spec-loop@spec-loop": true}`. The marketplace registers after the workspace trust dialog. A plugin listed by relative path inside that marketplace then loads; a plugin pointing at an external source needs `claude plugin install ... --scope project`.
+- plugin: `.claude/settings.json` with `extraKnownMarketplaces` (source `github`, repo `ng-galien/spec-loop`) and `enabledPlugins: {"spec-loop@spec-loop": true}`. The marketplace registers after the workspace trust dialog. A plugin listed by relative path inside that marketplace then loads; a plugin pointing at an external source needs `claude plugin install ... --scope project`.
 
 **Tool results.** The official page does not describe `structuredContent`. Community reports (https://claudeissues.com/issue/55677, /15412, /54450) say Claude Code forwards `structuredContent` and drops `content` text when both are present. Harmless for spec-loop as long as both carry the same JSON.
 
@@ -64,7 +64,7 @@ Sources: https://learn.chatgpt.com/docs/extend/mcp?surface=cli, https://learn.ch
 
 **Skills.** `.agents/skills/` in every directory from the working directory up to the repository root, `$HOME/.agents/skills`, `/etc/codex/skills`, then system skills. Symlinked skill folders are supported. Required frontmatter: `name`, `description`. Optional `agents/openai.yaml` inside a skill (display metadata, `policy.allow_implicit_invocation`, `dependencies.tools` such as an MCP server). Invocation: `$skill` or `/skills`, or implicit by description. The skills list is budgeted at 2 % of the context window. `~/.codex/skills/` is not listed in the current page.
 
-**Plugins.** Manifest `plugin.json` at the plugin root (portable form) or `.codex-plugin/plugin.json` (Codex form, kept as fallback), with `name`, `version`, `skills` (`"./skills/"`), MCP servers in `.mcp.json` (or `mcp.json`), optional `.app.json`, `hooks/`, `assets/`. Marketplaces: `$REPO_ROOT/.agents/plugins/marketplace.json`, `~/.agents/plugins/marketplace.json`, and the legacy `$REPO_ROOT/.claude-plugin/marketplace.json`. Entries: `{"name", "source": {"source": "local", "path": "./..."}, "policy": {"installation": "AVAILABLE"|"INSTALLED_BY_DEFAULT"|...}, "category"}`. Command: `codex plugin marketplace add OWNER/spec-loop[@ref]`; `/plugins` in the TUI. Per-plugin overrides: `plugins."spec-loop@spec-loop".mcp_servers.spec-loop.default_tools_approval_mode`.
+**Plugins.** Manifest `plugin.json` at the plugin root (portable form) or `.codex-plugin/plugin.json` (Codex form, kept as fallback), with `name`, `version`, `skills` (`"./skills/"`), MCP servers in `.mcp.json` (or `mcp.json`), optional `.app.json`, `hooks/`, `assets/`. Marketplaces: `$REPO_ROOT/.agents/plugins/marketplace.json`, `~/.agents/plugins/marketplace.json`, and the legacy `$REPO_ROOT/.claude-plugin/marketplace.json`. Entries: `{"name", "source": {"source": "local", "path": "./..."}, "policy": {"installation": "AVAILABLE"|"INSTALLED_BY_DEFAULT"|...}, "category"}`. Command: `codex plugin marketplace add ng-galien/spec-loop[@ref]`; `/plugins` in the TUI. Per-plugin overrides: `plugins."spec-loop@spec-loop".mcp_servers.spec-loop.default_tools_approval_mode`.
 
 **Feature flags.** The config reference lists no `skills` or `plugins` flag: skills and plugins are on. Relevant flags, all on by default: `features.apps`, `features.remote_plugin`, `features.skill_mcp_dependency_install`; `features.hooks` enables hooks. `codex features list` shows the installed version's flags.
 
@@ -85,7 +85,7 @@ Conclusions:
 
 - **One copy of each skill.** In the spec-loop repository, `skills/<name>/SKILL.md` at the root is read by all three package formats. In a consumer project, `.agents/skills/` serves Gemini, Antigravity and Codex; Claude Code needs `.claude/skills/`, provided by a committed symlink `.claude/skills -> ../.agents/skills` or a copy (Windows checkouts without symlink support get a text file instead of a link).
 - **Write SKILL.md in the strict standard subset**: `name` equal to the directory, lowercase and hyphens, at most 64 characters; `description` at most 1 024 characters and saying when to use the skill; no client-specific fields in the shared copy. Skills must name tools by their bare names (`features`, `validate`), not by a client prefix, since each client prefixes differently.
-- **One launch command**, written four times: `npx -y @OWNER/spec-loop@<version>`. What is duplicated per agent is only the MCP registration file and the package manifest.
+- **One launch command**, written four times: `npx -y mcp-spec-loop@<version>`. What is duplicated per agent is only the MCP registration file and the package manifest.
 - **The root is the weak point.** Each client starts the server differently; the skills should tell the agent to pass `root` (the absolute project path) on every call, and the manifests set `SPEC_LOOP_ROOT` where a variable exists.
 
 ## 5. Recommended layout
@@ -94,7 +94,7 @@ The spec-loop repository is at once the npm package, the Gemini extension, the C
 
 ```text
 spec-loop/
-├── package.json                    # "@OWNER/spec-loop", bin {"spec-loop": "dist/mcp.js"}, files [...]
+├── package.json                    # "mcp-spec-loop", bin {"spec-loop": "dist/mcp.js"}, files [...]
 ├── src/  dist/  schema/  templates/
 ├── skills/
 │   ├── framing/SKILL.md
@@ -116,7 +116,7 @@ spec-loop/
     └── .codex/config.toml
 ```
 
-Key file contents (replace `OWNER` and the version):
+Key file contents (replace the version):
 
 `gemini-extension.json`
 ```json
@@ -128,7 +128,7 @@ Key file contents (replace `OWNER` and the version):
   "mcpServers": {
     "spec-loop": {
       "command": "npx",
-      "args": ["-y", "@OWNER/spec-loop@0.1.0"]
+      "args": ["-y", "mcp-spec-loop@0.1.0"]
     }
   }
 }
@@ -137,7 +137,7 @@ Do not set `cwd` to `${extensionPath}` (the reference example does): the server 
 
 `.mcp.json` (plugin root and consumer projects)
 ```json
-{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "@OWNER/spec-loop@0.1.0"] } } }
+{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "mcp-spec-loop@0.1.0"] } } }
 ```
 
 `.claude-plugin/marketplace.json`
@@ -158,20 +158,20 @@ Whether Codex accepts `"./"` (the marketplace root itself) as a plugin path is n
 ```toml
 [mcp_servers.spec-loop]
 command = "npx"
-args = ["-y", "@OWNER/spec-loop@0.1.0"]
+args = ["-y", "mcp-spec-loop@0.1.0"]
 startup_timeout_sec = 60
 default_tools_approval_mode = "writes"
 ```
 
 `.gemini/settings.json` (consumer project)
 ```json
-{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "@OWNER/spec-loop@0.1.0"],
+{ "mcpServers": { "spec-loop": { "command": "npx", "args": ["-y", "mcp-spec-loop@0.1.0"],
   "includeTools": ["validate", "render", "diff", "patch", "learn", "features", "create"] } } }
 ```
 
 ## 6. Packaging plan
 
-**npm package.** In `package.json`: rename to `@OWNER/spec-loop`; remove `"private": true`; add `"bin": {"spec-loop": "dist/mcp.js"}` (the file already starts with `#!/usr/bin/env node`); add `"files": ["dist", "schema", "templates", "skills"]` because `packageRoot` reads `schema/` and `templates/` next to `dist/`; keep `"engines": {"node": ">=22"}`; publish with `npm publish --access public` (scoped packages are private by default). `prepare` already builds.
+**npm package.** In `package.json`: name `mcp-spec-loop`; no `"private": true`; `"bin": {"mcp-spec-loop": "dist/mcp.js"}` (the file already starts with `#!/usr/bin/env node`); add `"files": ["dist", "schema", "templates", "skills"]` because `packageRoot` reads `schema/` and `templates/` next to `dist/`; keep `"engines": {"node": ">=22"}`; publish with `npm publish`. `prepare` already builds.
 
 **Gemini extension.** The repository root, through `gemini-extension.json`; add the GitHub topic `gemini-cli-extension`; tag each release. No build artifact is needed in git because the extension launches the npm package.
 
@@ -183,12 +183,12 @@ default_tools_approval_mode = "writes"
 
 ### Release checklist
 
-- [ ] Same version in `package.json`, `gemini-extension.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and in every `@OWNER/spec-loop@<version>` argument (manifests and `examples/consumer/`).
+- [ ] Same version in `package.json`, `gemini-extension.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and in every `mcp-spec-loop@<version>` argument (manifests and `examples/consumer/`).
 - [ ] `npm run typecheck`; one targeted test file for the touched area.
 - [ ] `npm pack --dry-run` lists `dist/`, `schema/`, `templates/`, `skills/`.
 - [ ] Every `skills/*/SKILL.md`: `name` equals the directory, description at most 1 024 characters, no client-specific field.
 - [ ] `claude plugin validate . --strict` passes.
-- [ ] `npm publish --access public`, then `npx -y @OWNER/spec-loop@<version>` starts and waits on stdin.
+- [ ] `npm publish --access public`, then `npx -y mcp-spec-loop@<version>` starts and waits on stdin.
 - [ ] Copy `skills/` into `examples/consumer/.agents/skills/`.
 - [ ] Commit, tag `v<version>`, create the GitHub release (Gemini update checks follow the Latest release).
 - [ ] Day-one checks below, on each agent, in a scratch project with one feature under `spec/`.
@@ -196,17 +196,17 @@ default_tools_approval_mode = "writes"
 ## 7. Day one per agent
 
 **Gemini CLI**
-1. `gemini extensions install https://github.com/OWNER/spec-loop` (or, in a consumer project, the committed `.gemini/settings.json` and `.agents/skills/`); restart.
+1. `gemini extensions install https://github.com/ng-galien/spec-loop` (or, in a consumer project, the committed `.gemini/settings.json` and `.agents/skills/`); restart.
 2. `/mcp` lists `spec-loop` with ten tools; `/skills list` shows the six spec-loop skills (`framing`, `acceptance`, `anchoring`, `verification`, `done`, `verify`).
 3. Ask "list the spec-loop features", then run the `framing` skill on a new feature. Antigravity users: `agy plugin import gemini`, then the same checks.
 
 **Claude Code**
-1. `claude plugin marketplace add OWNER/spec-loop` then `claude plugin install spec-loop@spec-loop`; or, in a consumer project, commit `.mcp.json` and `.claude/skills/` and accept the prompt.
+1. `claude plugin marketplace add ng-galien/spec-loop` then `claude plugin install spec-loop@spec-loop`; or, in a consumer project, commit `.mcp.json` and `.claude/skills/` and accept the prompt.
 2. `claude mcp list` or `/mcp` shows `spec-loop` connected; `/plugin` shows the plugin and its skills.
 3. `/spec-loop:framing` (plugin) or `/framing` (project skill).
 
 **Codex**
-1. `codex plugin marketplace add OWNER/spec-loop`, then install from `/plugins`; or `codex mcp add spec-loop -- npx -y @OWNER/spec-loop@0.1.0` plus `.agents/skills/` in the project; start a new session.
+1. `codex plugin marketplace add ng-galien/spec-loop`, then install from `/plugins`; or `codex mcp add spec-loop -- npx -y mcp-spec-loop@0.1.0` plus `.agents/skills/` in the project; start a new session.
 2. `codex mcp list` and `/mcp` show the server; `/skills` lists the two skills.
 3. `$framing` on a new feature.
 

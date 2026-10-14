@@ -2,7 +2,7 @@
   "mcpServers": {
     "spec-loop": {
       "command": "npx",
-      "args": ["-y", "@ng-galien/spec-loop@0.1.0"],
+      "args": ["-y", "mcp-spec-loop@0.1.0"],
       "env": { "SPEC_LOOP_ROOT": "/absolute/path/to/your/project" }
     }
   }

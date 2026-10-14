@@ -17,16 +17,16 @@ You need a project folder, Node 22 or later, VS Code, and one agent.
 
    | Agent | Command |
    | --- | --- |
-   | Gemini CLI | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y @ng-galien/spec-loop@0.1.0`, or commit `.gemini/settings.json` from `examples/consumer/` with your absolute project path in `SPEC_LOOP_ROOT` (Gemini CLI 0.1.12 does not substitute `${workspacePath}` there) |
+   | Gemini CLI | `gemini mcp add -s project -e SPEC_LOOP_ROOT="$PWD" spec-loop -- npx -y mcp-spec-loop@0.1.0`, or commit `.gemini/settings.json` from `examples/consumer/` with your absolute project path in `SPEC_LOOP_ROOT` (Gemini CLI 0.1.12 does not substitute `${workspacePath}` there) |
    | Antigravity CLI | `agy plugin import gemini` after the Gemini line, or `.agents/mcp_config.json` from `examples/consumer/` |
-   | Claude Code | `claude mcp add --scope project spec-loop -- npx -y @ng-galien/spec-loop@0.1.0` |
-   | Codex | `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y @ng-galien/spec-loop@0.1.0` |
+   | Claude Code | `claude mcp add --scope project spec-loop -- npx -y mcp-spec-loop@0.1.0` |
+   | Codex | `codex mcp add spec-loop --env SPEC_LOOP_ROOT="$PWD" -- npx -y mcp-spec-loop@0.1.0` |
 
    Gemini CLI was replaced by Antigravity CLI (`agy`) for free and Google One accounts in June 2026. `agy plugin import gemini` converts the Gemini MCP servers, extensions and skills.
 
 3. Skills: copy the six folders of `skills/` (`framing`, `acceptance`, `anchoring`, `verification`, `done`, and `verify` for the owner's edits) into the project's `.agents/skills/` (read by Gemini CLI, Antigravity and Codex). Then link `.claude/skills` to `../.agents/skills` for Claude Code. `examples/consumer/` holds every file a project commits for the three agents.
 
-Until the package is published on npm, replace `npx -y @ng-galien/spec-loop@0.1.0` with `npx -y /path/to/spec-loop` (after `npm install` in this repository) or with `node /path/to/spec-loop/dist/mcp.js`.
+Until the package is published on npm, replace `npx -y mcp-spec-loop@0.1.0` with `npx -y /path/to/spec-loop` (after `npm install` in this repository) or with `node /path/to/spec-loop/dist/mcp.js`.
 
 ### Walkthrough
 

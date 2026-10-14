@@ -8,7 +8,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@ng-galien/spec-loop@0.1.0"
+        "mcp-spec-loop@0.1.0"
       ]
     }
   }

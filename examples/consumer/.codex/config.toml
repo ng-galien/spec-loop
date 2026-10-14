@@ -1,5 +1,5 @@
 [mcp_servers.spec-loop]
 command = "npx"
-args = ["-y", "@ng-galien/spec-loop@0.1.0"]
+args = ["-y", "mcp-spec-loop@0.1.0"]
 startup_timeout_sec = 60
 default_tools_approval_mode = "writes"
