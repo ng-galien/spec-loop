@@ -1,9 +1,10 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { advancePhase, patch, phases, render, status } from "../src/lib/index.js";
+import { advancePhase, create, patch, phases, render, status } from "../src/lib/index.js";
 import { loadProject } from "../src/lib/project.js";
-import { FEATURE, inFolder, workspace } from "./helpers.js";
+import { FEATURE, FOLDER, inFolder, workspace } from "./helpers.js";
 
 const NOW = "2026-10-14T12:00:00.000Z";
 const framing = phases.find((p) => p.name === "framing")!;
@@ -51,7 +52,8 @@ describe("project hooks", () => {
     const moved = await advancePhase(FEATURE, { root, by: "owner", now: NOW });
     expect(moved.ok).toBe(true);
     expect(moved.hooks).toEqual([expect.objectContaining({ phase: "requirements", on: "onEnter", title: "echo entered; exit 3", exitCode: 3, output: "entered\n" })]);
-    expect(moved.next.instruction).toMatch(/^project hook "echo entered; exit 3" \(echo entered; exit 3\) exited with 3: entered on entering "requirements"; the move stands/);
+    expect(moved.reasons).toEqual(['project hook "echo entered; exit 3" (echo entered; exit 3) exited with 3: entered']);
+    expect(moved.next.instruction).toMatch(/^project hook "echo entered; exit 3" \(echo entered; exit 3\) exited with 3: entered \(on entering "requirements"; the move stands\)/);
     const json = await feature(root);
     expect(json.phase).toBe("requirements");
     expect(json.lifecycle.hookRuns).toEqual([expect.objectContaining({ exitCode: 3 })]);
@@ -63,6 +65,53 @@ describe("project hooks", () => {
     expect(refused.ok).toBe(false);
     expect(refused.hooks[0]).toMatchObject({ exitCode: null, output: "[stopped after 1 s]" });
     expect(refused.reasons[0]).toBe('project hook "Slow" (sleep 5) did not finish: [stopped after 1 s]');
+  });
+
+  it("a hook that leaves a process in the background counts by its own exit code, and the background process is stopped", async () => {
+    const root = await completeFraming({ hooks: [{ phase: "framing", on: "beforeLeave", run: "(sleep 30217 &); echo started", timeout: 3, title: "Background" }] });
+    const started = Date.now();
+    const moved = await advancePhase(FEATURE, { root, by: "owner", now: NOW });
+    expect(Date.now() - started).toBeLessThan(2500);
+    expect(moved).toMatchObject({ ok: true, to: "requirements", hooks: [{ exitCode: 0, output: "started\n" }] });
+    const { execSync } = await import("node:child_process");
+    expect(execSync("ps -A -o command").toString().split("\n").map((l) => l.trim())).not.toContain("sleep 30217");
+  });
+
+  it("records the runs even while a rendered file is being edited, without overwriting the edit", async () => {
+    const root = await completeFraming({ hooks: [{ phase: "framing", on: "beforeLeave", run: `printf '\\nOwner note.\\n' >> spec/${FOLDER}/rendered/framing.md; exit 1`, title: "Editor" }] });
+    const refused = await advancePhase(FEATURE, { root, by: "owner", now: NOW });
+    expect(refused.ok).toBe(false);
+    expect(refused.reasons).toEqual(['project hook "Editor" (' + refused.hooks[0]!.run + ") exited with 1"]);
+    expect((await feature(root)).lifecycle.hookRuns).toHaveLength(1);
+    expect(await readFile(inFolder(root, "rendered", "framing.md"), "utf8")).toContain("Owner note.");
+    const s = await status(FEATURE, { root });
+    expect(s.alterations.map((a) => a.kind)).toEqual(["rendered-changed"]);
+  });
+
+  it("keeps the last 10 runs of each hook", async () => {
+    const root = await completeFraming({ hooks: [{ phase: "framing", on: "beforeLeave", run: "exit 1", title: "Fails" }] });
+    for (let i = 0; i < 12; i++) await advancePhase(FEATURE, { root, by: "owner", now: NOW });
+    expect((await feature(root)).lifecycle.hookRuns).toHaveLength(10);
+  });
+
+  it("phase needs an absolute root, since hooks run there", async () => {
+    await expect(advancePhase(FEATURE, { by: "owner" })).rejects.toThrow("phase needs root");
+    await expect(advancePhase(FEATURE, { root: "relative/project", by: "owner" })).rejects.toThrow("phase needs root");
+  });
+
+  it("create enters the first phase: it runs its onEnter hooks and carries its project instructions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "spec-loop-test-"));
+    await mkdir(join(root, "spec"));
+    await writeFile(join(root, "spec", "spec-loop.json"), JSON.stringify({
+      hooks: [{ phase: "framing", on: "onEnter", run: "echo hello", title: "Greeting" }],
+      instructions: { framing: { onEnter: "Read docs/vision.md first." } },
+    }));
+    const created = await create("export-csv", "Export CSV", { root, now: NOW });
+    expect(created.hooks).toEqual([expect.objectContaining({ phase: "framing", on: "onEnter", title: "Greeting", exitCode: 0, output: "hello\n" })]);
+    expect(created.next!.instruction).toBe(`${framing.instructions.onEnter} Project: Read docs/vision.md first.`);
+    const json = JSON.parse(await readFile(join(root, "spec", "FEAT-001-export-csv", "feature.json"), "utf8"));
+    expect(json.lifecycle.hookRuns).toHaveLength(1);
+    expect((await status("FEAT-001", { root })).alterations).toEqual([]);
   });
 
   it("appends project instructions to next.instruction", async () => {

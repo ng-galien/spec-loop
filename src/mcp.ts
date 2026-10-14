@@ -238,7 +238,7 @@ server.registerTool(
       reason: z.string().optional().describe("The owner's reason for opening a feature while another one is not done; required with by owner in that case"),
       root: z.string().describe("Absolute path of the project that holds or will hold spec/; required"),
     },
-    outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable(), next: nextStep.nullable() },
+    outputSchema: { ok: z.boolean(), feature: z.string().nullable(), id: z.string().nullable(), errors: z.array(validationError), render: renderResult.nullable(), hooks: z.array(hookRun).describe("onEnter project hooks of the first phase, run once the feature is created"), next: nextStep.nullable() },
     annotations: writes,
   },
   async ({ name, title, by, reason, root }) =>
@@ -321,7 +321,7 @@ server.registerTool(
       by: z.enum(["agent", "owner"]).describe("Who decided the move: owner when the owner asked for it; a backward move requires owner"),
       to: z.string().optional().describe("An earlier phase to move back to; omit to advance to the next phase"),
       reason: z.string().optional().describe("Why the owner moves the feature back; required with to"),
-      root,
+      root: z.string().describe("Absolute path of the project that holds spec/; required, since project hooks run there"),
     },
     outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), hooks: z.array(hookRun).describe("Project hooks run by this call: beforeLeave hooks of the phase left, then onEnter hooks of the phase entered"), patch: patchResult.nullable(), next: nextStep },
     annotations: writes,

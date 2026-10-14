@@ -9,30 +9,43 @@
       "title": "Framing",
       "summary": "intent, actors, scope, constraints, assumptions, questions, glossary",
       "description": "Fix what the feature is for, who takes part and where it stops, before any requirement is written.",
+      "skill": "framing",
       "produces": [
         "framing"
       ],
       "granularity": "One paragraph of intent, one line per scope item, one object per actor, constraint, assumption, question and glossary term.",
       "checks": [
         "noOpenQuestion"
-      ]
+      ],
+      "instructions": {
+        "onEnter": "Run the `framing` skill. Explore the repository first, then ask the owner one question at a time, each with your recommended answer, and stop after each question until the owner answers. Write each answer with `patch` at once.",
+        "onIncomplete": "Continue the `framing` skill: take the first item of `next.todo`, then the fields of `status.unaddressed`; ask the owner one question about it with your recommendation, and stop until the owner answers. Do not call `phase`.",
+        "beforeLeave": "Framing is complete. Point the owner to rendered/framing.md, ask whether to move to requirements, and stop. Call `phase` only after the owner's explicit yes in the conversation, with `by: \"owner\"`."
+      }
     },
     {
       "name": "requirements",
       "title": "Requirements",
       "summary": "one EARS sentence per requirement, with facet and priority",
       "description": "State each observable response of the system as one EARS sentence with a priority.",
+      "skill": "requirements",
       "produces": [
         "requirements"
       ],
       "granularity": "One EARS sentence, one observable response, per requirement.",
-      "checks": []
+      "checks": [],
+      "instructions": {
+        "onEnter": "Run the `requirements` skill. Write one EARS requirement per behaviour from the framing, a few at a time, show them to the owner and stop for corrections. A requirement about anything the user sees or operates has facet `interface` and needs a screen wireframe: an svg file under assets/, declared as an artifact of kind `screen` that lists the requirement in `illustrates`.",
+        "onIncomplete": "Continue the `requirements` skill: fix each item of `next.todo`; an interface requirement without a valid svg wireframe is listed there and blocks acceptance. Ask the owner only what the framing leaves open, one question at a time, and stop after each one. Do not call `phase`.",
+        "beforeLeave": "Requirements are complete. Check that every requirement about what the user sees or operates has facet `interface` and its svg wireframe, point the owner to rendered/requirements.md, ask whether to move to acceptance, and stop. Call `phase` only after the owner's explicit yes in the conversation, with `by: \"owner\"`."
+      }
     },
     {
       "name": "acceptance",
       "title": "Acceptance",
       "summary": "one Given/When/Then example per criterion, grouped by requirement",
       "description": "Give each requirement concrete Given/When/Then examples that show it satisfied or violated.",
+      "skill": "acceptance",
       "produces": [
         "criteria"
       ],
@@ -40,26 +53,38 @@
       "checks": [
         "requirementHasCriterion",
         "interfaceHasScreen"
-      ]
+      ],
+      "instructions": {
+        "onEnter": "Run the `acceptance` skill. Draft Given/When/Then criteria for each requirement in id order, with concrete values; ask the owner only for business values, one question at a time, and stop after each one.",
+        "onIncomplete": "Continue the `acceptance` skill: each requirement listed in `next.todo` still needs a criterion. Ask the owner one question at a time about business values only, and stop after each one. Do not call `phase`.",
+        "beforeLeave": "Every requirement has its criteria. Point the owner to rendered/criteria.md, ask whether to move to anchoring, and stop. Call `phase` only after the owner's explicit yes in the conversation, with `by: \"owner\"`."
+      }
     },
     {
       "name": "anchoring",
       "title": "Anchoring",
       "summary": "the places in the code that realise the requirements",
       "description": "Point at the places in the code that realize the requirements, and say how each one changes.",
+      "skill": "anchoring",
       "produces": [
         "anchors"
       ],
       "granularity": "One file path, plus a symbol when there is one, per anchor.",
       "checks": [
         "mustRequirementHasAnchor"
-      ]
+      ],
+      "instructions": {
+        "onEnter": "Run the `anchoring` skill. Read the target repository and anchor each requirement on a file and, when there is one, a symbol; write no code. Ask the owner only when two places are equally plausible, one question at a time, and stop after each one.",
+        "onIncomplete": "Continue the `anchoring` skill: each MUST requirement listed in `next.todo` still needs an anchor. Read the code before deciding, and write no code. Do not call `phase`.",
+        "beforeLeave": "Every MUST requirement is anchored. Point the owner to rendered/anchors.md, ask whether to move to verification, and stop; the code is then written at the anchors, outside spec-loop. Call `phase` only after the owner's explicit yes in the conversation, with `by: \"owner\"`."
+      }
     },
     {
       "name": "verification",
       "title": "Verification",
       "summary": "the tests that verify the criteria, and the coverage",
       "description": "Bind every criterion to the tests that verify it, named by the criterion id.",
+      "skill": "verification",
       "produces": [
         "tests"
       ],
@@ -67,18 +92,29 @@
       "checks": [
         "criterionHasTest",
         "testNameCarriesCriterion"
-      ]
+      ],
+      "instructions": {
+        "onEnter": "Run the `verification` skill. Check that the code is written at the anchors, then declare one test per criterion, its name starting with the criterion id; run only the named test files, once, and record each status from that run.",
+        "onIncomplete": "Continue the `verification` skill: each item of `next.todo` is a criterion without a test or a test not passing. Write or fix the test, run only the named test files once, and record each status from the runner's output. Do not call `phase`.",
+        "beforeLeave": "Every criterion has a passing or justified test. Run the `done` skill: report the coverage and the command you ran, ask the owner whether to close the feature, and stop. Call `phase` only after the owner's explicit yes in the conversation, with `by: \"owner\"`."
+      }
     },
     {
       "name": "done",
       "title": "Done",
       "summary": "every coverage rule holds",
       "description": "Close the feature once every requirement has a criterion, every criterion a test, and every test passes or is replaced by a justified method.",
+      "skill": "done",
       "produces": [],
       "granularity": "No new object.",
       "checks": [
         "testsPassingOrJustified"
-      ]
+      ],
+      "instructions": {
+        "onEnter": "The feature is closed. Tell the owner in one paragraph what it covers, and stop. Another feature may now be created.",
+        "onIncomplete": "The feature is closed but a closing rule fails again (see `next.todo`). Tell the owner and stop; reopen an earlier phase only on the owner's decision, with `phase`, `to`, `by: \"owner\"` and the owner's reason.",
+        "beforeLeave": "The feature is closed and there is no later phase. Wait for the owner's next request."
+      }
     }
   ],
   "x-checks": {
@@ -88,7 +124,7 @@
     "criterionHasTest": "Every criterion is verified by at least one test.",
     "testNameCarriesCriterion": "Every test name starts with the id of a criterion it verifies and contains each criterion id it verifies.",
     "interfaceHasScreen": {
-      "description": "Every requirement of facet interface is illustrated by at least one screen artifact in svg, before the feature enters the acceptance phase.",
+      "description": "Every requirement of facet interface is illustrated by at least one screen artifact in svg whose file exists under the feature folder and passes the svg check, before the feature enters the acceptance phase.",
       "gate": "entry",
       "requirement": {
         "facet": "interface"
@@ -199,7 +235,7 @@
     },
     "lifecycle": {
       "$ref": "#/$defs/lifecycle",
-      "description": "Creation date, phase history and last verification, written only by the create, phase and verify tools."
+      "description": "Creation date, phase history, last reconciliation and project hook runs, written only by the create, phase and reconcile tools."
     }
   },
   "allOf": [
@@ -672,7 +708,7 @@
           ],
           "description": "What side of the system the requirement fixes, which decides how it is illustrated and verified.",
           "x-enumDescriptions": {
-            "interface": "What a person sees and does on a screen; illustrated by a screen wireframe.",
+            "interface": "Anything a person sees or operates: a screen, a form, a message, a control; illustrated by a screen wireframe in svg before acceptance.",
             "behaviour": "How the system responds to an event or a state, observable from outside.",
             "data": "What the system stores, declares or exposes as data and configuration.",
             "integration": "How the system talks to another system: protocol, request, error contract.",
@@ -1167,7 +1203,7 @@
         },
         "source": {
           "$ref": "#/$defs/text",
-          "description": "Inline Mermaid or ascii text, for formats mermaid and ascii.",
+          "description": "Inline Mermaid or ascii text, for formats mermaid and ascii. A Mermaid source must parse: flowchart, sequenceDiagram, stateDiagram-v2, classDiagram or erDiagram.",
           "examples": [
             "flowchart LR\n  agent --> maket --> api"
           ]
@@ -1175,7 +1211,7 @@
         "path": {
           "type": "string",
           "pattern": "^assets/[^/].*\\.svg$",
-          "description": "File under spec/<feature>/assets/, for format svg.",
+          "description": "File under spec/<feature>/assets/, for format svg. Write it before declaring the artifact: the stored feature checks that it exists and is a well-formed svg in the SVG namespace, with a viewBox or a width and a height, and with no script element or on* attribute.",
           "examples": [
             "assets/workspace-screen.svg"
           ]
@@ -1286,6 +1322,34 @@
             }
           }
         },
+        "openedWhileUnfinished": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "features",
+            "reason",
+            "date"
+          ],
+          "description": "Set when the owner opened this feature while other features were not done yet: which ones, and the owner's reason.",
+          "properties": {
+            "features": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/featureId"
+              },
+              "description": "Ids of the features that were not done."
+            },
+            "reason": {
+              "$ref": "#/$defs/text",
+              "description": "Why the owner opened this feature anyway."
+            },
+            "date": {
+              "$ref": "#/$defs/date",
+              "description": "When the feature was opened."
+            }
+          }
+        },
         "acceptedChanges": {
           "type": "array",
           "description": "Hand edits of feature.json accepted by verify, each with the reason given.",
@@ -1307,9 +1371,69 @@
               }
             }
           }
+        },
+        "hookRuns": {
+          "type": "array",
+          "description": "Runs of the project hooks declared in spec/spec-loop.json, oldest first, kept as evidence: the last 10 of each hook (same phase and title).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "phase",
+              "on",
+              "title",
+              "run",
+              "date",
+              "exitCode",
+              "durationMs",
+              "output"
+            ],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "description": "Phase the hook belongs to."
+              },
+              "on": {
+                "enum": [
+                  "beforeLeave",
+                  "onEnter"
+                ],
+                "description": "beforeLeave: run before a forward move out of the phase; onEnter: run right after the phase was entered."
+              },
+              "title": {
+                "$ref": "#/$defs/text",
+                "description": "Name of the hook."
+              },
+              "run": {
+                "$ref": "#/$defs/text",
+                "description": "Shell command run from the project root."
+              },
+              "date": {
+                "$ref": "#/$defs/date",
+                "description": "When it ran."
+              },
+              "exitCode": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Exit code of the command; null when it was stopped by its timeout or could not start."
+              },
+              "durationMs": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How long it ran, in milliseconds."
+              },
+              "output": {
+                "type": "string",
+                "description": "stdout and stderr, interleaved, cut to their last 4000 characters."
+              }
+            }
+          }
         }
       }
     }
   },
-  "x-checksFormat": "A check is either a sentence (implemented by name in code) or an object rule: requirements matching `requirement` must be illustrated by an artifact matching `artifact`; `gate: entry` makes it hold already in the phase before the one that lists it; `message` is shown with {id} replaced. A check listed under a phase that produces no section is always an entry gate."
+  "x-checksFormat": "A check is either a sentence (implemented by name in code) or an object rule: requirements matching `requirement` must be illustrated by an artifact matching `artifact`; `gate: entry` makes it hold already in the phase before the one that lists it; `message` is shown with {id} replaced. A check listed under a phase that produces no section is always an entry gate.",
+  "x-phasesFormat": "Each phase names the `skill` that fills it and three `instructions` for the agent, carried by every tool result in `next.instruction`: `onEnter` right after the phase is entered, `onIncomplete` while the phase is incomplete, `beforeLeave` once it is complete."
 }

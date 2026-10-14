@@ -1,6 +1,6 @@
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, mkdir, symlink } from "node:fs/promises";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { validate, validateFeature, type Feature } from "../src/lib/index.js";
 import { FOLDER, guineaPig, inAcceptance, inFolder, inRequirements, workspace } from "./helpers.js";
 
@@ -83,6 +83,25 @@ describe("validate", () => {
     expect(validate(feature).valid).toBe(true);
   });
 
+  it("artifacts: the Mermaid parser leaves no global behind", async () => {
+    const feature = await guineaPig();
+    await validateFeature(feature);
+    expect("window" in globalThis).toBe(false);
+    expect("injected" in globalThis).toBe(false);
+  });
+
+  it("artifacts: a Mermaid parser that fails to load gives a readable invalid error, and the next validation retries", async () => {
+    vi.resetModules();
+    vi.doMock("happy-dom", () => {
+      throw new Error("no DOM here");
+    });
+    const { mermaidError } = await import("../src/lib/mermaid.js");
+    expect(await mermaidError("flowchart LR\n  a --> b")).toEqual({ kind: "unavailable", message: expect.stringContaining("the Mermaid parser could not be loaded") });
+    vi.doUnmock("happy-dom");
+    expect(await mermaidError("flowchart LR\n  a --> b")).toBeNull();
+    vi.resetModules();
+  });
+
   it("artifacts: the Mermaid kinds spec-loop renders all parse", async () => {
     const sources = [
       "sequenceDiagram\n  agent->>maket: list\n  maket-->>agent: items",
@@ -154,6 +173,22 @@ describe("validate", () => {
         { pointer: "/requirements/0", message: "REQ-001 needs its screen wireframe: ART-02 is missing or invalid", kind: "incomplete" },
       ]);
     }
+  });
+
+  it("svg: a screen path may not leave the feature folder, by .., absolute path or symbolic link", async () => {
+    const root = await workspace("requirements");
+    await mkdir(inFolder(root, "assets"), { recursive: true });
+    const outside = resolve(root, "outside.svg");
+    await copyFile(resolve(import.meta.dirname, "fixtures", "svg", "screen.svg"), outside);
+    await symlink(outside, inFolder(root, "assets", "link.svg"));
+    const check = async (path: string) => {
+      const feature = inRequirements(await guineaPig());
+      (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Screen", path, illustrates: [] });
+      return (await validateFeature(feature, { folder: FOLDER, options: { root } })).errors.filter((e) => e.kind === "invalid");
+    };
+    expect(await check("assets/../../../outside.svg")).toEqual([{ pointer: "/artifacts/1", message: "ART-02: assets/../../../outside.svg is outside the feature folder", kind: "invalid" }]);
+    expect(await check("assets/link.svg")).toEqual([{ pointer: "/artifacts/1", message: "ART-02: assets/link.svg is outside the feature folder", kind: "invalid" }]);
+    expect(await check(outside)).toContainEqual(expect.objectContaining({ pointer: "/artifacts/1", message: `ART-02: ${outside} is outside the feature folder` }));
   });
 
   it("svg: a bare candidate object is not checked against files", async () => {

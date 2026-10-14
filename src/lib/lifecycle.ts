@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { isAbsolute } from "node:path";
 import { diffFolder } from "./diff.js";
 import { indexIds, loadFeature, resolveFeature } from "./model.js";
 import { featureFile, specDir, workspaceRoot, type Location } from "./paths.js";
@@ -7,6 +8,7 @@ import { PROTECTED, patchFolder, protectedChanges, touchesProtected } from "./pa
 import { backup, lastGoodPath } from "./render.js";
 import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
+import { hookFailure, recordRuns } from "./evidence.js";
 import { hooksFor, loadProject, passed, runHooks, hookTitle, type HookMoment, type HookRun } from "./project.js";
 import type { Alteration, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validateFeature } from "./artifacts.js";
@@ -123,21 +125,11 @@ export interface PhaseResult {
   next: NextStep;
 }
 
-function hookRunsOps(json: Record<string, unknown>, runs: HookRun[]): PatchOperation[] {
-  if (runs.length === 0) return [];
-  const existing = (json.lifecycle as { hookRuns?: unknown } | undefined)?.hookRuns;
-  return Array.isArray(existing) ? runs.map((value) => ({ op: "add" as const, path: "/lifecycle/hookRuns/-", value })) : [{ op: "add", path: "/lifecycle/hookRuns", value: runs }];
-}
-
-const failure = (run: HookRun) => {
-  const last = run.output.trimEnd().split("\n").at(-1) ?? "";
-  return `project hook "${run.title}" (${run.run}) ${run.exitCode === null ? "did not finish" : `exited with ${run.exitCode}`}${last ? `: ${last}` : ""}`;
-};
-
 export async function advancePhase(
   ref: string,
   options: Location & { by?: Author; now?: string; to?: string; reason?: string } = {},
 ): Promise<PhaseResult> {
+  if (!options.root || !isAbsolute(options.root)) throw new Error("phase needs root: the absolute path of the project, where its hooks run");
   const folder = await resolveFeature(ref, options);
   const current = await statusFolder(folder, options);
   const by = options.by ?? "agent";
@@ -166,11 +158,11 @@ export async function advancePhase(
   if (reasons.length > 0) return refuse([], null, current.next);
   const now = options.now ?? new Date().toISOString();
   const leaving = backward ? [] : await runHooks(hooksFor(project, current.phase, "beforeLeave"), options);
-  const json = await loadFeature(folder, options);
   if (leaving.some((run) => !passed(run))) {
-    reasons.push(...leaving.filter((run) => !passed(run)).map(failure));
-    const recorded = await patchFolder(folder, hookRunsOps(json, leaving), { ...options, allowProtected: true, now });
-    return refuse(leaving, recorded, await nextFor(folder, options));
+    reasons.push(...leaving.filter((run) => !passed(run)).map(hookFailure));
+    const unrecorded = await recordRuns(folder, leaving, { ...options, now });
+    if (unrecorded) reasons.push(unrecorded);
+    return refuse(leaving, null, await nextFor(folder, options));
   }
   const entry = { phase: target, date: now, by, ...(backward ? { reason: options.reason!.trim() } : {}) };
   const result = await patchFolder(
@@ -178,32 +170,30 @@ export async function advancePhase(
     [
       { op: "replace", path: "/phase", value: target },
       { op: "add", path: "/lifecycle/phaseHistory/-", value: entry },
-      ...hookRunsOps(json, leaving),
     ],
     { ...options, allowProtected: true, now },
   );
   if (!result.ok) {
+    const unrecorded = await recordRuns(folder, leaving, { ...options, now });
     return {
-      ok: false, feature: folder, from: current.phase, to: target, reasons: result.errors.map((e) => e.message), missing: result.validation?.errors ?? [],
-      hooks: leaving, patch: result, next: await nextFor(folder, options),
+      ok: false, feature: folder, from: current.phase, to: target, reasons: [...result.errors.map((e) => e.message), ...(unrecorded ? [unrecorded] : [])],
+      missing: result.validation?.errors ?? [], hooks: leaving, patch: result, next: await nextFor(folder, options),
     };
   }
   const entering = await runHooks(hooksFor(project, target, "onEnter"), options);
-  const final = entering.length > 0 ? await patchFolder(folder, hookRunsOps(await loadFeature(folder, options), entering), { ...options, allowProtected: true, now }) : result;
+  const unrecorded = await recordRuns(folder, [...leaving, ...entering], { ...options, now });
   const next = await nextFor(folder, options, { entered: true });
-  const failed = entering.filter((run) => !passed(run));
-  if (failed.length > 0) {
-    next.instruction = `${failed.map(failure).join("; ")} on entering "${target}"; the move stands. Show the output to the owner. ${next.instruction}`;
-  }
+  const notes = [...entering.filter((run) => !passed(run)).map(hookFailure), ...(unrecorded ? [unrecorded] : [])];
+  if (notes.length > 0) next.instruction = `${notes.join("; ")} (on entering "${target}"; the move stands). Show this to the owner. ${next.instruction}`;
   return {
     ok: true,
     feature: folder,
     from: current.phase,
     to: target,
-    reasons: [],
-    missing: final.validation?.errors ?? [],
+    reasons: notes,
+    missing: (await validateFeature(await loadFeature(folder, options), { folder, options })).errors,
     hooks: [...leaving, ...entering],
-    patch: final,
+    patch: result,
     next,
   };
 }

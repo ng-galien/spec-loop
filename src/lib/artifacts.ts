@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { resolve, sep } from "node:path";
+import { readFile, realpath } from "node:fs/promises";
+import { isAbsolute, resolve, sep } from "node:path";
 import { featureDir, type Location } from "./paths.js";
 import { svgProblem } from "./svg.js";
 import type { ValidationError, ValidationResult } from "./types.js";
@@ -14,13 +14,20 @@ export interface Stored {
 
 async function svgError(path: string, stored: Stored): Promise<string | null> {
   const dir = featureDir(stored.folder, stored.options);
-  const file = resolve(dir, path);
-  if (!file.startsWith(`${dir}${sep}`)) return `${path} is outside the feature folder`;
-  let text: string;
+  const outside = `${path} is outside the feature folder`;
+  if (isAbsolute(path) || !resolve(dir, path).startsWith(`${dir}${sep}`)) return outside;
+  let real: string;
   try {
-    text = await readFile(file, "utf8");
+    real = await realpath(resolve(dir, path));
   } catch {
     return `${path} does not exist in spec/${stored.folder}/; write the file before declaring it`;
+  }
+  if (!real.startsWith(`${await realpath(dir)}${sep}`)) return outside;
+  let text: string;
+  try {
+    text = await readFile(real, "utf8");
+  } catch (error) {
+    return `${path} cannot be read: ${(error as Error).message}`;
   }
   const problem = svgProblem(text);
   return problem ? `${path} ${problem}` : null;
@@ -36,7 +43,8 @@ export async function artifactErrors(json: unknown, stored?: Stored): Promise<{ 
       const { mermaidError } = await import("./mermaid.js");
       const error = await mermaidError(artifact.source);
       if (error) {
-        errors.push({ pointer: `/artifacts/${i}`, message: `${String(artifact.id ?? "artifact")}: the Mermaid source does not parse: ${error}`, kind: "invalid" });
+        const text = error.kind === "parse" ? `the Mermaid source does not parse: ${error.message}` : error.message;
+        errors.push({ pointer: `/artifacts/${i}`, message: `${String(artifact.id ?? "artifact")}: ${text}`, kind: "invalid" });
         broken.add(String(artifact.id));
       }
     }

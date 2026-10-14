@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import fastJsonPatch from "fast-json-patch";
 import { resolveFeature, serializeFeature } from "./model.js";
 import { featureFile, type Location } from "./paths.js";
-import { ownerEditedFiles, render, renderToMemory } from "./render.js";
+import { ownerEditedFiles, readManifest, render, renderToMemory, sha256 } from "./render.js";
 import { nextFor } from "./next.js";
 import type { Feature, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
 import { validateFeature } from "./artifacts.js";
@@ -15,6 +15,7 @@ export interface PatchOptions extends Location {
   force?: boolean;
   now?: string;
   allowProtected?: boolean;
+  evidence?: boolean;
 }
 
 export const touchesProtected = (path: string | undefined) => path !== undefined && (path === "" || PROTECTED.some((p) => path === p || path.startsWith(`${p}/`)));
@@ -28,7 +29,8 @@ const PROTECTED_MESSAGE = "id, name, phase and lifecycle are written by the crea
 
 export async function patchFolder(folder: string, ops: PatchOperation[], options: PatchOptions = {}): Promise<PatchResult> {
   const file = featureFile(folder, options);
-  const current = JSON.parse(await readFile(file, "utf8")) as Feature;
+  const raw = await readFile(file, "utf8");
+  const current = JSON.parse(raw) as Feature;
   const fail = (errors: ValidationError[], validation: PatchResult["validation"] = null): PatchResult => ({ ok: false, feature: folder, errors, validation, render: null });
   if (!options.allowProtected) {
     const blocked = ops.filter((op) => touchesProtected(op.path) || touchesProtected(op.from));
@@ -48,6 +50,14 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
     if (changed.length > 0) return fail(changed.map((key) => ({ pointer: `/${key}`, message: `${PROTECTED_MESSAGE}; this patch changes ${key}`, kind: "invalid" as const })));
   }
   const validation = await validateFeature(next, { folder, options });
+  if (options.evidence) {
+    const broken = validation.errors.filter((e) => e.kind === "invalid" && e.pointer.startsWith("/lifecycle"));
+    if (broken.length > 0) return fail(broken, validation);
+    const clean = (await readManifest(folder, options))?.feature?.hash === sha256(raw);
+    await writeFile(file, serializeFeature(next));
+    const rendered = await render(folder, { ...options, force: false, trustedFeature: true, recordFeature: clean });
+    return { ok: true, feature: folder, errors: [], validation, render: rendered };
+  }
   if (!validation.valid) return fail(validation.errors.filter((e) => e.kind === "invalid"), validation);
   if (!options.force) {
     const edited = await ownerEditedFiles(folder, renderToMemory(next, validation), next, options);

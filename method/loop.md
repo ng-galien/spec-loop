@@ -41,4 +41,4 @@ Each render writes `spec/<feature>/.manifest.json`: the sha256 and render time o
 
 Every alteration is pending until a `reconcile` accounts for it. While anything is pending, `patch` and `render` refuse to write (a hand-edited `feature.json` included, a deleted rendered file is not silently recreated) and `phase` refuses to advance. `reconcile` restores the projection exactly: files added by hand are removed, deleted ones recreated, and the owner's versions are kept under `.spec-loop/overwritten/<time>/`. Each render also keeps the last known good `feature.json` under `.spec-loop/feature.last.json`.
 
-`status` and `features` echo the resolved project root and `spec/` path; check them when a feature seems missing. `create` needs an absolute `root`.
+`status` and `features` echo the resolved project root and `spec/` path; check them when a feature seems missing. `create` and `phase` need an absolute `root`: `phase` runs the project hooks there.

@@ -121,7 +121,8 @@ A project can add to the base loop, never remove from it, with one file it owns:
 - A `beforeLeave` hook runs before `phase` moves the feature forward out of its phase; a non-zero exit blocks the move.
 - An `onEnter` hook runs right after the phase is entered; a failure is recorded and does not undo the move.
 - The server runs each command through the shell from the project root, with a timeout (120 s by default), and keeps the last 4000 characters of its output.
-- Every run is recorded in the feature (`lifecycle.hookRuns`), shown by `status`, and listed in `rendered/verification.md`.
+- `create` runs the `onEnter` hooks of the first phase: creating a feature is entering it.
+- Every run is recorded in the feature (`lifecycle.hookRuns`, the last 10 per hook), shown by `status`, and listed in `rendered/verification.md`; `phase` needs an absolute `root`, where the hooks run.
 - `instructions` are appended to the schema's instructions in `next.instruction`.
 
 The commands come only from this file, which belongs to the project like its `package.json` scripts; spec-loop runs nothing from a remote source. A complete example is in [`examples/consumer/spec/spec-loop.json`](examples/consumer/spec/spec-loop.json); the details are in `learn` topic `project`.

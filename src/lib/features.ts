@@ -8,7 +8,8 @@ import { featureDir, featureFile, schemaPath, specDir, specSchemaCopy, templates
 import { phaseTitle, render } from "./render.js";
 import { firstPhase, lastPhase, nextPhase, phases } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
-import { loadProject } from "./project.js";
+import { hookFailure, recordRuns } from "./evidence.js";
+import { hooksFor, loadProject, passed, runHooks, type HookRun } from "./project.js";
 import type { Feature, NextStep, RenderResult, ValidationError } from "./types.js";
 import { validateFeature } from "./artifacts.js";
 
@@ -96,6 +97,7 @@ export interface CreateResult {
   id: string | null;
   errors: ValidationError[];
   render: RenderResult | null;
+  hooks: HookRun[];
   next: NextStep | null;
 }
 
@@ -106,7 +108,7 @@ export interface CreateOptions extends Location {
 }
 
 export async function create(name: string, title: string, options: CreateOptions = {}): Promise<CreateResult> {
-  const fail = (...messages: string[]): CreateResult => ({ ok: false, feature: null, id: null, errors: messages.map((message) => ({ pointer: "", message, kind: "invalid" as const })), render: null, next: null });
+  const fail = (...messages: string[]): CreateResult => ({ ok: false, feature: null, id: null, errors: messages.map((message) => ({ pointer: "", message, kind: "invalid" as const })), render: null, hooks: [], next: null });
   if (!options.root || !isAbsolute(options.root)) return fail("create needs root: the absolute path of the project that holds or will hold spec/");
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return fail(`invalid name "${name}": use lowercase words separated by dashes`);
   const existing = await featureFolders(options);
@@ -150,5 +152,10 @@ export async function create(name: string, title: string, options: CreateOptions
     await writeFile(featureFile(folder, options), serializeFeature(skeleton));
   }
   const rendered = await render(folder, { ...options, now });
-  return { ok: true, feature: folder, id, errors: [], render: rendered, next: await nextFor(folder, options, { entered: true }) };
+  const hooks = await runHooks(hooksFor(loadProject(options), phase, "onEnter"), options);
+  const unrecorded = await recordRuns(folder, hooks, { ...options, now });
+  const next = await nextFor(folder, options, { entered: true });
+  const notes = [...hooks.filter((run) => !passed(run)).map(hookFailure), ...(unrecorded ? [unrecorded] : [])];
+  if (notes.length > 0) next.instruction = `${notes.join("; ")} (on entering "${phase}"; the feature is created). Show this to the owner. ${next.instruction}`;
+  return { ok: true, feature: folder, id, errors: [], render: rendered, hooks, next };
 }

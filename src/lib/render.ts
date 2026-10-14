@@ -455,6 +455,7 @@ export async function ownerEditedFiles(folder: string, next: RenderedFile[], fea
 
 export interface RenderOptions extends GuardOptions {
   force?: boolean;
+  recordFeature?: boolean;
   now?: string;
 }
 
@@ -476,7 +477,18 @@ export async function render(ref: string, options: RenderOptions = {}): Promise<
   const files = renderToMemory(json, validation);
   const edited = await ownerEditedFiles(folder, files, json, options);
   const result: RenderResult = { ok: true, feature: folder, files: [], removed: [], backedUp: [], refused: [], validation };
-  if (edited.length > 0 && !options.force) return { ...result, ok: false, refused: edited };
+  if (edited.length > 0 && !options.force) {
+    if (options.recordFeature) {
+      const manifest = await readManifest(folder, options);
+      const featureRaw = await readFile(featureFile(folder, options), "utf8");
+      const nowRefused = options.now ?? new Date().toISOString();
+      await mkdir(stateDir(folder, options), { recursive: true });
+      await writeFile(lastGoodPath(folder, options), featureRaw);
+      const kept: Manifest = { feature: { hash: sha256(featureRaw), renderedAt: nowRefused }, files: manifest?.files ?? {}, assets: manifest?.assets ?? {} };
+      await writeFile(manifestPath(folder, options), `${JSON.stringify(kept, null, 2)}\n`);
+    }
+    return { ...result, ok: false, refused: edited };
+  }
   const now = options.now ?? new Date().toISOString();
   const base = renderedDir(folder, options);
   const produced = new Set(files.map((f) => f.path));

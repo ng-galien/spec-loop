@@ -1374,7 +1374,7 @@
         },
         "hookRuns": {
           "type": "array",
-          "description": "Every run of a project hook declared in spec/spec-loop.json, oldest first, kept as evidence.",
+          "description": "Runs of the project hooks declared in spec/spec-loop.json, oldest first, kept as evidence: the last 10 of each hook (same phase and title).",
           "items": {
             "type": "object",
             "additionalProperties": false,

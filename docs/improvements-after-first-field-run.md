@@ -24,7 +24,7 @@ What worked and must stay: the Gemini extension packaging (`gemini extensions li
 
 **Contract.**
 - `create` refuses while any feature under `spec/` is not in the last phase (`done`). The error names the blocking feature, its phase and its missing count, for example: `FEAT-003 (verification, 10 items missing) is not done; finish it or ask the owner to open a new feature anyway`.
-- Override by the owner only: `create` takes optional `by: "agent" | "owner"` (default `agent`) and `reason`. With `by: "owner"` and a non-empty reason the creation goes through and the reason is recorded in the new feature's lifecycle: `lifecycle.openedWhileUnfinished: { feature: "FEAT-003", reason, date }`. The lifecycle stays unpatchable.
+- Override by the owner only: `create` takes optional `by: "agent" | "owner"` (default `agent`) and `reason`. With `by: "owner"` and a non-empty reason the creation goes through and the reason is recorded in the new feature's lifecycle: `lifecycle.openedWhileUnfinished: { features: ["FEAT-003"], reason, date }` (a list: every feature not done at that moment). The lifecycle stays unpatchable.
 - The `features` tool keeps listing every feature with phase, missing count, pending owner edits, alterations and last modification, so a stalled feature is visible.
 
 **Where.** `src/lib/features.ts` (`create`), schema `lifecycle` definition, `create` input and output schemas in `src/mcp.ts`, the framing skill (it is the one that creates), `method/loop.md`, one line in `docs/decisions.md`.
@@ -63,10 +63,11 @@ What worked and must stay: the Gemini extension packaging (`gemini extensions li
   ```
 
 - Project `instructions.<phase>.{onEnter, beforeLeave}` are appended to the schema instructions in `next.instruction`.
+- `phase` requires `root`, an absolute path, as `create` does: the hooks run there. `create` runs the `onEnter` hooks of the first phase.
 - Command hooks run with the project root as working directory, through the shell, with the timeout in seconds (default 120); stdout and stderr are captured and truncated to 4000 characters.
 - `on: "beforeLeave"` hooks run inside `phase` before a forward move: any non-zero exit code blocks the move and the result says which hook failed and why; the move proceeds only when every hook passed.
 - `on: "onEnter"` hooks run right after a successful move; a failure does not undo the move but is recorded.
-- Every run is recorded in `lifecycle.hookRuns[]`: `{ phase, on, title, run, date, exitCode, durationMs, output }`. `status` reports the last run per hook. The `phase` result carries `hooks: [...]` with what ran. The runs are rendered in the feature's documents as evidence (in `verification.md` for verification hooks).
+- Every run is recorded in `lifecycle.hookRuns[]`: `{ phase, on, title, run, date, exitCode, durationMs, output }`. `status` reports the last run per hook. The `phase` result carries `hooks: [...]` with what ran. The runs are rendered as evidence in `verification.md` only, in a "Project hooks" table listing the runs of every phase; that document exists once the feature reaches verification, so runs of earlier phases appear there from then on. `lifecycle.hookRuns` keeps the last 10 runs of each hook.
 - The commands come from the project's own file, which belongs to the user; spec-loop never fetches hooks from anywhere else. The docs say so.
 - Documented in a `project` topic of `learn`, in the README ("Enrich the loop from your project") and in `examples/consumer/spec/spec-loop.json`.
 
@@ -110,6 +111,6 @@ These came out of the field run; they are recorded here so they are not lost. Th
 ## For the extension maintainer
 
 - Take the upstream version once these commits are in; do not patch a copy.
-- After updating, restart the MCP server (tool contracts changed: `create` gains `by` and `reason`; results gain `next`; `phase` gains `hooks`).
+- After updating, restart the MCP server (tool contracts changed: `create` gains `by`, `reason` and `hooks`; results gain `next`; `phase` gains `hooks` and requires an absolute `root`).
 - Move the project rules that live in the demo's GEMINI.md (independent review, test commands) into `spec/spec-loop.json` of that project; keep GEMINI.md for what is not a loop rule.
 - Verify on one feature: `create` refused while another is unfinished; `next.instruction` present in `status`; a broken `flowchart` refused by `patch`; an interface requirement without svg reported by `status` during requirements; a `beforeLeave` hook that exits 1 blocks `phase`.

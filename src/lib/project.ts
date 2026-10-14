@@ -101,16 +101,22 @@ export function runHook(hook: ProjectHook, options: Location & { now?: string } 
     };
     child.stdout.on("data", collect);
     child.stderr.on("data", collect);
-    const timer = setTimeout(() => {
-      timedOut = true;
+    const killGroup = () => {
       try {
         process.kill(-child.pid!, "SIGKILL");
       } catch {
         child.kill("SIGKILL");
       }
-    }, timeout * 1000);
+    };
+    let done = false;
     const finish = (exitCode: number | null, extra = "") => {
+      if (done) return;
+      done = true;
       clearTimeout(timer);
+      clearTimeout(grace);
+      killGroup();
+      child.stdout.destroy();
+      child.stderr.destroy();
       resolve({
         phase: hook.phase,
         on: hook.on,
@@ -119,13 +125,23 @@ export function runHook(hook: ProjectHook, options: Location & { now?: string } 
         date,
         exitCode,
         durationMs: Math.round(performance.now() - started),
-        output: truncate(output + extra),
+        output: truncate(`${output}${extra && output && !output.endsWith("\n") ? "\n" : ""}${extra}`),
       });
     };
-    child.on("error", (error) => finish(null, `${output && !output.endsWith("\n") ? "\n" : ""}[could not start: ${error.message}]`));
-    child.on("close", (code) => {
-      if (timedOut) finish(null, `${output && !output.endsWith("\n") ? "\n" : ""}[stopped after ${timeout} s]`);
-      else finish(code);
+    let grace: NodeJS.Timeout | undefined;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      finish(null, `[stopped after ${timeout} s]`);
+    }, timeout * 1000);
+    child.on("error", (error) => finish(null, `[could not start: ${error.message}]`));
+    child.on("exit", (code) => {
+      if (timedOut) return;
+      let closed = false;
+      child.on("close", () => {
+        closed = true;
+        finish(code);
+      });
+      if (!closed) grace = setTimeout(() => finish(code), 200);
     });
   });
 }

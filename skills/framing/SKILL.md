@@ -6,7 +6,7 @@ description: Frame a spec-loop feature with the owner by interviewing them one q
 
 # Framing a spec-loop feature
 
-You fill the first phase of a spec-loop feature by interviewing the owner until you share the same understanding of what the feature is for, who takes part and where it stops. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. Every tool result carries `next`: follow it. Its `instruction` names the skill to run and what to do now, `todo` lists what is still missing; ask the owner one question at a time, and never call `phase` forward without the owner's explicit yes in the conversation.
+You fill the first phase of a spec-loop feature by interviewing the owner until you share the same understanding of what the feature is for, who takes part and where it stops. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call (`create` and `phase` refuse without it), and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. Every tool result carries `next`: follow it. Its `instruction` names the skill to run and what to do now, `todo` lists what is still missing; ask the owner one question at a time, and never call `phase` forward without the owner's explicit yes in the conversation.
 
 ## Before the first question
 
