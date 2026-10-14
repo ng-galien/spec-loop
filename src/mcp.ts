@@ -105,14 +105,14 @@ const hookRun = z.object({
 });
 const patchResult = z.object({ ok: z.boolean(), feature: z.string(), errors: z.array(validationError), validation: validation.nullable(), render: renderResult.nullable() });
 const operation = z.object({ op: z.enum(["add", "remove", "replace", "move", "copy", "test"]), path: z.string(), value: z.unknown().optional(), from: z.string().optional() });
-const reportedItem = z.object({ file: z.string(), pointer: z.string().nullable(), reason: z.string().describe("Why it is reported to the owner instead of applied, in French") });
+const reportedItem = z.object({ file: z.string(), pointer: z.string().nullable(), reason: z.string().describe("Why it is reported to the owner instead of applied") });
 const history = z.object({ phase: z.string(), date: z.string(), by: z.enum(["agent", "owner"]), reason: z.string().optional() });
 
 const server = new McpServer(
   { name: "spec-loop", version: pkg.version },
   {
     instructions:
-      "spec-loop keeps one JSON object per feature in spec/<FEAT-nnn-name>/feature.json and projects it into French Markdown for the owner. This server is the only writer of spec/: never edit those files with a file tool. Pass root (the absolute project path) on every call. Start with learn, then status or features. Every result about a feature carries next (phase, skill, instruction, missing, todo): follow next.instruction, run the skill it names, ask the owner one question at a time, and never call phase forward without the owner's explicit yes in the conversation.",
+      "spec-loop keeps one JSON object per feature in spec/<FEAT-nnn-name>/feature.json and projects it into Markdown documents for the owner. This server is the only writer of spec/: never edit those files with a file tool. Pass root (the absolute project path) on every call. Start with learn, then status or features. Every result about a feature carries next (phase, skill, instruction, missing, todo): follow next.instruction, run the skill it names, ask the owner one question at a time, and never call phase forward without the owner's explicit yes in the conversation.",
   },
 );
 
@@ -320,7 +320,7 @@ server.registerTool(
       feature,
       by: z.enum(["agent", "owner"]).describe("Who decided the move: owner when the owner asked for it; a backward move requires owner"),
       to: z.string().optional().describe("An earlier phase to move back to; omit to advance to the next phase"),
-      reason: z.string().optional().describe("Why the owner moves the feature back, in French; required with to"),
+      reason: z.string().optional().describe("Why the owner moves the feature back; required with to"),
       root,
     },
     outputSchema: { ok: z.boolean(), feature: z.string(), from: z.string().nullable(), to: z.string().nullable(), reasons: z.array(z.string()), missing: z.array(validationError), hooks: z.array(hookRun).describe("Project hooks run by this call: beforeLeave hooks of the phase left, then onEnter hooks of the phase entered"), patch: patchResult.nullable(), next: nextStep },
@@ -344,7 +344,7 @@ server.registerTool(
       applied: z.number().int().min(0).describe("Number of pending items brought into the JSON or accepted"),
       reported: z.array(reportedItem).describe("Pending items reported to the owner instead of applied; each becomes an open question in framing.questions"),
       featureChange: z
-        .object({ action: z.enum(["accept", "restore"]), reason: z.string().min(1).describe("In French") })
+        .object({ action: z.enum(["accept", "restore"]), reason: z.string().min(1).describe("Why the change is accepted or restored") })
         .optional()
         .describe("Required when feature.json was changed outside the MCP: accept it (recorded in lifecycle.acceptedChanges) or restore the last known good copy"),
       root,

@@ -148,7 +148,7 @@ export async function advancePhase(
     if (phaseIndex(target) < 0) reasons.push(`unknown phase "${target}"`);
     else if (phaseIndex(target) >= phaseIndex(current.phase)) reasons.push(`"${target}" is not an earlier phase than "${current.phase}"; only the next phase can be entered forward`);
     if (by !== "owner") reasons.push("a move back to an earlier phase is decided by the owner: pass by owner");
-    if (!options.reason?.trim()) reasons.push("a move back to an earlier phase needs a reason, in French");
+    if (!options.reason?.trim()) reasons.push("a move back to an earlier phase needs a reason");
     if (current.ownerEdits.state === "pending") reasons.push(`${current.ownerEdits.hunks} owner edit(s) or alteration(s) pending: run the reconcile skill first`);
   } else {
     if (!target) reasons.push(`phase "${current.phase}" is the last one`);

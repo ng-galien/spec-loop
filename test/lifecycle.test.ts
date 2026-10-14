@@ -212,7 +212,7 @@ describe("lifecycle", () => {
     expect((await advancePhase(FEATURE, { root, by: "agent", to: "requirements", reason: "x" })).reasons).toContain(
       "a move back to an earlier phase is decided by the owner: pass by owner",
     );
-    expect((await advancePhase(FEATURE, { root, by: "owner", to: "requirements" })).reasons).toContain("a move back to an earlier phase needs a reason, in French");
+    expect((await advancePhase(FEATURE, { root, by: "owner", to: "requirements" })).reasons).toContain("a move back to an earlier phase needs a reason");
     expect((await advancePhase(FEATURE, { root, by: "owner", to: "verification", reason: "x" })).reasons[0]).toContain("is not an earlier phase");
     const back = await advancePhase(FEATURE, { root, by: "owner", to: "requirements", reason: "REQ-002 must cover deletion.", now: NOW });
     expect(back).toMatchObject({ ok: true, from: "verification", to: "requirements" });
