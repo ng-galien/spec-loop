@@ -203,7 +203,7 @@ No meaning is carried by colour, and no inline HTML is used. The only exception 
 - [`docs/integration-guide.md`](docs/integration-guide.md): how Gemini CLI, Antigravity, Claude Code and Codex load the server and the skills.
 - [`method/`](method/index.md): the method served by `learn`. `method/index.md` maps each phase to its skill.
 - [`docs/decisions.md`](docs/decisions.md): every decision, one dated line each.
-- [`site/index.html`](site/index.html): the project page; the brand is in [`assets/brand/`](assets/brand/brand.md).
+- [`site/index.html`](site/index.html), published at https://ng-galien.github.io/spec-loop/: the project page; the brand is in [`assets/brand/`](assets/brand/brand.md).
 
 ## Development
 
@@ -230,6 +230,6 @@ Then run `npm run assemble`. It writes `skills/<name>/SKILL.md` and the copy in 
   <img src="assets/brand/mark-light.svg" width="32" height="32" alt="spec-loop">
 </picture>
 
-Made for product owners who build with agents · [Project page](site/index.html) · MIT licence
+Made for product owners who build with agents · [Project page](https://ng-galien.github.io/spec-loop/) · MIT licence
 
 </div>
