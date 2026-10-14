@@ -1,0 +1,11 @@
+name: framing
+description: Frame a spec-loop feature with the owner by interviewing them one question at a time, each with a recommended answer, until the framing phase is complete. Use when the owner starts a new feature, asks to frame or scope one, or when a spec-loop feature is in its first phase with missing fields.
+phase: framing
+parts:
+  - preamble
+  - model
+  - refusal
+  - stop
+  - report
+patch_example: |
+  [{"op": "add", "path": "/framing/actors/-", "value": {"id": "ACT-02", "name": "The agent composing workspaces", "description": "Declares a structured workspace and edits its items."}}]

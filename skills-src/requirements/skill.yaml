@@ -1,0 +1,11 @@
+name: requirements
+description: Write the requirements of a spec-loop feature, one EARS sentence per behaviour with its facet, priority, title, rationale and source, and a screen wireframe for every interface requirement. Use when a spec-loop feature is in its requirements phase, or when the owner asks to state, list or change requirements.
+phase: requirements
+parts:
+  - preamble
+  - model
+  - refusal
+  - stop
+  - report
+patch_example: |
+  [{"op": "add", "path": "/requirements/-", "value": {"id": "REQ-004", "title": "Cursor listing", "pattern": "event", "facet": "integration", "statement": "When the workspace asks for a batch of items, the connector SHALL call the list endpoint with the cursor of the API.", "priority": "MUST", "rationale": "Cursor listing is the basis of ItemSource.", "source": ["ACT-02"]}}]

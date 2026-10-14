@@ -1,0 +1,10 @@
+name: done
+description: Close a spec-loop feature when every requirement is covered, every criterion verified by a passing test or a justified other method, and no question is open. Use when the owner asks to close, finish or sign off a spec-loop feature, or when a feature in its verification phase is complete.
+phase: done
+parts:
+  - preamble
+  - model
+  - refusal
+  - stop
+patch_example: |
+  [{"op": "add", "path": "/tests/5/reason", "value": "The screen layout is checked by eye against the wireframe ART-03."}]

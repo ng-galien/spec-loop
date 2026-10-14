@@ -1,0 +1,11 @@
+name: verification
+description: Bind every acceptance criterion of a spec-loop feature to the test that verifies it, write a missing test at its declared place, and record each status from one run of the named test files. Use when a spec-loop feature is in its verification phase, or when the owner asks which tests verify the criteria or whether they pass.
+phase: verification
+parts:
+  - preamble
+  - model
+  - refusal
+  - report
+  - stop
+patch_example: |
+  [{"op": "add", "path": "/tests/-", "value": {"file": "test/http-connector.test.ts", "name": "AC-004.1 lists two pages", "framework": "vitest", "level": "integration", "method": "test", "verifies": ["AC-004.1"], "status": "missing"}}]

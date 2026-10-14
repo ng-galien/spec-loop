@@ -20,7 +20,8 @@
     "skills"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "assemble": "node scripts/assemble.mjs",
+    "build": "node scripts/assemble.mjs && tsc -p tsconfig.json",
     "prepare": "tsc -p tsconfig.json",
     "start": "node dist/mcp.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit"

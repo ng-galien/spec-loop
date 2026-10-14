@@ -2,18 +2,16 @@
 name: framing
 description: Frame a spec-loop feature with the owner by interviewing them one question at a time, each with a recommended answer, until the framing phase is complete. Use when the owner starts a new feature, asks to frame or scope one, or when a spec-loop feature is in its first phase with missing fields.
 ---
+<!-- Generated from skills-src/framing; do not edit -->
 
 # Framing a spec-loop feature
 
-You fill the first phase of a spec-loop feature by interviewing the owner until you share the same understanding of what the feature is for, who takes part and where it stops. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
-
-Pass `root`, the absolute path of the project, on every spec-loop call.
+You fill the first phase of a spec-loop feature by interviewing the owner until you share the same understanding of what the feature is for, who takes part and where it stops. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first.
 
 ## Before the first question
 
 1. Call `learn` with topics `questioning`, `phases`, `fields` and `glossary`, unless you read them earlier in this session.
 2. Call `features`. If the feature does not exist, call `create` with a kebab-case name and a title. Otherwise call `status` on it.
-3. If `status` lists alterations, run the `reconcile` skill first.
 
 ## Working with the model
 
@@ -23,7 +21,7 @@ The model is the feature's `feature.json`, at the path `status` returns as `file
 [{"op": "add", "path": "/framing/actors/-", "value": {"id": "ACT-02", "name": "The agent composing workspaces", "description": "Declares a structured workspace and edits its items."}}]
 ```
 
-If a tool refuses, apply the refusal rule of `learn` topic `loop`.
+If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the operation at `errors[].pointer` and call again; after two refusals of the same change, show the error to the owner as returned and stop.
 
 ## The interview
 
@@ -42,4 +40,4 @@ After each answer, tell the owner in one sentence what changed and in which docu
 
 ## Ending
 
-Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Say so to the owner and ask whether to move to the next phase. On a yes, call `phase` with `by: "owner"`. If `phase` refuses, report its reasons.
+Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Report to the owner in plain sentences: what changed, with the ids it touched; what is still open or was reported, and why; and which document under `rendered/` to read. Then ask whether to move to the next phase. On a yes, call `phase` with `by: "owner"`. If `phase` refuses, report its reasons.

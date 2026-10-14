@@ -2,17 +2,16 @@
 name: acceptance
 description: Write the acceptance criteria of a spec-loop feature, at least one concrete Given/When/Then example per requirement, asking the owner only about business values. Use when a spec-loop feature is in its acceptance phase, or when the owner asks for criteria, examples or acceptance of requirements.
 ---
+<!-- Generated from skills-src/acceptance; do not edit -->
 
 # Writing acceptance criteria
 
-You give every requirement of a spec-loop feature concrete examples that show it satisfied or violated. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
-
-Pass `root`, the absolute path of the project, on every spec-loop call.
+You give every requirement of a spec-loop feature concrete examples that show it satisfied or violated. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first.
 
 ## Before starting
 
 1. Call `learn` with topics `fields` and `glossary`, unless you read them earlier in this session.
-2. Call `status`. If alterations are pending, run the `reconcile` skill first. If the feature is not in the acceptance phase, stop.
+2. Call `status`. If the feature is not in the acceptance phase, stop.
 3. Your agenda is `completeness.missing`: each requirement without a criterion is listed there by the schema coverage rule.
 
 ## Working with the model
@@ -23,7 +22,7 @@ The model is the feature's `feature.json`, at the path `status` returns as `file
 [{"op": "add", "path": "/criteria/-", "value": {"id": "AC-004.1", "requirement": "REQ-004", "title": "two pages", "given": ["an API that returns two pages of 50 items"], "when": "the workspace lists its items", "then": ["the 100 items are listed"]}}]
 ```
 
-If a tool refuses, apply the refusal rule of `learn` topic `loop`.
+If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the operation at `errors[].pointer` and call again; after two refusals of the same change, show the error to the owner as returned and stop.
 
 ## Drafting
 
@@ -41,4 +40,4 @@ Ask only about what depends on business values you cannot derive: a threshold, a
 
 ## Ending
 
-Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Tell the owner which criteria were written and where to read them, then ask whether to move on; on a yes, call `phase` with `by: "owner"`.
+Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Report to the owner in plain sentences: what changed, with the ids it touched; what is still open or was reported, and why; and which document under `rendered/` to read. Then ask whether to move on; on a yes, call `phase` with `by: "owner"`.

@@ -2,17 +2,16 @@
 name: done
 description: Close a spec-loop feature when every requirement is covered, every criterion verified by a passing test or a justified other method, and no question is open. Use when the owner asks to close, finish or sign off a spec-loop feature, or when a feature in its verification phase is complete.
 ---
+<!-- Generated from skills-src/done; do not edit -->
 
 # Closing a feature
 
-You check the closing gate of a spec-loop feature and move it to its last phase on the owner's decision. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
-
-Pass `root`, the absolute path of the project, on every spec-loop call.
+You check the closing gate of a spec-loop feature and move it to its last phase on the owner's decision. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first.
 
 ## Before starting
 
 1. Call `learn` with topic `phases`, unless you read it earlier in this session: the rules to satisfy before the last phase are listed there.
-2. Call `status`. If alterations are pending, run the `reconcile` skill first.
+2. Call `status`.
 
 ## Working with the model
 
@@ -22,7 +21,7 @@ The model is the feature's `feature.json`, at the path `status` returns as `file
 [{"op": "add", "path": "/tests/5/reason", "value": "The screen layout is checked by eye against the wireframe ART-03."}]
 ```
 
-If a tool refuses, apply the refusal rule of `learn` topic `loop`.
+If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the operation at `errors[].pointer` and call again; after two refusals of the same change, show the error to the owner as returned and stop.
 
 ## The gate
 

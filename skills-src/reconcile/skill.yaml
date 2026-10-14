@@ -1,0 +1,9 @@
+name: reconcile
+description: Reconcile the owner's edits to a spec-loop projection with its JSON model, applying the coherent ones and reporting the others. Use when the owner says they changed the rendered files and asks to check, verify or take their changes into account, or when status or features shows pending owner edits or alterations for a spec-loop feature.
+phase: any
+parts:
+  - model
+  - refusal
+  - report
+patch_example: |
+  [{"op": "replace", "path": "/framing/scope/in/1", "value": "Read one item, given its identity."}]

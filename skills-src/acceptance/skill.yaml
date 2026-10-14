@@ -1,0 +1,11 @@
+name: acceptance
+description: Write the acceptance criteria of a spec-loop feature, at least one concrete Given/When/Then example per requirement, asking the owner only about business values. Use when a spec-loop feature is in its acceptance phase, or when the owner asks for criteria, examples or acceptance of requirements.
+phase: acceptance
+parts:
+  - preamble
+  - model
+  - refusal
+  - stop
+  - report
+patch_example: |
+  [{"op": "add", "path": "/criteria/-", "value": {"id": "AC-004.1", "requirement": "REQ-004", "title": "two pages", "given": ["an API that returns two pages of 50 items"], "when": "the workspace lists its items", "then": ["the 100 items are listed"]}}]

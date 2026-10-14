@@ -2,17 +2,16 @@
 name: verification
 description: Bind every acceptance criterion of a spec-loop feature to the test that verifies it, write a missing test at its declared place, and record each status from one run of the named test files. Use when a spec-loop feature is in its verification phase, or when the owner asks which tests verify the criteria or whether they pass.
 ---
+<!-- Generated from skills-src/verification; do not edit -->
 
 # Declaring and checking the tests
 
-You declare, for each criterion of a spec-loop feature, the test that verifies it, and record whether it passes from the runner's own output. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
-
-Pass `root`, the absolute path of the project, on every spec-loop call. The tests live in the `repository` the owner names, or in `root` when he names none.
+You declare, for each criterion of a spec-loop feature, the test that verifies it, and record whether it passes from the runner's own output. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. The tests live in the `repository` the owner names, or in `root` when he names none.
 
 ## Before starting
 
 1. Call `learn` with topics `fields` and `glossary`, unless you read them earlier in this session.
-2. Call `status`. If alterations are pending, run the `reconcile` skill first. Your agenda is `completeness.missing`: criteria without a test, and tests not yet passing (the closing rule is checked before leaving this phase).
+2. Call `status`. Your agenda is `completeness.missing`: criteria without a test, and tests not yet passing (the closing rule is checked before leaving this phase).
 
 ## Working with the model
 
@@ -22,7 +21,7 @@ The model is the feature's `feature.json`, at the path `status` returns as `file
 [{"op": "add", "path": "/tests/-", "value": {"file": "test/http-connector.test.ts", "name": "AC-004.1 lists two pages", "framework": "vitest", "level": "integration", "method": "test", "verifies": ["AC-004.1"], "status": "missing"}}]
 ```
 
-If a tool refuses, apply the refusal rule of `learn` topic `loop`.
+If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the operation at `errors[].pointer` and call again; after two refusals of the same change, show the error to the owner as returned and stop.
 
 ## Declaring
 
@@ -44,7 +43,7 @@ spec-loop specifies, it does not implement: the code at the anchors is written w
 
 ## Reporting
 
-Report the coverage gaps (criteria without a test, tests missing or failing, with their ids), the command you ran, and where to read the result.
+Report to the owner in plain sentences: what changed, with the ids it touched; what is still open or was reported, and why; and which document under `rendered/` to read. In this phase that means the coverage gaps (criteria without a test, tests missing or failing, with their ids) and the command you ran.
 
 ## Ending
 

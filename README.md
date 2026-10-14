@@ -148,7 +148,14 @@ No meaning is carried by colour, and no inline HTML is used. The only exception 
 
 ```sh
 npm install                          # builds dist/ through prepare
+npm run build                        # assembles the skills, then compiles
 npm run typecheck
 npx vitest run test/render.test.ts   # one file at a time
 npm start                            # the MCP server on stdio
 ```
+
+The skills are generated. Edit `skills-src/`, never `skills/`:
+- the shared parts are in `skills-src/parts/` (preamble, model, refusal, report, stop);
+- each skill has a `skill.yaml` (name, description, phase, the parts in order, the patch example) and a `body.md` that places each part with `{{> part}}`.
+
+Then run `npm run assemble`. It writes `skills/<name>/SKILL.md` and the copy in `examples/consumer/.agents/skills/`; the Gemini extension and the Claude and Codex plugins read `skills/` directly. `test/skills.test.ts` fails, and lists the stale files, when a generated skill differs from its source.

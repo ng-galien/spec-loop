@@ -1,0 +1,11 @@
+name: anchoring
+description: Anchor the requirements of a spec-loop feature in the code of the target repository, naming for each the file and symbol that will realise it and how it changes, without writing code. Use when a spec-loop feature is in its anchoring phase, or when the owner asks where the requirements land in the code.
+phase: anchoring
+parts:
+  - preamble
+  - model
+  - refusal
+  - stop
+  - report
+patch_example: |
+  [{"op": "add", "path": "/anchors/-", "value": {"id": "ANC-01", "kind": "symbol", "path": "src/connectors/http.ts", "symbol": "HttpConnector.list", "change": "add", "realizes": ["REQ-004", "REQ-005"], "note": "New ItemSource implementation over REST."}}]

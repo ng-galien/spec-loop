@@ -2,17 +2,16 @@
 name: anchoring
 description: Anchor the requirements of a spec-loop feature in the code of the target repository, naming for each the file and symbol that will realise it and how it changes, without writing code. Use when a spec-loop feature is in its anchoring phase, or when the owner asks where the requirements land in the code.
 ---
+<!-- Generated from skills-src/anchoring; do not edit -->
 
 # Anchoring requirements in the code
 
-You find, in the repository that will carry the feature, the places that will realise each requirement. You never write or change code in this skill: spec-loop specifies, it does not implement. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself.
-
-Pass `root`, the absolute path of the project, on every spec-loop call. The code to read is the `repository` the owner names; when he names none, it is `root` itself. Anchor paths are relative to that repository.
+You find, in the repository that will carry the feature, the places that will realise each requirement. You never write or change code in this skill: spec-loop specifies, it does not implement. The spec-loop MCP server is the only writer of `spec/`: never edit those files yourself. Pass `root`, the absolute path of the project, on every spec-loop call, and start from `status` on the feature: when it lists alterations or pending owner edits, run the `reconcile` skill first. The code to read is the `repository` the owner names; when he names none, it is `root` itself. Anchor paths are relative to that repository.
 
 ## Before starting
 
 1. Call `learn` with topics `fields` and `glossary`, unless you read them earlier in this session.
-2. Call `status`. If alterations are pending, run the `reconcile` skill first. Your agenda is `completeness.missing`: every MUST requirement without an anchor is listed there.
+2. Call `status`. Your agenda is `completeness.missing`: every MUST requirement without an anchor is listed there.
 
 ## Working with the model
 
@@ -22,7 +21,7 @@ The model is the feature's `feature.json`, at the path `status` returns as `file
 [{"op": "add", "path": "/anchors/-", "value": {"id": "ANC-01", "kind": "symbol", "path": "src/connectors/http.ts", "symbol": "HttpConnector.list", "change": "add", "realizes": ["REQ-004", "REQ-005"], "note": "New ItemSource implementation over REST."}}]
 ```
 
-If a tool refuses, apply the refusal rule of `learn` topic `loop`.
+If a tool refuses, apply the refusal rule of `learn` topic `loop`: fix the operation at `errors[].pointer` and call again; after two refusals of the same change, show the error to the owner as returned and stop.
 
 ## Exploring
 
@@ -42,4 +41,4 @@ Ask only when two places are equally plausible for the same requirement: name bo
 
 ## Ending
 
-Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Tell the owner what is anchored where, then ask whether to move on; on a yes, call `phase` with `by: "owner"`. The implementation at the anchors happens next, outside spec-loop, with the usual development workflow.
+Stop when `status` reports `completeness.state: "complete"` and an empty `unaddressed` list. Report to the owner in plain sentences: what changed, with the ids it touched; what is still open or was reported, and why; and which document under `rendered/` to read. Then ask whether to move on; on a yes, call `phase` with `by: "owner"`. The implementation at the anchors happens next, outside spec-loop, with the usual development workflow.
