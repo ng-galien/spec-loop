@@ -1,6 +1,7 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { render, renderToMemory, validate } from "../src/lib/index.js";
+import { create, render, renderToMemory, validate } from "../src/lib/index.js";
 import { headingSlug } from "../src/lib/render.js";
 import { FEATURE, guineaPig, inAcceptance, inFolder, inRequirements, requirementsFixture, workspace } from "./helpers.js";
 
@@ -61,11 +62,11 @@ describe("render", () => {
   it("lists open questions under « À trancher » and answered ones, with their answer, under « Tranché »", async () => {
     const framing = renderToMemory(await guineaPig()).find((f) => f.path === "cadrage.md")!.content;
     const open = framing.slice(framing.indexOf("## À trancher"), framing.indexOf("## Tranché"));
-    expect(open).toContain("<!-- id: Q-01 -->\n### Q-01 : La création (POST)");
+    expect(open).toContain("<!-- id: Q-01 -->\n> [!IMPORTANT]\n> **Q-01** · La création (POST) et la suppression (DELETE) font-elles partie de la première version ?\n>\n> Recommandation : Oui : POST");
     expect(framing.slice(framing.indexOf("## Tranché"))).toContain("_Aucune question tranchée pour l'instant._");
     const answered = renderToMemory(await requirementsFixture()).find((f) => f.path === "cadrage.md")!.content;
     expect(answered.slice(answered.indexOf("## À trancher"), answered.indexOf("## Tranché"))).toContain("_Aucune question à trancher._");
-    expect(answered.slice(answered.indexOf("## Tranché"))).toContain("<!-- id: Q-05 -->\n### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n\nRéponse : Recommandation retenue.");
+    expect(answered.slice(answered.indexOf("## Tranché"))).toContain("<!-- id: Q-05 -->\n> [!NOTE]\n> **Q-05** · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n>\n> Réponse : Recommandation retenue.");
   });
 
   it("opens a past phase document with one line pointing at the current phase document", async () => {
@@ -110,7 +111,7 @@ describe("render", () => {
 
   it("shows the recommendation of an answered question on one line after the answer", async () => {
     const cadrage = renderToMemory(await requirementsFixture()).find((f) => f.path === "cadrage.md")!.content;
-    expect(cadrage).toContain("### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n\nRéponse : Recommandation retenue.\n\n_Recommandation proposée : Non : l'espace passe en lecture seule._\n\nConcerne : CON-03.");
+    expect(cadrage).toContain("> **Q-05** · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?\n>\n> Réponse : Recommandation retenue.\n>\n> _Recommandation proposée : Non : l'espace passe en lecture seule._\n>\n> Concerne : CON-03.\n");
   });
 
   it("marks the current phase in the index diagram by label, shape and dashed links, without colours", async () => {
@@ -119,5 +120,41 @@ describe("render", () => {
       '```mermaid\nflowchart LR\n  framing["Cadrage"]\n  requirements(["Exigences ◀ actuelle"])\n  acceptance["Acceptation"]\n  anchoring["Ancrage"]\n  verification["Vérification"]\n  done["Terminé"]\n  framing --> requirements\n  requirements -.-> acceptance\n  acceptance -.-> anchoring\n  anchoring -.-> verification\n  verification -.-> done\n```',
     );
     expect(index).not.toContain("classDef");
+  });
+
+  it("index: warns when the phase waits for answers, lists what is left and the questions as task lists", async () => {
+    const index = renderToMemory(await guineaPig()).find((f) => f.path === "index.md")!.content;
+    expect(index).toContain("> [!WARNING]\n> La phase « Cadrage » attend vos réponses : 5 question(s) ouverte(s), Q-01, Q-02, Q-03, Q-04, Q-05.");
+    expect(index).toContain("- [ ] Question Q-01 à répondre : `/framing/questions/0/status`");
+    expect(index).toContain("<!-- ptr: /framing/questions -->\n## Questions\n\n- [ ] Q-01 · La création (POST)");
+    const done = renderToMemory(await requirementsFixture()).find((f) => f.path === "index.md")!.content;
+    expect(done).not.toContain("[!WARNING]");
+    expect(done).toContain("- [x] Q-05 · Si l'API ne renvoie ni ETag ni champ de révision");
+  });
+
+  it("index: warns when tests fail or are missing in the verification phase", async () => {
+    const feature = inAcceptance(await guineaPig());
+    feature.phase = "verification";
+    feature.anchors = [{ id: "ANC-01", kind: "module", path: "src/http.ts", change: "add", realizes: ["REQ-001", "REQ-002"] }];
+    feature.tests = [{ file: "t.ts", name: "AC-001.1 x", framework: "vitest", verifies: ["AC-001.1"], status: "failing" }];
+    const index = renderToMemory(feature).find((f) => f.path === "index.md")!.content;
+    expect(index).toContain("> [!WARNING]\n> Vérification à refaire : 1 test(s) en échec ou pas encore écrit(s).");
+  });
+
+  it("cites a textual source of a requirement as a footnote, ids inline", async () => {
+    const feature = await requirementsFixture();
+    (feature.requirements as { source: string[] }[])[0]!.source = ["ACT-02", "Entretien du 14 octobre avec le propriétaire"];
+    const exigences = renderToMemory(feature).find((f) => f.path === "exigences.md")!.content;
+    expect(exigences).toContain("Origine : ACT-02[^REQ-001-1]\n\n[^REQ-001-1]: Entretien du 14 octobre avec le propriétaire\n");
+  });
+
+  it("spec index warns about a feature with pending owner edits", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const path = inFolder(root, "rendered", "cadrage.md");
+    await writeFile(path, (await readFile(path, "utf8")).replace("sans la modifier", "sans la toucher"));
+    await create("autre", "Autre", { root });
+    const index = await readFile(join(root, "spec", "README.md"), "utf8");
+    expect(index).toContain("> [!WARNING]\n> FEAT-001 : 1 modification(s) faite(s) hors de l'agent, à vérifier avant toute suite.");
   });
 });

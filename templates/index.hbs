@@ -3,6 +3,12 @@
 
 Fonctionnalité `{{id}}`. Phase actuelle : **{{phaseLabel}}**.
 
+{{#each warnings}}
+> [!WARNING]
+> {{this}}
+
+{{/each}}
+
 <!-- ptr: /phase -->
 ```mermaid
 flowchart LR
@@ -27,12 +33,21 @@ flowchart LR
 
 {{#if missing.length}}
 {{#each missing}}
-- {{text}} : `{{pointer}}`
+- [ ] {{text}} : `{{pointer}}`
 {{/each}}
 {{else}}
 Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
 {{/if}}
 
+{{#if questionList.length}}
+<!-- ptr: /framing/questions -->
+## Questions
+
+{{#each questionList}}
+- [{{#if done}}x{{else}} {{/if}}] {{id}} · {{question}}
+{{/each}}
+
+{{/if}}
 <!-- ptr: /lifecycle -->
 ## Historique
 

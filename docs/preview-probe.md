@@ -4,6 +4,8 @@ Ouvrez ce fichier en aperçu (Ctrl+Maj+V, ou Cmd+Maj+V sur Mac) et notez, pour c
 
 ## 1. Callouts GitHub
 
+Extension nécessaire : `yahyabatulu.vscode-markdown-alert`. Sans elle, chaque bloc reste une citation lisible.
+
 > [!NOTE]
 > Une note : si vous voyez un encadré avec une icône et le mot « Note », les callouts sont rendus.
 
@@ -17,6 +19,8 @@ Sinon, les trois blocs ci-dessus apparaissent comme des citations ordinaires com
 
 ## 2. Section repliable
 
+Aucune extension ; spec-loop n'utilise pas cette construction.
+
 <details>
 <summary>Cliquez pour déplier : cinq questions tranchées</summary>
 
@@ -26,12 +30,16 @@ Si ce texte est caché derrière un titre cliquable, les sections repliables son
 
 ## 3. Cases à cocher
 
+Extension nécessaire : `bierner.markdown-checkbox`. Sans elle, `[ ]` et `[x]` restent lisibles en début de ligne.
+
 - [x] Question Q-01 répondue
 - [ ] Question Q-06 ouverte
 
 Si vous voyez des cases, cochée et vide, les listes de tâches sont rendues. Sinon vous voyez `[x]` et `[ ]` en texte.
 
 ## 4. Tableau
+
+Aucune extension : rendu par l'aperçu de base.
 
 | Exigence | Priorité | Forme |
 | --- | --- | --- |
@@ -40,11 +48,15 @@ Si vous voyez des cases, cochée et vide, les listes de tâches sont rendues. Si
 
 ## 5. Texte barré, code, citation
 
+Aucune extension : rendu par l'aperçu de base.
+
 Un mot ~~barré~~, un `identifiant`, et une citation :
 
 > La révision connue protège contre la perte de mise à jour.
 
 ## 6. Note de bas de page
+
+Extension nécessaire : `bierner.markdown-footnotes`. Sans elle, le renvoi et la note restent lisibles en texte.
 
 Une affirmation avec sa source[^1].
 
@@ -52,11 +64,15 @@ Une affirmation avec sa source[^1].
 
 ## 7. HTML en ligne
 
+Aucune extension ; spec-loop n'utilise pas de HTML en ligne.
+
 Texte <span style="color:red;font-weight:bold">rouge et gras par style HTML</span>, et un <mark>surlignage</mark>, et un <kbd>Ctrl</kbd>.
 
 Si le texte n'est ni rouge ni gras, les styles HTML sont retirés. Si le surlignage et la touche s'affichent, ces balises passent.
 
 ## 8. Mermaid avec couleurs et formes
+
+Aucune extension : Mermaid est intégré à VS Code depuis la version 1.121 ; spec-loop n'utilise pas `classDef` dans ses diagrammes générés.
 
 ```mermaid
 flowchart LR
@@ -69,6 +85,8 @@ Trois cas possibles : le nœud « Exigences » est bleu (les couleurs classDef p
 
 ## 9. Mermaid : séquence et états
 
+Aucune extension : Mermaid est intégré à VS Code depuis la version 1.121.
+
 ```mermaid
 stateDiagram-v2
   [*] --> Ouverte
@@ -77,6 +95,8 @@ stateDiagram-v2
 ```
 
 ## 10. Emoji et symboles
+
+Aucune extension ; spec-loop n'utilise que des symboles Unicode (● ○ ◐ ◀), pas de codes emoji.
 
 Symboles Unicode : ✔ ✖ ▶ ◀ ⚠ ● ○ — et un emoji par code `:warning:` (rendu seulement si les codes emoji sont interprétés).
 

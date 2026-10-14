@@ -28,6 +28,10 @@ Justification : {{rationale}}
 
 Origine : {{sourceList}}
 {{/if}}
+{{#each footnotes}}
+
+[^{{label}}]: {{text}}
+{{/each}}
 
 {{#each artifacts}}
 {{> artifact}}

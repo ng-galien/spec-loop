@@ -28,11 +28,28 @@ Owner edits: an edited mermaid or ascii source is a text hunk mapped to its ART 
 
 ## Writing for the VS Code preview
 
-The owner reads every projection in the VS Code built-in Markdown preview: markdown-it in CommonMark mode with tables, with raw HTML sanitised and strict security. Mermaid is built into VS Code (1.121 and later) and follows the light or dark theme. Rules for templates and for artifacts you write:
+The owner reads every projection in the VS Code built-in Markdown preview: markdown-it in CommonMark mode with tables, raw HTML sanitised, strict security. VS Code keeps the built-in preview to CommonMark on purpose: callouts are not standard Markdown and are left to extensions (microsoft/vscode#245064). Mermaid is built into VS Code (1.121 and later) and follows the light or dark theme.
+
+Probe results (`docs/preview-probe.md`, tested by the owner on 14 October 2026):
+
+| Construct | Bare preview | With extension |
+| --- | --- | --- |
+| Tables, strikethrough, code, blockquotes, headings, lists | rendered | — |
+| Mermaid (flowchart, sequence, state) | rendered, theme colours | — |
+| GitHub callouts `> [!NOTE]`, `[!IMPORTANT]`, `[!WARNING]` | plain blockquote starting with `[!NOTE]` | `yahyabatulu.vscode-markdown-alert` |
+| Task lists `- [ ]`, `- [x]` | list line showing `[ ]` / `[x]` | `bierner.markdown-checkbox` |
+| Footnotes `[^1]` | literal `[^1]` and a `[^1]: …` paragraph | `bierner.markdown-footnotes` |
+| `<details>`, inline `style`, `class` | not relied on | — |
+
+The three extensions are recommended in `.vscode/extensions.json`; VS Code proposes them when the folder is first opened.
+
+Degradation rule: every construct that needs an extension must stay readable without it. A callout degrades to a blockquote whose first line names its kind; a checkbox degrades to a list line starting with `[ ]` or `[x]`; a footnote degrades to a marker and a paragraph next to the block it belongs to. Nothing else that needs an extension is used.
+
+Rules for templates and for artifacts you write:
 
 1. Meaning is never carried by colour alone. In generated diagrams the current phase is marked by its label (« Exigences ◀ actuelle ») and a distinct node shape, past phases by a plain label, next phases by dashed links. Generated diagrams carry no `classDef`; an author-written artifact may use it, but must stay readable without it.
-2. Only CommonMark plus tables: emphasis, code spans, headings, lists, blockquotes, horizontal rules, tables. No task lists, footnotes or emoji shortcodes. No inline HTML: no `style`, `class`, badges or anchors. The only HTML is the `<!-- id: … -->` and `<!-- ptr: … -->` comments, each alone on its line, never inside a list item or a paragraph.
+2. CommonMark plus tables, and the three degradable extensions above: callouts (an open question is `[!IMPORTANT]`, an answered one `[!NOTE]`, a blocking state in an index `[!WARNING]`), task lists (things left to do, questions open or answered), footnotes (a textual source of a requirement; ids stay inline). No inline HTML: no `style`, `class`, badges or anchors. The only HTML is the `<!-- id: … -->` and `<!-- ptr: … -->` comments, each alone on its line, outside any blockquote or list item.
 3. `<details>` is not relied on.
 4. Summary tables (the requirements table, the index of features) are plain Markdown tables; links to a block target the heading slug VS Code computes.
 5. Images: local files by relative path (svg under `assets/`), or https only.
-6. Both themes must read well: check the file in the preview (Ctrl+Shift+V, Cmd+Shift+V on macOS) in light and dark.
+6. Both themes must read well: check the file in the preview (Ctrl+Shift+V, Cmd+Shift+V on macOS) in light and dark, with and without the extensions.

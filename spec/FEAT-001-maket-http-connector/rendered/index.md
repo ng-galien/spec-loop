@@ -37,6 +37,16 @@ flowchart LR
 
 Rien : la phase est complète. Le passage à la phase suivante se décide dans la conversation.
 
+<!-- ptr: /framing/questions -->
+## Questions
+
+- [x] Q-01 · La création (POST) et la suppression (DELETE) font-elles partie de la première version ?
+- [x] Q-02 · Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
+- [x] Q-03 · Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
+- [x] Q-04 · Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
+- [x] Q-05 · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
+- [x] Q-06 · Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?
+
 <!-- ptr: /lifecycle -->
 ## Historique
 

@@ -66,6 +66,18 @@ type Rec = Record<string, unknown>;
 const list = (value: unknown): Rec[] => (Array.isArray(value) ? (value as Rec[]) : []);
 const joined = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(", ") : "");
 
+const ID_REF = /^(FEAT-\d{3}\/)?[A-Z]+-\d+(\.\d+)?$/;
+
+function sources(req: Rec): { sourceList: string; footnotes: { label: string; text: string }[] } {
+  const all = Array.isArray(req.source) ? req.source.map(String) : [];
+  const footnotes = all.filter((s) => !ID_REF.test(s)).map((text, i) => ({ label: `${String(req.id)}-${i + 1}`, text }));
+  const ids = all.filter((s) => ID_REF.test(s));
+  const refs = footnotes.map((f) => `[^${f.label}]`).join("");
+  return { sourceList: ids.length ? `${ids.join(", ")}${refs}` : refs ? `voir la note${refs}` : "", footnotes };
+}
+
+const quoted = (text: unknown) => String(text ?? "").split("\n").join("\n> ");
+
 function steps(criterion: Rec): { keyword: string; text: string }[] {
   const out: { keyword: string; text: string }[] = [];
   (Array.isArray(criterion.given) ? criterion.given : []).forEach((text, i) => out.push({ keyword: i === 0 ? "Soit" : "Et", text: String(text) }));
@@ -92,6 +104,21 @@ export function missingLines(feature: Feature, validation: ValidationResult): { 
       text: / is still open$/.test(e.message) ? `Question ${owner ?? ""} à répondre` : owner ? `${owner} ${state}` : `${state[0]!.toUpperCase()}${state.slice(1)}`,
     };
   });
+}
+
+function warnings(feature: Feature, phase: string): string[] {
+  const out: string[] = [];
+  const framing = (feature.framing ?? {}) as Rec;
+  const open = list(framing.questions).filter((q) => q.status === "open");
+  if (open.length > 0) {
+    out.push(`La phase « ${phaseTitle(phase)} » attend vos réponses : ${open.length} question(s) ouverte(s), ${open.map((q) => String(q.id)).join(", ")}.`);
+  }
+  const producer = phaseProducing("tests");
+  if (producer && phaseIndex(phase) >= phaseIndex(producer.name)) {
+    const stale = list(feature.tests).filter((t) => t.status !== "passing");
+    if (stale.length > 0) out.push(`Vérification à refaire : ${stale.length} test(s) en échec ou pas encore écrit(s).`);
+  }
+  return out;
 }
 
 function filesFor(feature: Feature, phase: string): FileSpec[] {
@@ -133,7 +160,7 @@ function view(feature: Feature, validation: ValidationResult): Rec {
   const artifacts = placeArtifacts(feature);
   const hostFile = (host: string) => (host === "framing" ? "cadrage.md" : host.startsWith("REQ-") ? "exigences.md" : "criteres.md");
   const requirements = list(feature.requirements).map(
-    (req): Rec => ({ ...req, facetLabel: enumLabel("requirement", "facet", req.facet) ?? "à préciser", anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), sourceList: joined(req.source), artifacts: artifacts.get(String(req.id)) ?? [] }),
+    (req): Rec => ({ ...req, facetLabel: enumLabel("requirement", "facet", req.facet) ?? "à préciser", anchor: headingSlug(`${String(req.id)}${req.title ? ` · ${String(req.title)}` : ""}`), patternLabel: label("pattern", req.pattern), ...sources(req), artifacts: artifacts.get(String(req.id)) ?? [] }),
   );
   const criteria = list(feature.criteria).map((c): Rec => ({ ...c, steps: steps(c), table: table(list(c.examples)), artifacts: artifacts.get(String(c.id)) ?? [] }));
   const lifecycle = (feature.lifecycle ?? {}) as Rec;
@@ -149,6 +176,8 @@ function view(feature: Feature, validation: ValidationResult): Rec {
       .filter((f) => f.section !== null)
       .map((f) => ({ path: f.path, label: fileTitle(f), description: phaseProducing(f.section!)?.summary ?? "décisions et leurs conséquences" })),
     missing: missingLines(feature, validation),
+    questionList: list(framing.questions).map((q) => ({ id: q.id, question: q.question, done: q.status === "answered" })),
+    warnings: warnings(feature, phase),
     history: list(lifecycle.phaseHistory).map((h) => ({ date: String(h.date).slice(0, 10), label: phaseTitle(String(h.phase)), by: label("by", h.by) })),
     lastVerify: lastVerify
       ? { date: String(lastVerify.date).slice(0, 10), applied: lastVerify.applied, reported: list(lastVerify.reported).length }
@@ -159,10 +188,16 @@ function view(feature: Feature, validation: ValidationResult): Rec {
       artifacts: artifacts.get("framing") ?? [],
       openQuestions: list(framing.questions)
         .filter((q) => q.status !== "answered")
-        .map((q) => ({ ...q, aboutList: joined(q.about) })),
+        .map((q) => ({ ...q, question: quoted(q.question), recommendation: q.recommendation ? quoted(q.recommendation) : null, aboutList: joined(q.about) })),
       answeredQuestions: list(framing.questions)
         .filter((q) => q.status === "answered")
-        .map((q) => ({ ...q, aboutList: joined(q.about) })),
+        .map((q) => ({
+          ...q,
+          question: quoted(q.question),
+          answer: q.answer ? quoted(q.answer) : null,
+          recommendation: q.recommendation ? quoted(q.recommendation) : null,
+          aboutList: joined(q.about),
+        })),
       glossary: list(framing.glossary).map((g) => ({ ...g, avoidList: joined(g.avoid) })),
     },
     requirements,

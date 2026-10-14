@@ -4,6 +4,13 @@
 
 Index généré : une ligne par fonctionnalité. Ouvrez les documents d'une fonctionnalité pour la lire. **À vérifier** signale des modifications faites hors de l'agent (fichiers rendus, schémas, `feature.json`) : demandez à l'agent de les vérifier.
 
+{{#each features}}
+{{#if pending}}
+> [!WARNING]
+> {{id}} : {{alterations}} modification(s) faite(s) hors de l'agent, à vérifier avant toute suite.
+
+{{/if}}
+{{/each}}
 | Id | Fonctionnalité | Phase | Complétude | Modifications | Documents |
 | --- | --- | --- | --- | --- | --- |
 {{#each features}}

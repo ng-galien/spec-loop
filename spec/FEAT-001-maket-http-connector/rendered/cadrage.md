@@ -129,54 +129,60 @@ _Aucune question à trancher._
 ## Tranché
 
 <!-- id: Q-01 -->
-### Q-01 : La création (POST) et la suppression (DELETE) font-elles partie de la première version ?
-
-Réponse : Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation.
-
-_Recommandation proposée : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place._
-
-Concerne : CON-01.
+> [!NOTE]
+> **Q-01** · La création (POST) et la suppression (DELETE) font-elles partie de la première version ?
+>
+> Réponse : Oui : la création (POST) et la suppression (DELETE) font partie de la première version, selon la recommandation.
+>
+> _Recommandation proposée : Oui : POST avec l'identité renvoyée par l'API, DELETE avec If-Match. Elles complètent ItemSource et coûtent peu une fois PUT en place._
+>
+> Concerne : CON-01.
 
 <!-- id: Q-02 -->
-### Q-02 : Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
-
-Réponse : Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation.
-
-_Recommandation proposée : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation._
+> [!NOTE]
+> **Q-02** · Comment déclare-t-on le passage de la réponse JSON de l'API aux champs de l'élément ?
+>
+> Réponse : Par des pointeurs JSON déclarés dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité et de la révision. Aucun langage de transformation.
+>
+> _Recommandation proposée : Par des pointeurs JSON dans le schéma de l'espace : chemin de la liste, du curseur suivant, de l'identité, de la révision. Pas de langage de transformation._
 
 <!-- id: Q-03 -->
-### Q-03 : Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
-
-Réponse : L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite.
-
-_Recommandation proposée : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite._
+> [!NOTE]
+> **Q-03** · Pour suivre les changements faits hors de Maket, commence-t-on par le webhook ou par l'interrogation périodique ?
+>
+> Réponse : L'interrogation périodique d'abord, parce qu'elle n'exige pas que Maket soit joignable de l'extérieur ; le webhook vient ensuite.
+>
+> _Recommandation proposée : L'interrogation périodique d'abord : elle n'exige pas que Maket soit joignable depuis l'extérieur. Le webhook vient ensuite._
 
 <!-- id: Q-04 -->
-### Q-04 : Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
-
-Réponse : Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur.
-
-_Recommandation proposée : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur._
-
-Concerne : ASM-02.
+> [!NOTE]
+> **Q-04** · Quelles formes de pagination le connecteur accepte-t-il : curseur opaque, numéro de page, en-tête Link ?
+>
+> Réponse : Curseur opaque et en-tête Link ; un numéro de page est accepté mais converti en curseur par le connecteur, pour que l'espace ne voie que le contrat du curseur.
+>
+> _Recommandation proposée : Curseur opaque et en-tête Link. Un numéro de page est converti en curseur par le connecteur._
+>
+> Concerne : ASM-02.
 
 <!-- id: Q-05 -->
-### Q-05 : Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
-
-Réponse : Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu.
-
-_Recommandation proposée : Non : l'espace passe en lecture seule._
-
-Concerne : CON-03.
+> [!NOTE]
+> **Q-05** · Si l'API ne renvoie ni ETag ni champ de révision, l'écriture reste-t-elle permise ?
+>
+> Réponse : Non. Une révision vient d'un ETag renvoyé en If-Match, ou d'un champ de version ou de date déclaré comme révision par un pointeur du schéma de l'espace. Sans l'un ni l'autre, l'écriture est refusée avec la raison « source en lecture seule » et l'espace est en lecture seule ; aucune écriture par comparaison de contenu.
+>
+> _Recommandation proposée : Non : l'espace passe en lecture seule._
+>
+> Concerne : CON-03.
 
 <!-- id: Q-06 -->
-### Q-06 : Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?
-
-Réponse : La configuration reste écrite par l'agent dans la définition de l'espace. Maket a un écran « Connecteurs » qui liste toutes les sources en service avec leur type, l'espace qui les utilise, l'URL de base, le nom de la variable d'environnement, l'état joignable ou non, lecture seule ou non, la date du dernier rafraîchissement, la dernière erreur, et un bouton « tester la connexion ». Dans l'espace, un indicateur d'état du connecteur est visible sans ouvrir l'écran. Aucun secret ne se saisit dans Maket.
-
-_Recommandation proposée : La configuration est une définition de l'espace de travail, écrite par l'agent par l'outil MCP de création ou de modification de définition, comme le schéma de données. Maket affiche dans l'espace un panneau de source en lecture : URL, nom de la variable, état joignable ou non, lecture seule ou non, date du dernier rafraîchissement, et un bouton « tester la connexion ». Aucun formulaire de saisie des pointeurs, et le secret ne se saisit jamais dans Maket._
-
-Concerne : ACT-01, ACT-02.
+> [!NOTE]
+> **Q-06** · Par où le propriétaire configure-t-il le connecteur (URL de base, nom de la variable d'environnement, pointeurs JSON) et comment voit-il l'état de la source dans Maket ?
+>
+> Réponse : La configuration reste écrite par l'agent dans la définition de l'espace. Maket a un écran « Connecteurs » qui liste toutes les sources en service avec leur type, l'espace qui les utilise, l'URL de base, le nom de la variable d'environnement, l'état joignable ou non, lecture seule ou non, la date du dernier rafraîchissement, la dernière erreur, et un bouton « tester la connexion ». Dans l'espace, un indicateur d'état du connecteur est visible sans ouvrir l'écran. Aucun secret ne se saisit dans Maket.
+>
+> _Recommandation proposée : La configuration est une définition de l'espace de travail, écrite par l'agent par l'outil MCP de création ou de modification de définition, comme le schéma de données. Maket affiche dans l'espace un panneau de source en lecture : URL, nom de la variable, état joignable ou non, lecture seule ou non, date du dernier rafraîchissement, et un bouton « tester la connexion ». Aucun formulaire de saisie des pointeurs, et le secret ne se saisit jamais dans Maket._
+>
+> Concerne : ACT-01, ACT-02.
 
 <!-- ptr: /framing/glossary -->
 ## Glossaire
