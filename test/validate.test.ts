@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validate, type Feature } from "../src/lib/index.js";
+import { validate, validateFeature, type Feature } from "../src/lib/index.js";
 import { guineaPig, inAcceptance, inRequirements } from "./helpers.js";
 
 const pointers = (feature: unknown, kind?: string) =>
@@ -67,6 +67,32 @@ describe("validate", () => {
     const feature = await guineaPig();
     (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "screen", format: "svg", title: "Écran", source: "<svg/>", illustrates: [] });
     expect(validate(feature).errors).toContainEqual(expect.objectContaining({ pointer: "/artifacts/1", kind: "invalid" }));
+  });
+
+  it("artifacts: a Mermaid source must parse; a broken one is invalid at its artifact", async () => {
+    const feature = await guineaPig();
+    const artifacts = feature.artifacts as Record<string, unknown>[];
+    artifacts.push({ id: "ART-02", kind: "flow", format: "mermaid", title: "Flow", source: "flowchart LR\n  agent --> maket\n  maket --> api", illustrates: [] });
+    expect(await validateFeature(feature)).toMatchObject({ valid: true });
+    artifacts[1]!.source = "flowchart LR\n  agent --> maket\n  maket -->";
+    const broken = await validateFeature(feature);
+    expect(broken.valid).toBe(false);
+    expect(broken.errors).toContainEqual({ pointer: "/artifacts/1", message: expect.stringMatching(/^ART-02: the Mermaid source does not parse: Parse error on line \d+:/), kind: "invalid" });
+    expect(validate(feature).valid).toBe(true);
+  });
+
+  it("artifacts: the Mermaid kinds spec-loop renders all parse", async () => {
+    const sources = [
+      "sequenceDiagram\n  agent->>maket: list\n  maket-->>agent: items",
+      "stateDiagram-v2\n  [*] --> draft\n  draft --> published",
+      "classDiagram\n  ItemSource <|-- HttpConnector",
+      "erDiagram\n  WORKSPACE ||--o{ ITEM : holds",
+    ];
+    for (const source of sources) {
+      const feature = await guineaPig();
+      (feature.artifacts as unknown[]).push({ id: "ART-02", kind: "flow", format: "mermaid", title: "Diagram", source, illustrates: [] });
+      expect((await validateFeature(feature)).valid, source).toBe(true);
+    }
   });
 
   it("rejects duplicate ids and dangling references", async () => {

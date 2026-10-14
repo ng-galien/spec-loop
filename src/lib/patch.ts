@@ -5,7 +5,7 @@ import { featureFile, type Location } from "./paths.js";
 import { ownerEditedFiles, render, renderToMemory } from "./render.js";
 import { nextFor } from "./next.js";
 import type { Feature, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
-import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 const { applyPatch, deepClone } = fastJsonPatch;
 
@@ -36,10 +36,10 @@ export async function patchFolder(folder: string, ops: PatchOperation[], options
     const e = error as { message?: string; index?: number; operation?: { path?: string } };
     return fail([{ pointer: e.operation?.path ?? "", message: `patch operation ${e.index ?? "?"} rejected: ${(e.message ?? String(error)).split("\n")[0]}`, kind: "invalid" }]);
   }
-  const validation = validate(next);
+  const validation = await validateFeature(next, { folder, options });
   if (!validation.valid) return fail(validation.errors.filter((e) => e.kind === "invalid"), validation);
   if (!options.force) {
-    const edited = await ownerEditedFiles(folder, renderToMemory(next), next, options);
+    const edited = await ownerEditedFiles(folder, renderToMemory(next, validation), next, options);
     if (edited.length > 0) {
       return fail(
         edited.map((path) => ({ pointer: "", message: `${path} was changed outside the MCP and is not reconciled yet: run the reconcile skill first`, kind: "invalid" as const })),

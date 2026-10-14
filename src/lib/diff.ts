@@ -6,6 +6,7 @@ import { featureFile, renderedDir, type Location } from "./paths.js";
 import { assetHashes, listRenderedOnDisk, parseHeader, readManifest, renderToMemory, sha256 } from "./render.js";
 import type { Alteration, DiffResult, Feature, FileDiff, Hunk, Target } from "./types.js";
 import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 const ID_MARKER = /<!-- id: ([A-Z]+-[0-9]+(?:\.[0-9]+)?) -->/g;
 const PTR_MARKER = /<!-- ptr: (\/[^ ]*) -->/;
@@ -117,7 +118,7 @@ export async function diffFolder(folder: string, options: Location = {}): Promis
     });
   }
   const ids = indexIds(json);
-  const expected = renderToMemory(json);
+  const expected = renderToMemory(json, await validateFeature(json, { folder, options }));
   const base = renderedDir(folder, options);
   const files: FileDiff[] = [];
   const known = new Set<string>();

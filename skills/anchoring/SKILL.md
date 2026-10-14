@@ -33,7 +33,7 @@ For each requirement, read the code before deciding:
 - One anchor may realise several requirements: list them all in `realizes`.
 - Write in `note` what the change is about at that place, in one or two sentences.
 
-When the anchors span more than one module, add a `module` artifact in mermaid that shows the modules touched and their dependencies.
+When the anchors span more than one module, add a `module` artifact in mermaid that shows the modules touched and their dependencies; `patch` refuses a Mermaid source that does not parse.
 
 ## Asking the owner
 

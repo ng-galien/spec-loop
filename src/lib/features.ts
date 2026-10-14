@@ -10,7 +10,7 @@ import { firstPhase, lastPhase, nextPhase, phases } from "./schema.js";
 import { nextFor, nextStep } from "./next.js";
 import { loadProject } from "./project.js";
 import type { Feature, NextStep, RenderResult, ValidationError } from "./types.js";
-import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 export interface FeatureSummary {
   id: string;
@@ -42,7 +42,7 @@ async function summarize(folder: string, id: string, name: string, options: Loca
       next: { phase: null, skill: "reconcile", instruction: "feature.json cannot be read as JSON: run the `reconcile` skill and restore it.", missing: 1, todo: [`/: ${(error as Error).message}`] },
     };
   }
-  const now = validate(json);
+  const now = await validateFeature(json, { folder, options });
   const next = nextPhase(now.phase);
   const d = await diffFolder(folder, options);
   return {
@@ -55,7 +55,7 @@ async function summarize(folder: string, id: string, name: string, options: Loca
     phase: now.phase,
     complete: now.complete,
     missingCount: now.errors.length,
-    missingForNext: next ? validate({ ...json, phase: next }).errors.filter((e) => e.kind === "incomplete") : [],
+    missingForNext: next ? (await validateFeature({ ...json, phase: next }, { folder, options })).errors.filter((e) => e.kind === "incomplete") : [],
     ownerEdits: d.alterations.length > 0 ? "pending" : "none",
     alterations: d.alterations.length,
     modified: (await stat(file)).mtime.toISOString(),

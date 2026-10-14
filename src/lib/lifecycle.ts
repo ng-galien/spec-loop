@@ -8,7 +8,7 @@ import { nextPhase, phaseIndex, phaseInfo, resolveRef, schema, type JsonSchema }
 import { nextFor, nextStep } from "./next.js";
 import { hooksFor, loadProject, passed, runHooks, hookTitle, type HookMoment, type HookRun } from "./project.js";
 import type { Alteration, NextStep, PatchOperation, PatchResult, ValidationError } from "./types.js";
-import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 export type Author = "agent" | "owner";
 
@@ -76,7 +76,7 @@ function lastBackward(history: StatusResult["phaseHistory"]): StatusResult["last
 
 export async function statusFolder(folder: string, options: Location = {}): Promise<StatusResult> {
   const json = await loadFeature(folder, options);
-  const validation = validate(json);
+  const validation = await validateFeature(json, { folder, options });
   const d = await diffFolder(folder, options);
   const lifecycle = (json.lifecycle ?? {}) as { lastVerify?: StatusResult["lastVerify"]; phaseHistory?: StatusResult["phaseHistory"]; hookRuns?: HookRun[] };
   const project = loadProject(options);

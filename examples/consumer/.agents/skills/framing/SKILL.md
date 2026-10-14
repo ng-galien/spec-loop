@@ -34,7 +34,7 @@ Fill each field of the current phase as its description in the schema says, requ
 - A field the owner declares not applicable is written as an empty array; it then counts as addressed.
 - A point the owner cannot settle becomes a question object with status `open` and your recommendation.
 - Keep the granularity of the phase: a requirement, a criterion or a code location given now becomes a question or a scope line for its own phase.
-- A context diagram helps the owner see the boundaries: add it as a mermaid artifact (`learn` topic `artifacts`).
+- A context diagram helps the owner see the boundaries: add it as a mermaid artifact (`learn` topic `artifacts`). Every Mermaid source is parsed when it is written: `patch` refuses one that does not parse, with the parser's message at `/artifacts/n`.
 
 After each answer, tell the owner in one sentence what changed and in which document.
 

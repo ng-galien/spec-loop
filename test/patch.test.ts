@@ -4,6 +4,16 @@ import { diff, patch, render } from "../src/lib/index.js";
 import { FEATURE, inFolder, workspace } from "./helpers.js";
 
 describe("patch", () => {
+  it("never writes a Mermaid diagram that does not parse", async () => {
+    const root = await workspace();
+    await render(FEATURE, { root });
+    const before = await readFile(inFolder(root, "feature.json"), "utf8");
+    const result = await patch(FEATURE, [{ op: "replace", path: "/artifacts/0/source", value: "flowchart LR\n  agent -->" }], { root });
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual([expect.objectContaining({ pointer: "/artifacts/0", kind: "invalid" })]);
+    expect(await readFile(inFolder(root, "feature.json"), "utf8")).toBe(before);
+  });
+
   it("applies a JSON Patch, writes feature.json and re-renders", async () => {
     const root = await workspace();
     await render(FEATURE, { root });

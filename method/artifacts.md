@@ -4,7 +4,7 @@ An artifact (ART-01) is a diagram or a screen bound to what it illustrates. Arti
 
 Format rule:
 
-- `mermaid` is the default for every flow, sequence, state, context or module diagram. Its text lives inline in `source`.
+- `mermaid` is the default for every flow, sequence, state, context or module diagram. Its text lives inline in `source`. Every Mermaid source is parsed when the feature is validated: a source that does not parse is an `invalid` error at its artifact, with the parser's message, so `patch` never writes a broken diagram. Use the kinds the preview renders: `flowchart`, `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `erDiagram`.
 - `svg` is for screens. The file lives under `spec/<feature>/assets/` and the artifact points at it with `path`. Write the file, then declare the artifact with `patch`.
 - `ascii` is a draft only. Replace it with mermaid or svg before the phase is complete; never leave an ascii artifact as the final one.
 

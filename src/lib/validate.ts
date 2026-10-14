@@ -79,7 +79,7 @@ function translate(error: ErrorObject, phase: Phase | null, reached: number): Va
   }
 }
 
-function coherence(json: Rec, phase: Phase | null): ValidationError[] {
+function coherence(json: Rec, phase: Phase | null, broken: Set<string> = new Set()): ValidationError[] {
   const errors: ValidationError[] = [];
   const invalid = (pointer: string, message: string) => errors.push({ pointer, message, kind: "invalid" });
   const incomplete = (pointer: string, message: string) => errors.push({ pointer, message, kind: "incomplete" });
@@ -178,7 +178,12 @@ function coherence(json: Rec, phase: Phase | null): ValidationError[] {
   return errors;
 }
 
-export function validate(json: unknown): ValidationResult {
+export interface ValidateExtra {
+  errors?: ValidationError[];
+  brokenArtifacts?: Set<string>;
+}
+
+export function validate(json: unknown, extra: ValidateExtra = {}): ValidationResult {
   const phase = phaseOf(json);
   if (json === null || typeof json !== "object" || Array.isArray(json)) {
     return { valid: false, complete: false, phase, errors: [{ pointer: "", message: "a feature must be a JSON object", kind: "invalid" }] };
@@ -188,7 +193,7 @@ export function validate(json: unknown): ValidationResult {
   const seen = new Set<string>();
   const history = ((json as { lifecycle?: { phaseHistory?: { phase?: string }[] } }).lifecycle?.phaseHistory ?? []) as { phase?: string }[];
   const reached = Math.max(-1, ...(Array.isArray(history) ? history.map((h) => phaseIndex(h?.phase)) : []));
-  for (const error of [...(check.errors ?? []).map((e) => translate(e, phase, reached)), ...coherence(json as Rec, phase)]) {
+  for (const error of [...(check.errors ?? []).map((e) => translate(e, phase, reached)), ...coherence(json as Rec, phase, extra.brokenArtifacts), ...(extra.errors ?? [])]) {
     if (!error) continue;
     const key = `${error.pointer}\u0000${error.message}`;
     if (seen.has(key)) continue;

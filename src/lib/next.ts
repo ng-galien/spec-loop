@@ -4,7 +4,7 @@ import type { Location } from "./paths.js";
 import { hooksFor, hookTitle, loadProject, PROJECT_FILE, type Project } from "./project.js";
 import { phaseInfo } from "./schema.js";
 import type { NextStep, ValidationResult } from "./types.js";
-import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 export interface NextContext {
   entered?: boolean;
@@ -53,5 +53,5 @@ export function nextStep(validation: ValidationResult, context: NextContext = {}
 export async function nextFor(folder: string, options: Location = {}, context: { entered?: boolean } = {}): Promise<NextStep> {
   const json = await loadFeature(folder, options);
   const d = await diffFolder(folder, options);
-  return nextStep(validate(json), { ...context, pending: d.alterations.length > 0, project: loadProject(options) });
+  return nextStep(await validateFeature(json, { folder, options }), { ...context, pending: d.alterations.length > 0, project: loadProject(options) });
 }

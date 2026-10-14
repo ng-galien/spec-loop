@@ -1,4 +1,5 @@
 export { validate } from "./validate.js";
+export { validateFeature } from "./artifacts.js";
 export { render, renderToMemory, type RenderOptions } from "./render.js";
 export { diff } from "./diff.js";
 export { patch, type PatchOptions } from "./patch.js";

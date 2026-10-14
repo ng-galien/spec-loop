@@ -252,16 +252,17 @@ server.registerTool(
   "validate",
   {
     title: "Validate a spec-loop feature",
-    description: "Validate a spec-loop feature.json, or a candidate object, against the schema and the coverage checks of its phase; every error has a JSON pointer.",
+    description: "Validate a spec-loop feature.json, or a candidate object, against the schema and the coverage checks of its phase, and parse every Mermaid artifact; every error has a JSON pointer.",
     inputSchema: { feature: feature.optional(), json: z.record(z.string(), z.unknown()).optional().describe("Candidate feature object, validated instead of the stored file"), root },
     outputSchema: validation.shape,
     annotations: readOnly,
   },
   async ({ feature, json, root }) =>
     run(async () => {
-      if (json) return { value: lib.validate(json) };
+      if (json) return { value: await lib.validateFeature(json) };
       if (!feature) throw new Error("give either feature or json");
-      return { value: lib.validate(await lib.loadFeature(await lib.resolveFeature(feature, { root }), { root })) };
+      const folder = await lib.resolveFeature(feature, { root });
+      return { value: await lib.validateFeature(await lib.loadFeature(folder, { root }), { folder, options: { root } }) };
     }),
 );
 

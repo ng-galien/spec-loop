@@ -8,6 +8,7 @@ import { featureDir, featureFile, renderedDir, stateDir, templatesDir, type Loca
 import { enumLabel, phaseIndex, phaseInfo, phaseProducing, phases } from "./schema.js";
 import type { Feature, RenderedFile, RenderResult, ValidationResult } from "./types.js";
 import { validate } from "./validate.js";
+import { validateFeature } from "./artifacts.js";
 
 interface FileSpec {
   path: string;
@@ -329,8 +330,7 @@ function navigation(feature: Feature, spec: FileSpec, produced: FileSpec[]): { t
   };
 }
 
-export function renderToMemory(feature: Feature): RenderedFile[] {
-  const validation = validate(feature);
+export function renderToMemory(feature: Feature, validation: ValidationResult = validate(feature)): RenderedFile[] {
   const data = view(feature, validation);
   const phase = validation.phase ?? phases[0]!.name;
   const produced = filesFor(feature, phase);
@@ -469,8 +469,8 @@ export async function backup(folder: string, relative: string, content: string, 
 export async function render(ref: string, options: RenderOptions = {}): Promise<RenderResult> {
   const folder = await resolveFeature(ref, options);
   const json = await loadFeature(folder, options);
-  const validation = validate(json);
-  const files = renderToMemory(json);
+  const validation = await validateFeature(json, { folder, options });
+  const files = renderToMemory(json, validation);
   const edited = await ownerEditedFiles(folder, files, json, options);
   const result: RenderResult = { ok: true, feature: folder, files: [], removed: [], backedUp: [], refused: [], validation };
   if (edited.length > 0 && !options.force) return { ...result, ok: false, refused: edited };

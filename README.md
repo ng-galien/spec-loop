@@ -162,7 +162,7 @@ Commit `.vscode/extensions.json` from `examples/consumer/`. VS Code then propose
 | `learn` | no | Returns the method by topic; `phases` and `fields` are generated from the schema. |
 | `features` | no | Lists every feature: id, phase, completeness, pending owner edits, last modification. |
 | `status` | no | Reports one feature: file path, completeness, unaddressed fields, pending edits, last reconciliation, phase history, last backward move. |
-| `validate` | no | Checks a feature or a candidate object against the schema and the coverage rules; every error has a JSON pointer. |
+| `validate` | no | Checks a feature or a candidate object against the schema and the coverage rules, and parses every Mermaid artifact; every error has a JSON pointer. |
 | `diff` | no | Compares the regenerated projection with the files on disk; maps each hunk to an id and a pointer; classifies alterations. |
 | `create` | yes | Writes the skeleton of a new feature (next FEAT number) and renders it; needs an absolute `root`. One feature at a time: refuses while another feature is not done, unless the owner asks for it (`by: "owner"` and a `reason`, recorded in the new feature). |
 | `render` | yes | Renders the feature deterministically; refuses while owner edits are unverified. |
